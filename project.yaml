@@ -28,3 +28,10 @@ actions:
       highly_sensitive:
         rds: output/process/*.rds
 
+  report_history:
+    run: r:latest analysis/report_history.R
+    needs: [process]
+    outputs:
+      moderately_sensitive:
+        csv: output/report_history/*.csv
+        png: output/report_history/*.png
