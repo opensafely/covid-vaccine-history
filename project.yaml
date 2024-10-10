@@ -21,3 +21,10 @@ actions:
       highly_sensitive:
         cohort: output/extracts/extract_varying.arrow
 
+  process:
+    run: r:latest analysis/process.R
+    needs: [extract_fixed, extract_varying]
+    outputs:
+      highly_sensitive:
+        rds: output/process/*.rds
+
