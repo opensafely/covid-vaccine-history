@@ -95,28 +95,32 @@ vax_shortname_lookup <- c(
 # template for standardising characteristics that are extracted multiple times
 # using this in mutate like this: `mutate(!!!standardise_characteristics)`
 standardise_characteristics <-
-  rlang::quos(
-    ageband = cut(
-      age,
-      breaks = c(-Inf, 18, 40, 55, 65, 75, Inf),
-      labels = c("under 18", "18-39", "40-54", "55-64", "65-74", "75+"),
-      right = FALSE
-    ),
-    region = fct_collapse(
-      region,
-      `East of England` = "East",
-      `London` = "London",
-      `Midlands` = c("West Midlands", "East Midlands"),
-      `North East and Yorkshire` = c("Yorkshire and The Humber", "North East"),
-      `North West` = "North West",
-      `South East` = "South East",
-      `South West` = "South West"
-    )
+
+
+
+rlang::quos(
+
+  ## --VARIABLES--
+  ageband = cut(
+    age,
+    breaks = c(-Inf, 18, 40, 55, 65, 75, Inf),
+    labels = c("under 18", "18-39", "40-54", "55-64", "65-74", "75+"),
+    right = FALSE
+  ),
+  region = fct_collapse(
+    region,
+    `East of England` = "East",
+    `London` = "London",
+    `Midlands` = c("West Midlands", "East Midlands"),
+    `North East and Yorkshire` = c("Yorkshire and The Humber", "North East"),
+    `North West` = "North West",
+    `South East` = "South East",
+    `South West` = "South West"
   )
+)
 
 
-
-# Import dmummy data if running locally, or real data if running on the server
+# Import dummy data if running locally, or real data if running on the server
 import_extract <- function(custom_file_path, ehrql_file_path){
 
   if(Sys.getenv("OPENSAFELY_BACKEND") %in% c("", "expectations")){
