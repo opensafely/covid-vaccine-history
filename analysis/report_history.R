@@ -42,7 +42,7 @@ data_vax <-
   mutate(
     vax_dosenumber = factor(vax_index, levels = sort(unique(vax_index)), labels = paste("Dose", sort(unique(vax_index)))),
     vax_week = floor_date(vax_date, unit = "week", week_start = 1),
-    vax_type = fct_recode(factor(vax_type, levels = vax_shortname_8), !!!vax_shortname_8),
+    vax_type = fct_collapse(vax_type, !!!vax_shortname_8, other_level="Other"),
     all = ""
   )
 
@@ -55,7 +55,7 @@ data_vax_clean <-
   mutate(
     vax_dosenumber = factor(vax_index, levels = sort(unique(vax_index)), labels = paste("Dose", sort(unique(vax_index)))),
     vax_week = floor_date(vax_date, unit = "week", week_start = 1),
-    vax_type = fct_recode(factor(vax_type, levels = vax_shortname_8), !!!vax_shortname_8),
+    vax_type = fct_collapse(vax_type, !!!vax_shortname_8, other_level="Other"),
     all = "",
     all2 = ""
   )
@@ -75,6 +75,8 @@ summary_validation <-
     pct_missing_date = n_missing_date / n,
     n_earlier_than_start_date = ceiling_any(sum(vax_date < start_date, na.rm = TRUE)),
     pct_earlier_than_start_date = n_earlier_than_start_date / n,
+    n_earlier_than_firstpossiblevax_date = ceiling_any(sum(vax_date < firstpossiblevax_date, na.rm = TRUE)),
+    pct_earlier_than_firstpossiblevax_date = n_earlier_than_firstpossiblevax_date / n,
     n_interval_within_14days = sum(vax_interval < 14, na.rm = TRUE),
     pct_interval_within_14days = n_interval_within_14days / n,
   ) %>%
