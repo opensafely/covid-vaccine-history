@@ -48,6 +48,8 @@ for i in range(1, 16+1):
     current_vax = covid_vaccinations.where(covid_vaccinations.date>previous_vax_date).first_for_patient()
     registration = practice_registrations.for_patient_on(current_vax.date)
     
+    ## --VARIABLES--
+    
     setattr(dataset, f"covid_vax_{i}_date", current_vax.date)
     setattr(dataset, f"covid_vax_type_{i}", current_vax.product_name)
     setattr(dataset, f"age_{i}", patients.age_on(current_vax.date))
@@ -55,6 +57,7 @@ for i in range(1, 16+1):
     setattr(dataset, f"deregistered_{i}_date", registration.end_date)
     setattr(dataset, f"region_{i}", registration.practice_nuts1_region_name)
     setattr(dataset, f"stp_{i}", registration.practice_stp)
+    
     
     previous_vax_date = current_vax.date
 

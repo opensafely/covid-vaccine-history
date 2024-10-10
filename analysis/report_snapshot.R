@@ -156,6 +156,8 @@ plot_date_of_last_dose <- function(rows) {
   ggsave(fs::path(output_dir, glue("last_vax_date_{row_name}.png")), plot = temp_plot)
 }
 
+
+## --VARIABLES--
 plot_date_of_last_dose(ageband)
 plot_date_of_last_dose(region)
 plot_date_of_last_dose(sex)
@@ -224,7 +226,7 @@ plot_vax_count <- function(rows) {
   ggsave(fs::path(output_dir, glue("vax_count_{row_name}.png")), plot = temp_plot)
 }
 
-
+## --VARIABLES--
 plot_vax_count(ageband)
 plot_vax_count(region)
 plot_vax_count(sex)

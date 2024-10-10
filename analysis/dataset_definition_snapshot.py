@@ -56,11 +56,13 @@ dataset.define_population(
   & alive
 )
 
+## --VARIABLES--
+
 dataset.sex = patients.sex
 dataset.age = patients.age_on(snapshot_date)
 dataset.region = registered_patients.practice_nuts1_region_name
 dataset.stp = registered_patients.practice_stp
 
-#TODO add more variables here!
+
 
 
