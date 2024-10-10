@@ -1,63 +1,26 @@
+# _________________________________________________
+# Purpose:
+# define key design features for the study
+# define useful functions used in the codebase
+# define some look up tables to use in the codebase
+# this script should be sourced (using `source(here("analysis", "utility.R"))`) at the start of each R script
+# _________________________________________________
 
 
-# Import dmummy data if running locally, or real data if running on the server
-import_extract <- function(custom_file_path, studydef_file_path){
 
-  if(Sys.getenv("OPENSAFELY_BACKEND") %in% c("", "expectations")){
+# key study dates
+# The dates are defined in json format so they can be read in by R and python scripts
+# json has no easy way to comment, so explanation for dates is here:
+# - firstpossibleax_date is the date from which we want to identify covid vaccines. the mass vax programme was 8 Dec 2020 but other people were vaccinated earlier in trials, so want to pick these people up too (and possibly exclude them)
+# - start_date is when we start the observational period proper, at the start of the mass vax programme
+# - end_date is when we stopthe observation period. This may be extended as the study progresses
+study_dates <-
+  jsonlite::read_json(path=here("lib", "dates.json")) %>%
+  map(as.Date)
 
-    # ideally in future this will check column existence and types from metadata,
-    # rather than from a cohort-extractor-generated dummy data
-
-    data_studydef_dummy <- read_feather(studydef_file_path) %>%
-      # because date types are not returned consistently by cohort extractor
-      mutate(across(ends_with("_date"), ~ as.Date(.))) %>%
-      mutate(patient_id = as.integer(patient_id))
-
-    data_custom_dummy <- read_feather(custom_file_path)
-
-    not_in_studydef <- names(data_custom_dummy)[!( names(data_custom_dummy) %in% names(data_studydef_dummy) )]
-    not_in_custom  <- names(data_studydef_dummy)[!( names(data_studydef_dummy) %in% names(data_custom_dummy) )]
-
-
-    if(length(not_in_custom)!=0) stop(
-      paste(
-        "These variables are in studydef but not in custom: ",
-        paste(not_in_custom, collapse=", ")
-      )
-    )
-
-    if(length(not_in_studydef)!=0) stop(
-      paste(
-        "These variables are in custom but not in studydef: ",
-        paste(not_in_studydef, collapse=", ")
-      )
-    )
-
-    # reorder columns
-    data_studydef_dummy <- data_studydef_dummy[,names(data_custom_dummy)]
-
-    unmatched_types <- cbind(
-      map_chr(data_studydef_dummy, ~paste(class(.), collapse=", ")),
-      map_chr(data_custom_dummy, ~paste(class(.), collapse=", "))
-    )[ (map_chr(data_studydef_dummy, ~paste(class(.), collapse=", ")) != map_chr(data_custom_dummy, ~paste(class(.), collapse=", ")) ), ] %>%
-      as.data.frame() %>% rownames_to_column()
-
-
-    # if(nrow(unmatched_types)>0) stop(
-    #   #unmatched_types
-    #   "inconsistent typing in studydef : dummy dataset\n",
-    #   apply(unmatched_types, 1, function(row) paste(paste(row, collapse=" : "), "\n"))
-    # )
-
-    data_extract <- data_custom_dummy
-  } else {
-    data_extract <- read_feather(studydef_file_path) %>%
-      #because date types are not returned consistently by cohort extractor
-      mutate(across(ends_with("_date"),  as.Date))
-  }
-  data_extract
-}
-
+# make these available in the global environment
+# so we don't have to use `study_dates$start_date` or `start_date <- study_dates$start_date` in each script
+list2env(study_dates, globalenv())
 
 roundmid_any <- function(x, to = 1) {
   # like ceiling_any, but centers on (integer) midpoint of the rounding points
@@ -128,6 +91,65 @@ vax_shortname_lookup <- c(
 #   left_join(tibble(x=x), source, by = {{from}})[[{{to}}]]
 # }
 
+
+
+# Import dmummy data if running locally, or real data if running on the server
+import_extract <- function(custom_file_path, studydef_file_path){
+
+  if(Sys.getenv("OPENSAFELY_BACKEND") %in% c("", "expectations")){
+
+    # ideally in future this will check column existence and types from metadata,
+    # rather than from a cohort-extractor-generated dummy data
+
+    data_studydef_dummy <- read_feather(studydef_file_path) %>%
+      # because date types are not returned consistently by cohort extractor
+      mutate(across(ends_with("_date"), ~ as.Date(.))) %>%
+      mutate(patient_id = as.integer(patient_id))
+
+    data_custom_dummy <- read_feather(custom_file_path)
+
+    not_in_studydef <- names(data_custom_dummy)[!( names(data_custom_dummy) %in% names(data_studydef_dummy) )]
+    not_in_custom  <- names(data_studydef_dummy)[!( names(data_studydef_dummy) %in% names(data_custom_dummy) )]
+
+
+    if(length(not_in_custom)!=0) stop(
+      paste(
+        "These variables are in studydef but not in custom: ",
+        paste(not_in_custom, collapse=", ")
+      )
+    )
+
+    if(length(not_in_studydef)!=0) stop(
+      paste(
+        "These variables are in custom but not in studydef: ",
+        paste(not_in_studydef, collapse=", ")
+      )
+    )
+
+    # reorder columns
+    data_studydef_dummy <- data_studydef_dummy[,names(data_custom_dummy)]
+
+    unmatched_types <- cbind(
+      map_chr(data_studydef_dummy, ~paste(class(.), collapse=", ")),
+      map_chr(data_custom_dummy, ~paste(class(.), collapse=", "))
+    )[ (map_chr(data_studydef_dummy, ~paste(class(.), collapse=", ")) != map_chr(data_custom_dummy, ~paste(class(.), collapse=", ")) ), ] %>%
+      as.data.frame() %>% rownames_to_column()
+
+
+    # if(nrow(unmatched_types)>0) stop(
+    #   #unmatched_types
+    #   "inconsistent typing in studydef : dummy dataset\n",
+    #   apply(unmatched_types, 1, function(row) paste(paste(row, collapse=" : "), "\n"))
+    # )
+
+    data_extract <- data_custom_dummy
+  } else {
+    data_extract <- read_feather(studydef_file_path) %>%
+      #because date types are not returned consistently by cohort extractor
+      mutate(across(ends_with("_date"),  as.Date))
+  }
+  data_extract
+}
 
 
 

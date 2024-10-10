@@ -18,11 +18,6 @@ source(here("analysis", "utility.R"))
 output_dir <- here("output", "report_history")
 fs::dir_create(output_dir)
 
-# define start and end of observation period
-# TODO move data definitions to a master script
-start_date <- as.Date("2020-06-01")
-end_date <- as.Date("2023-09-01")
-
 # Import processed data ----
 data_fixed <- read_rds(here("output", "process", "data_fixed.rds"))
 data_varying <- read_rds(here("output", "process", "data_vax.rds"))
@@ -101,6 +96,8 @@ summary_validation_stratified <-
     pct_missing_date = n_missing_date / n,
     n_earlier_than_start_date = ceiling_any(sum(vax_date < start_date, na.rm = TRUE)),
     pct_earlier_than_start_date = n_earlier_than_start_date / n,
+    n_earlier_than_firstpossiblevax_date = ceiling_any(sum(vax_date < firstpossiblevax_date, na.rm = TRUE)),
+    pct_earlier_than_firstpossiblevax_date = n_earlier_than_firstpossiblevax_date / n,
     n_interval_within_14days = sum(vax_interval < 14, na.rm = TRUE),
     pct_interval_within_14days = n_interval_within_14days / n,
   ) %>%

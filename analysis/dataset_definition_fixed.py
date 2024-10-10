@@ -6,6 +6,10 @@
 # alsoextract count of previous vaccines as at that date
 ##########################
 
+
+from json import loads
+from pathlib import Path
+
 from ehrql import (
     case,
     create_dataset,
@@ -24,17 +28,20 @@ from ehrql.tables.tpp import (
 # import codelists
 from codelists import *
 
-# end of observation period
-index_date = "2023-09-01"
 
-start_date = "2020-01-01"
-end_date = "2023-09-01"
+study_dates = loads(
+    Path("lib/dates.json").read_text(),
+)
+
+# Change these in ./lib/dates.json if necessary
+start_date = study_dates["start_date"]
+end_date = study_dates["end_date"]
 
 # all covid-19 vaccination events
 covid_vaccinations = (
   vaccinations
   .where(vaccinations.target_disease.is_in(["SARS-2 CORONAVIRUS"]))
-  .where(vaccinations.date.is_on_or_before(index_date))
+  .where(vaccinations.date.is_on_or_before(end_date))
   .sort_by(vaccinations.date)
 )
 
@@ -70,7 +77,7 @@ dataset.sex = patients.sex
 # ethnicity = (clinical_events
 #   .where(clinical_events.snomedct_code.is_in(ethnicity_codelist16))
 #   .sort_by(clinical_events.date)
-#   .where(clinical_events.date.is_on_or_before(index_date))
+#   .where(clinical_events.date.is_on_or_before(end_date))
 #   .last_for_patient()
 # )
 # 

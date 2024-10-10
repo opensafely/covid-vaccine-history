@@ -20,9 +20,6 @@ source(here("analysis", "utility.R"))
 output_dir <- here("output", "process")
 fs::dir_create(output_dir)
 
-# define start and end of observation period
-start_date <- as.Date("2020-06-01")
-end_date <- as.Date("2023-12-31")
 
 # Import and process fixed dataset ----
 
