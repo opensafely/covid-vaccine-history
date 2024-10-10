@@ -31,21 +31,18 @@ population_size <- 1000
 # we do this because some dplyr operations to not preserve date attributes, so dates will be converted to numerics
 
 # choose the june 2020 to pick up possible trial participants, but definitely exclude errors or unknown dates (1900-01-01, 2018-03-24, etc)
-index_date <- as.Date("2020-06-01")
-
-# first date the people were vaccinated in mass UK covid vax programme
-studystart_date <- as.Date("2020-12-07")
+index_date <- firstpossiblevax_date
 
 index_day <- 0L
 
 
-studystart_day <- as.integer(studystart_date - index_date)
+start_day <- as.integer(start_date - index_date)
 
 # set the variables that are known a-priori to the simulation engine
 # ie, defined ad accessible outside of the scope of the dataset
 known_variables <- c(
-  "index_date", "studystart_date",
-  "index_day",  "studystart_day"
+  "index_date", "start_date",
+  "index_day",  "start_day"
 )
 
 # define the simulation configuration
@@ -64,7 +61,7 @@ sim_list_vax_info <- lst(
 
   # covid vax any
   covid_vax_1_day = bn_node(
-    ~ runif(n = ..n, studystart_day, studystart_day + 365),
+    ~ runif(n = ..n, start_day, start_day + 365),
     missing_rate = ~0.05,
   ),
   covid_vax_2_day = bn_node(
