@@ -69,55 +69,10 @@ data_extract_varying <-
     here("output", "extracts", "extract_varying.arrow")
   )
 
-# function to standardise characteristics for each vaccination event
-# doing this on wide format not long format as it reduces dataset size prior to reshaping
-standardise_characteristics <- function(i) {
-  rlang::quos(
-    "ageband_{i}" := cut(
-      .data[[glue("age_{i}")]],
-      breaks = c(-Inf, 18, 40, 55, 65, 75, Inf),
-      labels = c("under 18", "18-39", "40-54", "55-64", "65-74", "75+"),
-      right = FALSE
-    ),
-    "region_{i}" := fct_collapse(
-      .data[[glue("region_{i}")]],
-      `East of England` = "East",
-      `London` = "London",
-      `Midlands` = c("West Midlands", "East Midlands"),
-      `North East and Yorkshire` = c("Yorkshire and The Humber", "North East"),
-      `North West` = "North West",
-      `South East` = "South East",
-      `South West` = "South West"
-    )
-  )
-}
-
-# apply standardisation across all events
-data_processed_varying <-
-  data_extract_varying %>%
-  mutate(
-    !!!standardise_characteristics(1),
-    !!!standardise_characteristics(2),
-    !!!standardise_characteristics(3),
-    !!!standardise_characteristics(4),
-    !!!standardise_characteristics(5),
-    !!!standardise_characteristics(6),
-    !!!standardise_characteristics(7),
-    !!!standardise_characteristics(8),
-    !!!standardise_characteristics(9),
-    !!!standardise_characteristics(10),
-    !!!standardise_characteristics(11),
-    !!!standardise_characteristics(12),
-    !!!standardise_characteristics(13),
-    !!!standardise_characteristics(14),
-    !!!standardise_characteristics(15),
-    !!!standardise_characteristics(16),
-  )
-
 
 # Reshape vaccination data
 data_vax <-
-  data_processed_varying %>%
+  data_extract_varying %>%
   select(
     patient_id,
     matches("covid_vax\\_\\d+\\_date"),
@@ -137,7 +92,10 @@ data_vax <-
     values_drop_na = TRUE,
     names_transform = list(vax_index = as.integer)
   ) %>%
-  rename(
+  mutate(
+    !!!standardise_characteristics
+  ) %>%
+    rename(
     vax_date = covid_vax,
     vax_type = covid_vax_type,
   ) %>%
