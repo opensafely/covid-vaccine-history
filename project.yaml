@@ -21,12 +21,16 @@ actions:
       highly_sensitive:
         cohort: output/extracts/extract_varying.arrow
 
+
+
   process:
     run: r:latest analysis/process.R
     needs: [extract_fixed, extract_varying]
     outputs:
       highly_sensitive:
         rds: output/process/*.rds
+
+# report vaccine history over entire observational period ----
 
   report_history:
     run: r:latest analysis/report_history.R
@@ -35,3 +39,21 @@ actions:
       moderately_sensitive:
         csv: output/report_history/*.csv
         png: output/report_history/*.png
+
+ # report detailed vaccine history at specific snapshots in time ----
+
+  extract_snapshot_20230930:
+    run: ehrql:v1 generate-dataset analysis/dataset_definition_snapshot.py
+      --output output/extracts/extract_snapshot_20230930.arrow
+      -- 2023-09-30
+    outputs:
+      highly_sensitive:
+        cohort: output/extracts/extract_snapshot_20230930.arrow
+
+  report_snapshot_20230930:
+    run: r:latest analysis/report_snapshot.R 2023-09-30
+    needs: [extract_snapshot_20230930, process]
+    outputs:
+      moderately_sensitive:
+        #csv: output/report_snapshot_20230930/*.csv
+        png: output/report_snapshot_20230930/*.png
