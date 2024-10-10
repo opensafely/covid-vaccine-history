@@ -1,12 +1,15 @@
 version: '3.0'
 
-# Ignore this`expectation` block. It is required but not used, and will be removed in future versions.
 expectations:
-  population_size: 1000
+  population_size: 10000
 
 actions:
-  generate_dataset:
-    run: ehrql:v1 generate-dataset analysis/dataset_definition.py --output output/dataset.csv.gz
+
+  extract_fixed:
+    run: ehrql:v1 generate-dataset analysis/dataset_definition_fixed.py
+      --output output/extracts/extract_fixed.arrow
+      --dummy-data-file lib/dummydata/dummyinput_fixed.arrow
     outputs:
       highly_sensitive:
-        dataset: output/dataset.csv.gz
+        cohort: output/extracts/extract_fixed.arrow
+
