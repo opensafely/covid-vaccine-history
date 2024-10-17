@@ -16,14 +16,14 @@ library("arrow")
 # Import custom functions
 source(here("analysis", "utility.R"))
 
-args <- commandArgs(trailingOnly=TRUE)
+args <- commandArgs(trailingOnly = TRUE)
 
-if(length(args)==0){
+if (length(args) == 0) {
   # use for interactive testing
-  #removeobjects <- FALSE
+  # removeobjects <- FALSE
   snapshot_date <- as.Date("2023-09-30")
 } else {
-  #removeobjects <- TRUE
+  # removeobjects <- TRUE
   snapshot_date <- as.Date(args[[1]])
 }
 
@@ -94,7 +94,6 @@ data_snapshot <-
 ## output plots of date of last dose by type and other characteristics ----
 
 plot_date_of_last_dose <- function(rows) {
-
   summary_by <- data_snapshot %>%
     group_by(last_vax_type, last_vax_week) %>%
     group_by({{ rows }}, .add = TRUE) %>%
@@ -170,31 +169,29 @@ plot_date_of_last_dose(all)
 ## output plots of dose count by type and other characteristics ----
 
 plot_vax_count <- function(rows) {
-
   summary_by <- data_snapshot %>%
     group_by(vax_count, {{ rows }}) %>%
     summarise(
       n = ceiling_any(n(), 10),
     ) %>%
-    group_by( {{ rows }}) %>%
+    group_by({{ rows }}) %>%
     mutate(
       row_total = sum(n),
       prop = n / row_total,
-
     )
 
   temp_plot <-
     ggplot(summary_by) +
     geom_bar(
       aes(x = prop, y = {{ rows }}, width = row_total, fill = as.character(vax_count)),
-      stat= "identity", position = "fill"
-      #position = position_stack(reverse = TRUE),
+      stat = "identity", position = "fill"
+      # position = position_stack(reverse = TRUE),
     ) +
     facet_grid(
-      rows = vars({{rows}}),
+      rows = vars({{ rows }}),
       scales = "free_y",
       space = "free_y"
-    )+
+    ) +
     labs(
       x = "%",
       y = NULL,
@@ -216,7 +213,7 @@ plot_vax_count <- function(rows) {
       axis.ticks.x = element_line(),
       strip.text = element_blank(),
       legend.position = "bottom"
-    )+
+    ) +
     NULL
 
   print(temp_plot)
@@ -233,5 +230,3 @@ plot_vax_count(imd_quintile)
 plot_vax_count(region)
 plot_vax_count(sex)
 plot_vax_count(all)
-
-

@@ -48,7 +48,7 @@ data_processed_fixed %>%
   select(
     patient_id,
     sex,
-    #ethnicity...
+    # ethnicity...
     death_date
   ) %>%
   write_rds(fs::path(output_dir, "data_fixed.rds"), compress = "gz")
@@ -85,7 +85,7 @@ data_vax <-
     matches("stp_\\d+"),
     matches("imd_\\d+"),
     matches("imd_quintile_\\d+"),
-    #... more clinical characteristics here
+    # ... more clinical characteristics here
   ) %>%
   pivot_longer(
     cols = -patient_id,
@@ -97,7 +97,7 @@ data_vax <-
   mutate(
     !!!standardise_characteristics
   ) %>%
-    rename(
+  rename(
     vax_date = covid_vax,
     vax_type = covid_vax_type,
   ) %>%

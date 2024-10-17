@@ -39,8 +39,8 @@ known_variables <- c(
 
 
 # function to convert ethnicity 16 group into 5 group
-ethnicity_16_to_5 <- function(x){
-  x1 <- fct_relabel(x, ~str_extract(.x, ".*(?= - )")) # pick up everything before " - "
+ethnicity_16_to_5 <- function(x) {
+  x1 <- fct_relabel(x, ~ str_extract(.x, ".*(?= - )")) # pick up everything before " - "
   x2 <- fct_recode(x1, `Chinese or Other Ethnic Groups` = "Other Ethnic Groups")
   return(x2)
 }

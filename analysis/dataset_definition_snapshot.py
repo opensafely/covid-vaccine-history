@@ -63,7 +63,7 @@ dataset.sex = patients.sex
 dataset.age = patients.age_on(snapshot_date)
 dataset.region = registered_patients.practice_nuts1_region_name
 dataset.stp = registered_patients.practice_stp
-dataset.imd= addresses.for_patient_on(snapshot_date).imd_rounded
+dataset.imd = addresses.for_patient_on(snapshot_date).imd_rounded
 
 
 
