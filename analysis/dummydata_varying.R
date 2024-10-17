@@ -173,10 +173,11 @@ sim_list_varying_i <- function(i) {
       ~ as.integer(rnorm(n = ..n, mean = 60, sd = 14)),
       needs = vax_variable
     ),
-#    "imd_{i}" := bn_node(
-#     ~ as.integer([rnorm?]](n = ..n, median/mean = [?], sd/iqr = [?])),
-#      needs = vax_variable
-#    ),
+   "imd_{i}" := bn_node(
+     ~ as.integer(plyr::round_any(runif(n=..n, 100, 32000), 100)),
+     missing = ~ 0.05,
+     needs = vax_variable
+   ),
     "registered_{i}" := bn_node(
       ~ rbernoulli(n = ..n, p = 0.99),
       needs = vax_variable
