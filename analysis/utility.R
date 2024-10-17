@@ -116,7 +116,13 @@ rlang::quos(
     `North West` = "North West",
     `South East` = "South East",
     `South West` = "South West"
-  )
+  ),
+  imd_quintile = cut(
+    imd_rounded, 
+    breaks = c(-Inf, 32844 * (0:5) / 5), 
+    labels = c("1 (most deprived)", "2", "3", "4", "5 (least deprived)"), 
+    right = FALSE)
+# I don't know how to assign "unknown" to the NA
 )
 
 

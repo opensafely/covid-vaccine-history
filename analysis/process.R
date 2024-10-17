@@ -83,6 +83,8 @@ data_vax <-
     matches("ageband_\\d+"),
     matches("region_\\d+"),
     matches("stp_\\d+"),
+    matches("imd_\\d+"),
+    matches("imd_quintile_\\d+"),
     #... more clinical characteristics here
   ) %>%
   pivot_longer(

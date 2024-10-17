@@ -132,7 +132,7 @@ summary_stratified <-
   data_vax %>%
   group_by(
     vax_index, vax_type, vax_week,
-    sex, ageband, region
+    sex, ageband, region, imd_quintile
   ) %>%
   summarise(
     n = ceiling_any(n(), 100)
@@ -213,10 +213,12 @@ plot_vax_dates <- function(rows, cols) {
 }
 
 plot_vax_dates(ageband, vax_dosenumber)
+plot_vax_dates(imd_quintile, vax_dosenumber)
 plot_vax_dates(region, vax_dosenumber)
 plot_vax_dates(sex, vax_dosenumber)
 plot_vax_dates(vax_dosenumber, all)
 plot_vax_dates(ageband, all)
+plot_vax_dates(imd_quintile, all)
 plot_vax_dates(region, all)
 plot_vax_dates(sex, all)
 plot_vax_dates(all, all2)
@@ -292,6 +294,7 @@ plot_vax_intervals <- function(rows, cols) {
 }
 
 plot_vax_intervals(ageband, vax_dosenumber)
+plot_vax_intervals(imd_quintile, vax_dosenumber)
 plot_vax_intervals(region, vax_dosenumber)
 plot_vax_intervals(sex, vax_dosenumber)
 plot_vax_intervals(vax_dosenumber, all)

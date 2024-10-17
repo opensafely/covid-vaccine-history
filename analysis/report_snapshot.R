@@ -159,6 +159,7 @@ plot_date_of_last_dose <- function(rows) {
 
 ## --VARIABLES--
 plot_date_of_last_dose(ageband)
+plot_date_of_last_dose(imd_quintile)
 plot_date_of_last_dose(region)
 plot_date_of_last_dose(sex)
 plot_date_of_last_dose(all)
@@ -228,6 +229,7 @@ plot_vax_count <- function(rows) {
 
 ## --VARIABLES--
 plot_vax_count(ageband)
+plot_vax_count(imd_quintile)
 plot_vax_count(region)
 plot_vax_count(sex)
 plot_vax_count(all)
