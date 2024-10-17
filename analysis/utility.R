@@ -95,35 +95,33 @@ vax_shortname_lookup <- c(
 # template for standardising characteristics that are extracted multiple times
 # using this in mutate like this: `mutate(!!!standardise_characteristics)`
 standardise_characteristics <-
+  rlang::quos(
 
-
-
-rlang::quos(
-
-  ## --VARIABLES--
-  ageband = cut(
-    age,
-    breaks = c(-Inf, 18, 40, 55, 65, 75, Inf),
-    labels = c("under 18", "18-39", "40-54", "55-64", "65-74", "75+"),
-    right = FALSE
-  ),
-  region = fct_collapse(
-    region,
-    `East of England` = "East",
-    `London` = "London",
-    `Midlands` = c("West Midlands", "East Midlands"),
-    `North East and Yorkshire` = c("Yorkshire and The Humber", "North East"),
-    `North West` = "North West",
-    `South East` = "South East",
-    `South West` = "South West"
-  ),
-  imd_quintile = cut(
-    imd_rounded, 
-    breaks = c(-Inf, 32844 * (0:5) / 5), 
-    labels = c("1 (most deprived)", "2", "3", "4", "5 (least deprived)"), 
-    right = FALSE)
-# I don't know how to assign "unknown" to the NA
-)
+    ## --VARIABLES--
+    ageband = cut(
+      age,
+      breaks = c(-Inf, 18, 40, 55, 65, 75, Inf),
+      labels = c("under 18", "18-39", "40-54", "55-64", "65-74", "75+"),
+      right = FALSE
+    ),
+    region = fct_collapse(
+      region,
+      `East of England` = "East",
+      `London` = "London",
+      `Midlands` = c("West Midlands", "East Midlands"),
+      `North East and Yorkshire` = c("Yorkshire and The Humber", "North East"),
+      `North West` = "North West",
+      `South East` = "South East",
+      `South West` = "South West"
+    ),
+    imd_quintile = cut(
+      imd,
+      breaks = c(0, 32844 * (1:5) / 5),
+      labels = c("1 (most deprived)", "2", "3", "4", "5 (least deprived)"),
+      include.lowest = TRUE,
+      right = FALSE
+    )
+  )
 
 
 # Import dummy data if running locally, or real data if running on the server
