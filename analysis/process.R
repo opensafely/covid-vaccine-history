@@ -40,7 +40,7 @@ stopifnot(
 # Process snapshot dataset
 data_processed_fixed <- data_extract_fixed %>%
   mutate(
-    sex = case_when(
+    sex = fct_case_when(
       sex == "female" ~ "Female",
       sex == "male" ~ "Male",
       # sex == "intersex" ~ "Inter-sex",

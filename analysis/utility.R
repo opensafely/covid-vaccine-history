@@ -48,6 +48,15 @@ splice <- function(...) {
   list_flatten(lst(...), name_spec = "{inner}", name_repair = "check_unique")
 }
 
+# uses dplyr::case_when but converts the output to a factor,
+# with factors ordered as they appear in the case_when's  ... argument
+fct_case_when <- function(...) {
+  args <- as.list(match.call())
+  levels <- sapply(args[-1], function(f) f[[3]])  # extract RHS of formula
+  levels <- levels[!is.na(levels)]
+  factor(dplyr::case_when(...), levels=levels)
+}
+
 # function to convert ethnicity 16 group into 5 group
 ethnicity_16_to_5 <- function(x) {
   x1 <- fct_relabel(x, ~ str_extract(.x, ".*(?= - )")) # pick up everything before " - "
