@@ -61,6 +61,7 @@ registered_at_any_time_in_observation_period = practice_registrations.where(
 
 # initialise dataset
 dataset = create_dataset()
+dataset.configure_dummy_data(population_size=1000)
 
 # define dataset poppulation
 dataset.define_population(registered_at_any_time_in_observation_period.exists_for_patient())
