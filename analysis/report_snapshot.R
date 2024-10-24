@@ -45,7 +45,7 @@ stopifnot("snapshot date is greater than observationa end date - extend end date
 data_snapshot <- read_feather(here("output", "extracts", glue("extract_snapshot_{snapshot_date_compact}.arrow")))
 data_vax <- read_rds(here("output", "process", "data_vax.rds"))
 data_vax_clean <- read_rds(here("output", "process", "data_vax_clean.rds"))
-
+data_fixed <- read_rds(here("output", "process", "data_fixed.rds"))
 
 # select most recent vaccine _before_ snapshot date, and summarise
 data_last_vax_date_clean <-
@@ -71,6 +71,10 @@ stopifnot("data_last_vax_date_clean should not have multiple rows per patient" =
 
 data_snapshot <-
   data_snapshot %>%
+  left_join(
+    data_fixed %>% select(patient_id, sex, ethnicity5, ethnicity16),
+    by = "patient_id"
+  ) %>%
   mutate(!!!standardise_characteristics) %>%
   left_join(
     data_last_vax_date_clean,
@@ -95,6 +99,9 @@ data_snapshot <-
 
 plot_date_of_last_dose <- function(rows) {
   summary_by <- data_snapshot %>%
+    mutate(
+      "{{ rows }}" := fct_explicit_na({{ rows }}, na_level ="Unknown"),
+    ) %>%
     group_by(last_vax_type, last_vax_week) %>%
     group_by({{ rows }}, .add = TRUE) %>%
     summarise(
@@ -157,11 +164,13 @@ plot_date_of_last_dose <- function(rows) {
 
 
 ## --VARIABLES--
-plot_date_of_last_dose(ageband)
-plot_date_of_last_dose(imd_quintile)
-plot_date_of_last_dose(region)
-plot_date_of_last_dose(sex)
 plot_date_of_last_dose(all)
+plot_date_of_last_dose(sex)
+plot_date_of_last_dose(ageband)
+plot_date_of_last_dose(ethnicity5)
+plot_date_of_last_dose(region)
+plot_date_of_last_dose(imd_quintile)
+
 
 
 
@@ -170,6 +179,9 @@ plot_date_of_last_dose(all)
 
 plot_vax_count <- function(rows) {
   summary_by <- data_snapshot %>%
+    mutate(
+      "{{ rows }}" := fct_explicit_na({{ rows }}, na_level ="Unknown"),
+    ) %>%
     group_by(vax_count, {{ rows }}) %>%
     summarise(
       n = ceiling_any(n(), 10),
@@ -225,8 +237,11 @@ plot_vax_count <- function(rows) {
 }
 
 ## --VARIABLES--
-plot_vax_count(ageband)
-plot_vax_count(imd_quintile)
-plot_vax_count(region)
-plot_vax_count(sex)
 plot_vax_count(all)
+plot_vax_count(sex)
+plot_vax_count(ageband)
+plot_vax_count(ethnicity5)
+plot_vax_count(region)
+plot_vax_count(imd_quintile)
+
+

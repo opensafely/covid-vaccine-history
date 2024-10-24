@@ -74,18 +74,18 @@ dataset.sex = patients.sex
 # we choose here to look at the last known ethnicity recorded _across the entire record_ 
 # rather than as known/recorded on the vaccination date, even though this looks into the future.
 
-# ethnicity = (clinical_events
-#   .where(clinical_events.snomedct_code.is_in(ethnicity_codelist16))
-#   .sort_by(clinical_events.date)
-#   .where(clinical_events.date.is_on_or_before(end_date))
-#   .last_for_patient()
-# )
+ethnicity = (clinical_events
+  .where(clinical_events.snomedct_code.is_in(ethnicity_codelist16))
+  .sort_by(clinical_events.date)
+  .where(clinical_events.date.is_on_or_before(end_date))
+  .last_for_patient()
+)
 # 
 # # ethnicity using 5 groups + unknown
-# dataset.ethnicity5 = ethnicity.snomedct_code.to_category(ethnicity_codelist5)
+dataset.ethnicity5 = ethnicity.snomedct_code.to_category(ethnicity_codelist5)
 # 
-# # ethnicity using 15 groups + unknown
-# dataset.ethnicity16 = ethnicity.snomedct_code.to_category(ethnicity_codelist16)
+# # ethnicity using 16 groups + unknown
+dataset.ethnicity16 = ethnicity.snomedct_code.to_category(ethnicity_codelist16)
 
 # patient death date
 dataset.death_date = ons_deaths.date

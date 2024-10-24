@@ -38,14 +38,6 @@ known_variables <- c(
 )
 
 
-# function to convert ethnicity 16 group into 5 group
-ethnicity_16_to_5 <- function(x) {
-  x1 <- fct_relabel(x, ~ str_extract(.x, ".*(?= - )")) # pick up everything before " - "
-  x2 <- fct_recode(x1, `Chinese or Other Ethnic Groups` = "Other Ethnic Groups")
-  return(x2)
-}
-
-
 # define the simulation configuration
 # ie, a list of variables to simulate
 # use the form _variable_name_ = bn_node(~ _formula_for_simulating_variable_, ) see help("bn_node")
@@ -58,38 +50,38 @@ sim_list <- lst(
     ~ rfactor(n = ..n, levels = c("female", "male", "intersex", "unknown"), p = c(0.51, 0.49, 0, 0)),
     missing_rate = ~0.001 # this is shorthand for ~(rbernoulli(n=..n, p = 0.2))
   ),
-  # ethnicity5 = bn_node(variable_formula = ~ ethnicity_16_to_5(ethnicity16)),
-  # ethnicity16 = bn_node(
-  #   variable_formula = ~ rfactor(
-  #     n = ..n,
-  #     levels = c(
-  #       "White - British",
-  #       "White - Irish",
-  #       "White - Any other White background",
-  #       "Mixed - White and Black Caribbean",
-  #       "Mixed - White and Black African",
-  #       "Mixed - White and Asian",
-  #       "Mixed - Any other mixed background",
-  #       "Asian or Asian British - Indian",
-  #       "Asian or Asian British - Pakistani",
-  #       "Asian or Asian British - Bangladeshi",
-  #       "Asian or Asian British - Any other Asian background",
-  #       "Black or Black British - Caribbean",
-  #       "Black or Black British - African",
-  #       "Black or Black British - Any other Black background",
-  #       "Other Ethnic Groups - Chinese",
-  #       "Other Ethnic Groups - Any other ethnic group"
-  #     ),
-  #     p = c(
-  #       0.5, 0.05, 0.05, # White
-  #       0.025, 0.025, 0.025, 0.025, # Mixed
-  #       0.025, 0.025, 0.025, 0.025, # Asian
-  #       0.033, 0.033, 0.034, # Black
-  #       0.05, 0.05 # Other
-  #     )
-  #   ),
-  #   missing_rate = ~0.1,
-  # ),
+  ethnicity5 = bn_node(variable_formula = ~ ethnicity_16_to_5(ethnicity16), needs = "ethnicity16"),
+  ethnicity16 = bn_node(
+    variable_formula = ~ rfactor(
+      n = ..n,
+      levels = c(
+        "White - British",
+        "White - Irish",
+        "White - Any other White background",
+        "Mixed - White and Black Caribbean",
+        "Mixed - White and Black African",
+        "Mixed - White and Asian",
+        "Mixed - Any other mixed background",
+        "Asian or Asian British - Indian",
+        "Asian or Asian British - Pakistani",
+        "Asian or Asian British - Bangladeshi",
+        "Asian or Asian British - Any other Asian background",
+        "Black or Black British - Caribbean",
+        "Black or Black British - African",
+        "Black or Black British - Any other Black background",
+        "Other Ethnic Groups - Chinese",
+        "Other Ethnic Groups - Any other ethnic group"
+      ),
+      p = c(
+        0.5, 0.05, 0.05, # White
+        0.025, 0.025, 0.025, 0.025, # Mixed
+        0.025, 0.025, 0.025, 0.025, # Asian
+        0.033, 0.033, 0.034, # Black
+        0.05, 0.05 # Other
+      )
+    ),
+    missing_rate = ~0.1,
+  ),
   death_day = bn_node(
     ~ as.integer(runif(n = ..n, index_day, index_day + 2000)),
     missing_rate = ~0.99

@@ -29,6 +29,13 @@ data_extract_fixed <-
     here("lib", "dummydata", "dummyinput_fixed.arrow"),
     here("output", "extracts", "extract_fixed.arrow")
   )
+# data_extract_fixed <- read_feather(here("output", "extracts", "extract_fixed.arrow"))
+
+stopifnot(
+  "inconsistency between ethnicity5 and ethnicity 16" = identical(data_extract_fixed$ethnicity5, ethnicity_16_to_5(data_extract_fixed$ethnicity16))
+)
+# with(data_extract_fixed, table(ethnicity16, ethnicity5, useNA="ifany"))
+
 
 # Process snapshot dataset
 data_processed_fixed <- data_extract_fixed %>%
@@ -39,8 +46,10 @@ data_processed_fixed <- data_extract_fixed %>%
       # sex == "intersex" ~ "Inter-sex",
       # sex == "unknown" ~ "Unknown",
       TRUE ~ NA_character_
-    ) %>% factor(),
-    # ethnicity....
+    ),
+    ethnicity5 = factor(ethnicity5, levels = factor_levels$ethnicity5),
+    ethnicity16 = factor(ethnicity16, levels = factor_levels$ethnicity16) %>%
+      fct_relabel(~ str_extract(.x, "(?<= - )(.*)")), # pick up everything after " - "
   )
 
 # save processed fixed dataset
@@ -48,7 +57,8 @@ data_processed_fixed %>%
   select(
     patient_id,
     sex,
-    # ethnicity...
+    ethnicity5,
+    ethnicity16,
     death_date
   ) %>%
   write_rds(fs::path(output_dir, "data_fixed.rds"), compress = "gz")
@@ -132,3 +142,4 @@ data_vax_clean <-
 
 # save ataset with <14-day vaccines removed
 write_rds(data_vax_clean, fs::path(output_dir, "data_vax_clean.rds"), compress = "gz")
+

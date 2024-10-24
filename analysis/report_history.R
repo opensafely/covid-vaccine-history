@@ -36,7 +36,7 @@ vax_shortname_8 <- vax_shortname_lookup[c(1:8)] # , length(vax_shortname_lookup)
 data_vax <-
   left_join(
     data_varying,
-    data_fixed %>% select(patient_id, sex, death_date),
+    data_fixed %>% select(patient_id, sex, ethnicity5, ethnicity16, death_date),
     by = "patient_id"
   ) %>%
   mutate(
@@ -49,7 +49,7 @@ data_vax <-
 data_vax_clean <-
   left_join(
     data_varying_clean,
-    data_fixed %>% select(patient_id, sex, death_date),
+    data_fixed %>% select(patient_id, sex, ethnicity5, ethnicity16, death_date),
     by = "patient_id"
   ) %>%
   mutate(
@@ -59,7 +59,6 @@ data_vax_clean <-
     all = "",
     all2 = ""
   )
-
 
 # _______________________________________________________________________________________
 # data validation checks ----
@@ -132,7 +131,7 @@ summary_stratified <-
   data_vax %>%
   group_by(
     vax_index, vax_type, vax_week,
-    sex, ageband, region, imd_quintile
+    sex, ageband, ethnicity5, region, imd_quintile,
   ) %>%
   summarise(
     n = ceiling_any(n(), 100)
@@ -148,10 +147,14 @@ write_csv(summary_stratified, fs::path(output_dir, "vax_counts_stratified.csv"))
 
 plot_vax_dates <- function(rows, cols) {
   summary_by <- data_vax_clean %>%
+    mutate(
+      "{{ rows }}" := fct_explicit_na({{ rows }}, na_level ="Unknown"),
+      "{{ cols }}" := fct_explicit_na({{ cols }}, na_level ="Unknown"),
+    ) %>%
     group_by(vax_type, vax_week) %>%
     group_by({{ rows }}, {{ cols }}, .add = TRUE) %>%
     summarise(
-      n = roundmid_any(n(), 6)
+      n = roundmid_any(n(), 10)
     )
 
   temp_plot <-
@@ -212,16 +215,23 @@ plot_vax_dates <- function(rows, cols) {
   ggsave(fs::path(output_dir, glue("vax_dates_{row_name}_{col_name}.png")), plot = temp_plot)
 }
 
-plot_vax_dates(ageband, vax_dosenumber)
-plot_vax_dates(imd_quintile, vax_dosenumber)
-plot_vax_dates(region, vax_dosenumber)
-plot_vax_dates(sex, vax_dosenumber)
-plot_vax_dates(vax_dosenumber, all)
-plot_vax_dates(ageband, all)
-plot_vax_dates(imd_quintile, all)
-plot_vax_dates(region, all)
-plot_vax_dates(sex, all)
+
+
 plot_vax_dates(all, all2)
+
+plot_vax_dates(sex, all)
+plot_vax_dates(ageband, all)
+plot_vax_dates(ethnicity5, all)
+plot_vax_dates(region, all)
+plot_vax_dates(imd_quintile, all)
+plot_vax_dates(vax_dosenumber, all)
+
+plot_vax_dates(sex, vax_dosenumber)
+plot_vax_dates(ageband, vax_dosenumber)
+plot_vax_dates(ethnicity5, vax_dosenumber)
+plot_vax_dates(region, vax_dosenumber)
+plot_vax_dates(imd_quintile, vax_dosenumber)
+
 
 
 ## output plots of time since previous vaccination by type, dose number, and other characteristics ----
@@ -230,13 +240,15 @@ plot_vax_intervals <- function(rows, cols) {
   summary_by <- data_vax_clean %>%
     filter(vax_index != 1) %>%
     mutate(
+      "{{ rows }}" := fct_explicit_na({{ rows }}, na_level ="Unknown"),
+      "{{ cols }}" := fct_explicit_na({{ cols }}, na_level ="Unknown"),
       vax_interval = roundmid_any(vax_interval + 1, 7), # to split into 0-6, 7-13, 14-20, 21-28, ....
       vax_dosenumber = paste(vax_dosenumber, " - ", vax_index-1)
     ) %>%
     group_by(vax_dosenumber, vax_type, vax_interval) %>%
     group_by({{ rows }}, {{ cols }}, .add = TRUE) %>%
     summarise(
-      n = ceiling_any(n(), 10)
+      n = ceiling_any(n(), 10),
     )
 
   temp_plot <-
@@ -293,9 +305,11 @@ plot_vax_intervals <- function(rows, cols) {
   ggsave(fs::path(output_dir, glue("vax_intervals_{row_name}_{col_name}.png")), plot = temp_plot)
 }
 
-plot_vax_intervals(ageband, vax_dosenumber)
-plot_vax_intervals(imd_quintile, vax_dosenumber)
-plot_vax_intervals(region, vax_dosenumber)
 plot_vax_intervals(sex, vax_dosenumber)
+plot_vax_intervals(ageband, vax_dosenumber)
+plot_vax_intervals(ethnicity5, vax_dosenumber)
+plot_vax_intervals(region, vax_dosenumber)
+plot_vax_intervals(imd_quintile, vax_dosenumber)
+
 plot_vax_intervals(vax_dosenumber, all)
 
