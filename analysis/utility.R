@@ -48,6 +48,21 @@ splice <- function(...) {
   list_flatten(lst(...), name_spec = "{inner}", name_repair = "check_unique")
 }
 
+# uses dplyr::case_when but converts the output to a factor,
+# with factors ordered as they appear in the case_when's  ... argument
+fct_case_when <- function(...) {
+  args <- as.list(match.call())
+  levels <- sapply(args[-1], function(f) f[[3]])  # extract RHS of formula
+  levels <- levels[!is.na(levels)]
+  factor(dplyr::case_when(...), levels=levels)
+}
+
+# function to convert ethnicity 16 group into 5 group
+ethnicity_16_to_5 <- function(x) {
+  x1 <- fct_relabel(x, ~ str_extract(.x, ".*(?= - )")) # pick up everything before " - "
+  x2 <- fct_recode(x1, `Chinese or Other Ethnic Groups` = "Other Ethnic Groups")
+  return(x2)
+}
 
 # output from https://jobs.opensafely.org/opensafely-internal/tpp-vaccination-names/ workspace
 # shows all possible covid vaccination names in TPP
@@ -122,6 +137,40 @@ standardise_characteristics <-
       right = FALSE
     )
   )
+
+
+
+## factor levels provided in a sensible order, as this won't happen directly from opensafely ----
+
+factor_levels <-
+  lst(
+    ethnicity5 = c(
+      "White",
+      "Mixed",
+      "Asian or Asian British",
+      "Black or Black British",
+      "Other Ethnic Groups"
+    ),
+    ethnicity16 = c(
+      "White - British",
+      "White - Irish",
+      "White - Any other White background",
+      "Mixed - White and Black Caribbean",
+      "Mixed - White and Black African",
+      "Mixed - White and Asian",
+      "Mixed - Any other mixed background",
+      "Asian or Asian British - Indian",
+      "Asian or Asian British - Pakistani",
+      "Asian or Asian British - Bangladeshi",
+      "Asian or Asian British - Any other Asian background",
+      "Black or Black British - Caribbean",
+      "Black or Black British - African",
+      "Black or Black British - Any other Black background",
+      "Other Ethnic Groups - Chinese",
+      "Other Ethnic Groups - Any other ethnic group"
+    ),
+  )
+
 
 
 # Import dummy data if running locally, or real data if running on the server

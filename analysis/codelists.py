@@ -13,13 +13,13 @@ from ehrql import codelist_from_csv
 
 ethnicity_codelist5 = codelist_from_csv(
   "codelists/opensafely-ethnicity-snomed-0removed.csv",
-  column="snomedcode",
-  category_column="Grouping_6", # it should be called "grouping_5" but it's not!
+  column="code",
+  category_column="Label_6", # it's 6 because there is an additional "6 - Not stated" but this is not represented in SNOMED, instead corresponding to no ethnicity code
 )
 
 ethnicity_codelist16 = codelist_from_csv(
   "codelists/opensafely-ethnicity-snomed-0removed.csv",
-  column="snomedcode",
-  category_column="Grouping_16",
+  column="code",
+  category_column="Label_16",
 )
 

@@ -34,6 +34,7 @@ covid_vaccinations = (
 
 # initialise dataset
 dataset = create_dataset()
+dataset.configure_dummy_data(population_size=1000)
 
 # define dataset poppulation
 dataset.define_population(covid_vaccinations.exists_for_patient())
