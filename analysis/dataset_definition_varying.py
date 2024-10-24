@@ -19,7 +19,8 @@ from ehrql.tables.tpp import (
   practice_registrations, 
   vaccinations, 
   clinical_events, 
-  ons_deaths
+  ons_deaths,
+  addresses,
 )
 # import codelists
 from codelists import *
@@ -57,7 +58,7 @@ for i in range(1, 16+1):
     setattr(dataset, f"deregistered_{i}_date", registration.end_date)
     setattr(dataset, f"region_{i}", registration.practice_nuts1_region_name)
     setattr(dataset, f"stp_{i}", registration.practice_stp)
-    
+    setattr(dataset, f"imd_{i}", addresses.for_patient_on(current_vax.date).imd_rounded)
     
     previous_vax_date = current_vax.date
 

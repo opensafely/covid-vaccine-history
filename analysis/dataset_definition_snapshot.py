@@ -23,7 +23,8 @@ from ehrql.tables.tpp import (
   practice_registrations, 
   vaccinations, 
   clinical_events, 
-  ons_deaths
+  ons_deaths,
+  addresses,
 )
 # import codelists
 from codelists import *
@@ -62,6 +63,7 @@ dataset.sex = patients.sex
 dataset.age = patients.age_on(snapshot_date)
 dataset.region = registered_patients.practice_nuts1_region_name
 dataset.stp = registered_patients.practice_stp
+dataset.imd = addresses.for_patient_on(snapshot_date).imd_rounded
 
 
 
