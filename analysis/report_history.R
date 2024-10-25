@@ -243,7 +243,7 @@ plot_vax_intervals <- function(rows, cols) {
       "{{ rows }}" := fct_explicit_na({{ rows }}, na_level ="Unknown"),
       "{{ cols }}" := fct_explicit_na({{ cols }}, na_level ="Unknown"),
       vax_interval = roundmid_any(vax_interval + 1, 7), # to split into 0-6, 7-13, 14-20, 21-28, ....
-      vax_dosenumber = paste(vax_dosenumber, " - ", vax_index-1)
+      vax_dosenumber = factor(vax_index, levels = sort(unique(vax_index)), labels = paste("Dose ", sort(unique(vax_index))-1, "-", sort(unique(vax_index)))),
     ) %>%
     group_by(vax_dosenumber, vax_type, vax_interval) %>%
     group_by({{ rows }}, {{ cols }}, .add = TRUE) %>%
