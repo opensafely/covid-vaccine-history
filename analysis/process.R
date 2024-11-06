@@ -104,13 +104,19 @@ data_vax <-
     values_drop_na = TRUE,
     names_transform = list(vax_index = as.integer)
   ) %>%
-  mutate(
-    !!!standardise_characteristics
-  ) %>%
   rename(
     vax_date = covid_vax,
     vax_type = covid_vax_type,
   ) %>%
+  mutate(
+    !!!standardise_characteristics,
+    vax_campaign = cut(
+      vax_date, 
+      breaks = c(campaign_dates$start, end_date),
+      labels = campaign_dates$campaign,
+      include.lowest = TRUE, right = TRUE
+    )
+  )  %>%
   arrange(patient_id, vax_date) %>%
   mutate(
     vax_type = fct_recode(factor(vax_type, vax_product_lookup), !!!vax_product_lookup) %>% fct_explicit_na("other")
@@ -142,4 +148,3 @@ data_vax_clean <-
 
 # save ataset with <14-day vaccines removed
 write_rds(data_vax_clean, fs::path(output_dir, "data_vax_clean.rds"), compress = "gz")
-

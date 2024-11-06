@@ -22,6 +22,24 @@ study_dates <-
 # so we don't have to use `study_dates$start_date` or `start_date <- study_dates$start_date` in each script
 list2env(study_dates, globalenv())
 
+# covid-19 vacacine campaign dates
+campaign_dates <-
+  tribble(
+    ~campaign,        ~start,       ~start_rounded,
+    "Pre-roll-out",   as.character(firstpossiblevax_date), as.character(firstpossiblevax_date),
+    "Primary series", "2020-12-08", "2020-12-01",
+    "Autumn 2021",    "2021-09-06", "2021-09-01",
+    "Spring 2022",    "2022-04-01", "2022-04-01",
+    "Autumn 2022",    "2022-09-12", "2022-09-01",
+    "Spring 2023",    "2023-04-03", "2023-04-01", 
+    "Autumn 2023",    "2023-09-11", "2023-09-01",
+    "Spring 2024",    "2024-04-01", "2023-04-01",
+    "Autumn 2024",    "2024-10-03", "2024-09-01"
+  ) %>%
+  mutate(
+    across(c(start, start_rounded), as.Date) 
+  )
+      
 roundmid_any <- function(x, to = 1) {
   # like ceiling_any, but centers on (integer) midpoint of the rounding points
   ceiling(x / to) * to - (floor(to / 2) * (x != 0))
