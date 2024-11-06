@@ -72,11 +72,11 @@ summary_validation <-
     n = ceiling_any(n(), 100),
     n_missing_date = ceiling_any(sum(is.na(vax_date)), 100),
     pct_missing_date = n_missing_date / n,
-    n_earlier_than_start_date = ceiling_any(sum(vax_date < start_date, na.rm = TRUE)),
+    n_earlier_than_start_date = ceiling_any(sum(vax_date < start_date, na.rm = TRUE), 100),
     pct_earlier_than_start_date = n_earlier_than_start_date / n,
-    n_earlier_than_firstpossiblevax_date = ceiling_any(sum(vax_date < firstpossiblevax_date, na.rm = TRUE)),
+    n_earlier_than_firstpossiblevax_date = ceiling_any(sum(vax_date < firstpossiblevax_date, na.rm = TRUE), 100),
     pct_earlier_than_firstpossiblevax_date = n_earlier_than_firstpossiblevax_date / n,
-    n_interval_within_14days = sum(vax_interval < 14, na.rm = TRUE),
+    n_interval_within_14days = ceiling_any(sum(vax_interval < 14, na.rm = TRUE), 100),
     pct_interval_within_14days = n_interval_within_14days / n,
   ) %>%
   ungroup()
@@ -95,11 +95,11 @@ summary_validation_stratified <-
     n = ceiling_any(n(), 100),
     n_missing_date = ceiling_any(sum(is.na(vax_date)), 100),
     pct_missing_date = n_missing_date / n,
-    n_earlier_than_start_date = ceiling_any(sum(vax_date < start_date, na.rm = TRUE)),
+    n_earlier_than_start_date = ceiling_any(sum(vax_date < start_date, na.rm = TRUE), 100),
     pct_earlier_than_start_date = n_earlier_than_start_date / n,
-    n_earlier_than_firstpossiblevax_date = ceiling_any(sum(vax_date < firstpossiblevax_date, na.rm = TRUE)),
+    n_earlier_than_firstpossiblevax_date = ceiling_any(sum(vax_date < firstpossiblevax_date, na.rm = TRUE), 100),
     pct_earlier_than_firstpossiblevax_date = n_earlier_than_firstpossiblevax_date / n,
-    n_interval_within_14days = sum(vax_interval < 14, na.rm = TRUE),
+    n_interval_within_14days = ceiling_any(sum(vax_interval < 14, na.rm = TRUE), 100),
     pct_interval_within_14days = n_interval_within_14days / n,
   ) %>%
   ungroup()
@@ -112,7 +112,7 @@ summary_vax_count <-
   group_by(patient_id) %>%
   summarise(vax_count=n()) %>%
   group_by(vax_count) %>%
-  summarise(frequency=ceiling_any(n(), 10))
+  summarise(frequency=ceiling_any(n(), 100))
 
 write_csv(summary_vax_count, fs::path(output_dir, "validation_vax_count.csv"))
 
@@ -154,7 +154,7 @@ plot_vax_dates <- function(rows, cols) {
     group_by(vax_type, vax_week) %>%
     group_by({{ rows }}, {{ cols }}, .add = TRUE) %>%
     summarise(
-      n = roundmid_any(n(), 10)
+      n = ceiling_any(n(), 100)
     )
 
   temp_plot <-
@@ -248,7 +248,7 @@ plot_vax_intervals <- function(rows, cols) {
     group_by(vax_dosenumber, vax_type, vax_interval) %>%
     group_by({{ rows }}, {{ cols }}, .add = TRUE) %>%
     summarise(
-      n = ceiling_any(n(), 10),
+      n = ceiling_any(n(), 100),
     )
 
   temp_plot <-

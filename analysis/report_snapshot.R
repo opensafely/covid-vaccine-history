@@ -105,7 +105,7 @@ plot_date_of_last_dose <- function(rows) {
     group_by(last_vax_type, last_vax_week) %>%
     group_by({{ rows }}, .add = TRUE) %>%
     summarise(
-      n = ceiling_any(n(), 10)
+      n = ceiling_any(n(), 100)
     )
 
   temp_plot <-
@@ -184,7 +184,7 @@ plot_vax_count <- function(rows) {
     ) %>%
     group_by(vax_count, {{ rows }}) %>%
     summarise(
-      n = ceiling_any(n(), 10),
+      n = ceiling_any(n(), 100),
     ) %>%
     group_by({{ rows }}) %>%
     mutate(
