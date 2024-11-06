@@ -42,7 +42,7 @@ data_vax <-
   mutate(
     vax_dosenumber = factor(vax_index, levels = sort(unique(vax_index)), labels = paste("Dose", sort(unique(vax_index)))),
     vax_week = floor_date(vax_date, unit = "week", week_start = 1),
-    vax_type = fct_collapse(vax_type, !!!vax_shortname_8, other_level="Other"),
+    vax_type8 = fct_collapse(vax_type, !!!vax_shortname_8, other_level="Other"),
     all = ""
   )
 
@@ -55,7 +55,7 @@ data_vax_clean <-
   mutate(
     vax_dosenumber = factor(vax_index, levels = sort(unique(vax_index)), labels = paste("Dose", sort(unique(vax_index)))),
     vax_week = floor_date(vax_date, unit = "week", week_start = 1),
-    vax_type = fct_collapse(vax_type, !!!vax_shortname_8, other_level="Other"),
+    vax_type8 = fct_collapse(vax_type, !!!vax_shortname_8, other_level="Other"),
     all = "",
     all2 = ""
   )
@@ -68,15 +68,16 @@ data_vax_clean <-
 
 summary_validation <-
   data_vax %>%
+  #group_by(vax_campaign) %>%
   summarise(
     n = ceiling_any(n(), 100),
     n_missing_date = ceiling_any(sum(is.na(vax_date)), 100),
     pct_missing_date = n_missing_date / n,
-    n_earlier_than_start_date = ceiling_any(sum(vax_date < start_date, na.rm = TRUE)),
+    n_earlier_than_start_date = ceiling_any(sum(vax_date < start_date, na.rm = TRUE), 100),
     pct_earlier_than_start_date = n_earlier_than_start_date / n,
-    n_earlier_than_firstpossiblevax_date = ceiling_any(sum(vax_date < firstpossiblevax_date, na.rm = TRUE)),
+    n_earlier_than_firstpossiblevax_date = ceiling_any(sum(vax_date < firstpossiblevax_date, na.rm = TRUE), 100),
     pct_earlier_than_firstpossiblevax_date = n_earlier_than_firstpossiblevax_date / n,
-    n_interval_within_14days = sum(vax_interval < 14, na.rm = TRUE),
+    n_interval_within_14days = ceiling_any(sum(vax_interval < 14, na.rm = TRUE), 100),
     pct_interval_within_14days = n_interval_within_14days / n,
   ) %>%
   ungroup()
@@ -89,17 +90,17 @@ write_csv(summary_validation, fs::path(output_dir, "validation.csv"))
 summary_validation_stratified <-
   data_vax %>%
   group_by(
-    vax_index, vax_type
+    vax_dosenumber, vax_type8
   ) %>%
   summarise(
     n = ceiling_any(n(), 100),
     n_missing_date = ceiling_any(sum(is.na(vax_date)), 100),
     pct_missing_date = n_missing_date / n,
-    n_earlier_than_start_date = ceiling_any(sum(vax_date < start_date, na.rm = TRUE)),
+    n_earlier_than_start_date = ceiling_any(sum(vax_date < start_date, na.rm = TRUE), 100),
     pct_earlier_than_start_date = n_earlier_than_start_date / n,
-    n_earlier_than_firstpossiblevax_date = ceiling_any(sum(vax_date < firstpossiblevax_date, na.rm = TRUE)),
+    n_earlier_than_firstpossiblevax_date = ceiling_any(sum(vax_date < firstpossiblevax_date, na.rm = TRUE), 100),
     pct_earlier_than_firstpossiblevax_date = n_earlier_than_firstpossiblevax_date / n,
-    n_interval_within_14days = sum(vax_interval < 14, na.rm = TRUE),
+    n_interval_within_14days = ceiling_any(sum(vax_interval < 14, na.rm = TRUE), 100),
     pct_interval_within_14days = n_interval_within_14days / n,
   ) %>%
   ungroup()
@@ -107,14 +108,48 @@ summary_validation_stratified <-
 write_csv(summary_validation_stratified, fs::path(output_dir, "validation_stratified.csv"))
 
 
+## output frequency of total number of doses (vax_count)
+
 summary_vax_count <-
   data_vax %>%
   group_by(patient_id) %>%
   summarise(vax_count=n()) %>%
   group_by(vax_count) %>%
-  summarise(frequency=ceiling_any(n(), 10))
+  summarise(frequency=ceiling_any(n(), 100))
 
 write_csv(summary_vax_count, fs::path(output_dir, "validation_vax_count.csv"))
+
+
+## output frequency of vaccination type by campaign
+
+summary_vax_type_campaign <-
+  data_vax %>%
+  group_by(
+    vax_campaign, vax_type
+  ) %>%
+  summarise(
+    n = ceiling_any(n(), 100)
+  ) %>%
+  ungroup()
+
+write_csv(summary_vax_type_campaign, fs::path(output_dir, "vax_counts_type_campaign.csv"))
+
+
+## output frequency of vaccination type by dose number
+
+summary_vax_type_dosenumber <-
+  data_vax %>%
+  group_by(
+    vax_dosenumber, vax_type
+  ) %>%
+  summarise(
+    n = ceiling_any(n(), 100)
+  ) %>%
+  ungroup()
+
+write_csv(summary_vax_type_dosenumber, fs::path(output_dir, "vax_counts_type_dosenumber.csv"))
+
+
 
 # _______________________________________________________________________________________
 # Report info using characteristics recorded on each vaccination date ----
@@ -126,11 +161,12 @@ write_csv(summary_vax_count, fs::path(output_dir, "validation_vax_count.csv"))
 
 ## output fully stratified vaccine counts ----
 ## this is useful for anyone wanting to externally re-construct different cuts of data for plotting etc
+## However, the row count current exceeds the limit for viewing outputs in Airlock, so we also break these down in uni / bivariate tables below
 
 summary_stratified <-
   data_vax %>%
   group_by(
-    vax_index, vax_type, vax_week,
+    vax_dosenumber, vax_type8, vax_campaign,
     sex, ageband, ethnicity5, region, imd_quintile,
   ) %>%
   summarise(
@@ -151,16 +187,16 @@ plot_vax_dates <- function(rows, cols) {
       "{{ rows }}" := fct_explicit_na({{ rows }}, na_level ="Unknown"),
       "{{ cols }}" := fct_explicit_na({{ cols }}, na_level ="Unknown"),
     ) %>%
-    group_by(vax_type, vax_week) %>%
+    group_by(vax_type8, vax_week) %>%
     group_by({{ rows }}, {{ cols }}, .add = TRUE) %>%
     summarise(
-      n = roundmid_any(n(), 10)
+      n = ceiling_any(n(), 100)
     )
 
   temp_plot <-
     ggplot(summary_by) +
     geom_col(
-      aes(x = vax_week, y = n, fill = vax_type, group = vax_type),
+      aes(x = vax_week, y = n, fill = vax_type8, group = vax_type8),
       alpha = 0.5,
       position = position_stack(reverse = TRUE),
       # position=position_identity(),
@@ -224,6 +260,7 @@ plot_vax_dates(ageband, all)
 plot_vax_dates(ethnicity5, all)
 plot_vax_dates(region, all)
 plot_vax_dates(imd_quintile, all)
+plot_vax_dates(vax_campaign, all)
 plot_vax_dates(vax_dosenumber, all)
 
 plot_vax_dates(sex, vax_dosenumber)
@@ -231,6 +268,7 @@ plot_vax_dates(ageband, vax_dosenumber)
 plot_vax_dates(ethnicity5, vax_dosenumber)
 plot_vax_dates(region, vax_dosenumber)
 plot_vax_dates(imd_quintile, vax_dosenumber)
+plot_vax_dates(vax_campaign, vax_dosenumber)
 
 
 
@@ -245,16 +283,16 @@ plot_vax_intervals <- function(rows, cols) {
       vax_interval = roundmid_any(vax_interval + 1, 7), # to split into 0-6, 7-13, 14-20, 21-28, ....
       vax_dosenumber = factor(vax_index, levels = sort(unique(vax_index)), labels = paste("Dose ", sort(unique(vax_index))-1, "-", sort(unique(vax_index)))),
     ) %>%
-    group_by(vax_dosenumber, vax_type, vax_interval) %>%
+    group_by(vax_dosenumber, vax_type8, vax_interval) %>%
     group_by({{ rows }}, {{ cols }}, .add = TRUE) %>%
     summarise(
-      n = ceiling_any(n(), 10),
+      n = ceiling_any(n(), 100),
     )
 
   temp_plot <-
     ggplot(summary_by) +
     geom_col(
-      aes(x = vax_interval, y = n, fill = vax_type, group = vax_type),
+      aes(x = vax_interval, y = n, fill = vax_type8, group = vax_type8),
       alpha = 0.5,
       position = position_stack(reverse = TRUE),
       # position=position_identity(),
@@ -310,6 +348,7 @@ plot_vax_intervals(ageband, vax_dosenumber)
 plot_vax_intervals(ethnicity5, vax_dosenumber)
 plot_vax_intervals(region, vax_dosenumber)
 plot_vax_intervals(imd_quintile, vax_dosenumber)
-
+plot_vax_intervals(vax_campaign, vax_dosenumber)
+plot_vax_intervals(vax_campaign, all)
 plot_vax_intervals(vax_dosenumber, all)
 

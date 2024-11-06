@@ -1,6 +1,6 @@
 # _______________________________________________________________________________________
 # Purpose:
-# Report the distribution of vaccines schedules in different population subgroups at the end of the observationa period
+# Report the distribution of vaccines schedules in different population subgroups as at a given date
 # _______________________________________________________________________________________
 
 
@@ -21,10 +21,10 @@ args <- commandArgs(trailingOnly = TRUE)
 if (length(args) == 0) {
   # use for interactive testing
   # removeobjects <- FALSE
-  snapshot_date <- as.Date("2023-09-30")
+  snapshot_date <- as.Date("2023-09-30", format = "%Y%m%d")
 } else {
   # removeobjects <- TRUE
-  snapshot_date <- as.Date(args[[1]])
+  snapshot_date <- as.Date(args[[1]], format = "%Y%m%d")
 }
 
 # create string representation of date in compact format YYYMMDD
@@ -105,7 +105,7 @@ plot_date_of_last_dose <- function(rows) {
     group_by(last_vax_type, last_vax_week) %>%
     group_by({{ rows }}, .add = TRUE) %>%
     summarise(
-      n = ceiling_any(n(), 10)
+      n = ceiling_any(n(), 100)
     )
 
   temp_plot <-
@@ -184,7 +184,7 @@ plot_vax_count <- function(rows) {
     ) %>%
     group_by(vax_count, {{ rows }}) %>%
     summarise(
-      n = ceiling_any(n(), 10),
+      n = ceiling_any(n(), 100),
     ) %>%
     group_by({{ rows }}) %>%
     mutate(
