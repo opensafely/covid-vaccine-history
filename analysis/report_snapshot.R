@@ -1,6 +1,6 @@
 # _______________________________________________________________________________________
 # Purpose:
-# Report the distribution of vaccines schedules in different population subgroups at the end of the observationa period
+# Report the distribution of vaccines schedules in different population subgroups as at a given date
 # _______________________________________________________________________________________
 
 
@@ -21,10 +21,10 @@ args <- commandArgs(trailingOnly = TRUE)
 if (length(args) == 0) {
   # use for interactive testing
   # removeobjects <- FALSE
-  snapshot_date <- as.Date("2023-09-30")
+  snapshot_date <- as.Date("2023-09-30", format = "%Y%m%d")
 } else {
   # removeobjects <- TRUE
-  snapshot_date <- as.Date(args[[1]])
+  snapshot_date <- as.Date(args[[1]], format = "%Y%m%d")
 }
 
 # create string representation of date in compact format YYYMMDD
