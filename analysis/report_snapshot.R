@@ -160,6 +160,9 @@ plot_date_of_last_dose <- function(rows) {
   # col_name = deparse(substitute(cols))
 
   ggsave(fs::path(output_dir, glue("last_vax_date_{row_name}.png")), plot = temp_plot)
+
+ # write tables that capture underlying plotting data
+  write_csv(summary_by, fs::path(output_dir, glue("last_vax_date_{row_name}.csv")))
 }
 
 
@@ -234,6 +237,9 @@ plot_vax_count <- function(rows) {
   # col_name = deparse(substitute(cols))
 
   ggsave(fs::path(output_dir, glue("vax_count_{row_name}.png")), plot = temp_plot)
+ 
+  # write tables that capture underlying plotting data
+  write_csv(summary_by, fs::path(output_dir, glue("vax_count_{row_name}.csv")))
 }
 
 ## --VARIABLES--
