@@ -21,11 +21,24 @@ args <- commandArgs(trailingOnly = TRUE)
 if (length(args) == 0) {
   # use for interactive testing
   # removeobjects <- FALSE
-  snapshot_date <- as.Date("2023-09-30", format = "%Y%m%d")
+  snapshot_date <- as.Date("20210906", format = "%Y%m%d")
 } else {
   # removeobjects <- TRUE
   snapshot_date <- as.Date(args[[1]], format = "%Y%m%d")
 }
+
+# how wide are the temporal bins for frequencies over time? in days
+# use fix width, rather than months or bi-months or quarters, so that temporal denominator is even and ratio of weekends to weekdays is fixed
+temporal_resolution <- 28
+
+# dates to round down to
+# use this with `findInterval` until lubridate package is updated in the opensafely R image 
+# (then use `floor_date(date, unit=floor_dates`)
+floor_dates <- seq(
+  as.Date("2020-06-01"), # monday
+  as.Date("2029-12-31"),  # to monday!
+  by = temporal_resolution
+)
 
 # create string representation of date in compact format YYYMMDD
 snapshot_date_compact <- format(snapshot_date, "%Y%m%d")
@@ -38,7 +51,7 @@ output_dir <- here("output", glue("report_snapshot_{snapshot_date_compact}"))
 fs::dir_create(output_dir)
 
 
-stopifnot("snapshot date is greater than observationa end date - extend end date to pick up all vaccinations prior to snapshot date" = snapshot_date <= end_date)
+stopifnot("snapshot date is greater than observation end date - extend end date to pick up all vaccinations prior to snapshot date" = snapshot_date <= end_date)
 
 
 # Import processed data ----
@@ -68,7 +81,8 @@ check_1rpp <-
   filter(row_number() != 1)
 stopifnot("data_last_vax_date_clean should not have multiple rows per patient" = nrow(check_1rpp) == 0)
 
-
+# merge fixed data and vaccine data onto snapshot data
+# note that in dummy data this doesn't work very well because patient IDs might not be matched across all datasets
 data_snapshot <-
   data_snapshot %>%
   left_join(
@@ -85,7 +99,8 @@ data_snapshot <-
     vax_count = replace_na(vax_count, 0L),
     last_vax_type = fct_explicit_na(last_vax_type, "unvaccinated"),
     last_vax_date = if_else(vax_count == 0, default_date + as.integer(runif(n(), 0, 10)), last_vax_date),
-    last_vax_week = floor_date(last_vax_date, unit = "week", week_start = 1),
+    last_vax_week = floor_date(last_vax_date, unit = "week", week_start = 1), # starting on a monday
+    last_vax_period = floor_dates[findInterval(last_vax_date, floor_dates)], # use floor_date(last_vax_date, unit = floor_dates) when lubridate package is updated 
     all = ""
   )
 
@@ -94,7 +109,6 @@ data_snapshot <-
 # Report vaccination info, stratifying by characteristics recorded on the "snapshot_date" ----
 # _______________________________________________________________________________________
 
-
 ## output plots of date of last dose by type and other characteristics ----
 
 plot_date_of_last_dose <- function(rows) {
@@ -102,20 +116,24 @@ plot_date_of_last_dose <- function(rows) {
     mutate(
       "{{ rows }}" := fct_explicit_na({{ rows }}, na_level ="Unknown"),
     ) %>%
-    group_by(last_vax_type, last_vax_week) %>%
-    group_by({{ rows }}, .add = TRUE) %>%
+    group_by({{ rows }}, last_vax_type, last_vax_period) %>%
     summarise(
       n = ceiling_any(n(), 100)
+    ) %>%
+    ungroup() %>%
+    complete(
+      {{ rows }}, last_vax_type, last_vax_period,
+      fill = list(n = 0)
     )
 
   temp_plot <-
     ggplot(summary_by) +
     geom_col(
-      aes(x = last_vax_week, y = n, fill = last_vax_type, group = last_vax_type),
+      aes(x = last_vax_period, y = n, fill = last_vax_type, group = last_vax_type),
       alpha = 0.5,
       position = position_stack(reverse = TRUE),
       # position=position_identity(),
-      width = 7
+      width = temporal_resolution
     ) +
     facet_grid(
       rows = vars({{ rows }}),
@@ -160,6 +178,9 @@ plot_date_of_last_dose <- function(rows) {
   # col_name = deparse(substitute(cols))
 
   ggsave(fs::path(output_dir, glue("last_vax_date_{row_name}.png")), plot = temp_plot)
+
+ # write tables that capture underlying plotting data
+  write_csv(summary_by, fs::path(output_dir, glue("last_vax_date_{row_name}.csv")))
 }
 
 
@@ -172,9 +193,6 @@ plot_date_of_last_dose(region)
 plot_date_of_last_dose(imd_quintile)
 
 
-
-
-
 ## output plots of dose count by type and other characteristics ----
 
 plot_vax_count <- function(rows) {
@@ -182,10 +200,16 @@ plot_vax_count <- function(rows) {
     mutate(
       "{{ rows }}" := fct_explicit_na({{ rows }}, na_level ="Unknown"),
     ) %>%
-    group_by(vax_count, {{ rows }}) %>%
+    group_by({{ rows }}, vax_count) %>%
     summarise(
       n = ceiling_any(n(), 100),
     ) %>%
+    ungroup() %>%
+    complete(
+      {{ rows }}, vax_count,
+      fill = list(n = 0)
+    ) %>%
+    ungroup() %>%
     group_by({{ rows }}) %>%
     mutate(
       row_total = sum(n),
@@ -234,6 +258,9 @@ plot_vax_count <- function(rows) {
   # col_name = deparse(substitute(cols))
 
   ggsave(fs::path(output_dir, glue("vax_count_{row_name}.png")), plot = temp_plot)
+ 
+  # write tables that capture underlying plotting data
+  write_csv(summary_by, fs::path(output_dir, glue("vax_count_{row_name}.csv")))
 }
 
 ## --VARIABLES--
@@ -243,5 +270,3 @@ plot_vax_count(ageband)
 plot_vax_count(ethnicity5)
 plot_vax_count(region)
 plot_vax_count(imd_quintile)
-
-
