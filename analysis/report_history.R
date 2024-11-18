@@ -58,6 +58,9 @@ data_vax_clean <-
     vax_type8 = fct_collapse(vax_type, !!!vax_shortname_8, other_level="Other"),
     all = "",
     all2 = ""
+  ) %>%
+  mutate(
+    across(where(is.factor) | where(is.character), ~fct_explicit_na(.x, na_level ="Unknown"))
   )
 
 # _______________________________________________________________________________________
@@ -185,10 +188,6 @@ write_csv(summary_stratified, fs::path(output_dir, "vax_counts_stratified.csv"))
 
 plot_vax_dates <- function(rows, cols) {
   summary_by <- data_vax_clean %>%
-    mutate(
-      "{{ rows }}" := fct_explicit_na({{ rows }}, na_level ="Unknown"),
-      "{{ cols }}" := fct_explicit_na({{ cols }}, na_level ="Unknown"),
-    ) %>%
     group_by(vax_type8, vax_week) %>%
     group_by({{ rows }}, {{ cols }}, .add = TRUE) %>%
     summarise(
@@ -285,8 +284,6 @@ plot_vax_intervals <- function(rows, cols) {
   summary_by <- data_vax_clean %>%
     filter(vax_index != 1) %>%
     mutate(
-      "{{ rows }}" := fct_explicit_na({{ rows }}, na_level ="Unknown"),
-      "{{ cols }}" := fct_explicit_na({{ cols }}, na_level ="Unknown"),
       vax_interval = roundmid_any(vax_interval + 1, 7), # to split into 0-6, 7-13, 14-20, 21-28, ....
       vax_dosenumber = factor(vax_index, levels = sort(unique(vax_index)), labels = paste("Dose ", sort(unique(vax_index))-1, "-", sort(unique(vax_index)))),
     ) %>%
@@ -361,4 +358,5 @@ plot_vax_intervals(vax_dosenumber, all)
 #PRIMIS
 plot_vax_intervals(chd, vax_dosenumber)
 plot_vax_intervals(cld, vax_dosenumber)
+plot_vax_intervals(cv, vax_dosenumber)
 

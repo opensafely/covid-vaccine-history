@@ -88,12 +88,10 @@ data_snapshot <-
     last_vax_date = if_else(vax_count == 0, default_date + as.integer(runif(n(), 0, 10)), last_vax_date),
     last_vax_week = floor_date(last_vax_date, unit = "week", week_start = 1),
     all = ""
-    ) %>%
-    #impute values for no-clinical event
-    mutate(
-      chd = replace_na(chd, "no"),
-      cld = replace_na(cld, "no")
-    )
+  ) %>%
+  mutate(
+    across(where(is.factor) | where(is.character), ~fct_explicit_na(.x, na_level ="Unknown"))
+  )
 
 
 # _______________________________________________________________________________________
@@ -105,9 +103,6 @@ data_snapshot <-
 
 plot_date_of_last_dose <- function(rows) {
   summary_by <- data_snapshot %>%
-    mutate(
-      "{{ rows }}" := fct_explicit_na({{ rows }}, na_level ="Unknown"),
-    ) %>%
     group_by(last_vax_type, last_vax_week) %>%
     group_by({{ rows }}, .add = TRUE) %>%
     summarise(
@@ -187,9 +182,6 @@ plot_date_of_last_dose(cld)
 
 plot_vax_count <- function(rows) {
   summary_by <- data_snapshot %>%
-    mutate(
-      "{{ rows }}" := fct_explicit_na({{ rows }}, na_level ="Unknown"),
-    ) %>%
     group_by(vax_count, {{ rows }}) %>%
     summarise(
       n = ceiling_any(n(), 100),
