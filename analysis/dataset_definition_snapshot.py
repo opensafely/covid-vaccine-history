@@ -69,7 +69,5 @@ dataset.stp = registered_patients.practice_stp
 dataset.imd = addresses.for_patient_on(snapshot_date).imd_rounded
 
 ## PRIMIS Variables ##
-
-## Chronic heart disease
-dataset.chd = has_prior_event(chd_cov, snapshot_date)
-dataset.cld = has_prior_event(cld, snapshot_date)
+dataset.chd = has_prior_event(chd_cov, snapshot_date) ## Chronic heart disease
+dataset.cld = has_prior_event(cld, snapshot_date) ## Chronic liver disease
