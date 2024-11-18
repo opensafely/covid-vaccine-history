@@ -1,38 +1,23 @@
-#######################################################################################
-# Common functions for contructing clinical queries
-#######################################################################################
-
-import operator
-
-from functools import reduce
+# #######################################################################################
+# # Common functions for contructing clinical queries
+# #######################################################################################
 
 from ehrql.codes import CTV3Code, ICD10Code
 
 from ehrql import case, days, when
 
 from ehrql.tables.core import (
-    medications, 
-    patients) 
-
-from ehrql.tables.tpp import (
-#    addresses,
-#    opa_cost,
-    clinical_events,
-#    practice_registrations,
-#    appointments,
-#    vaccinations
+  medications,
+  patients
 )
 
-from json import loads
-from sys import argv
-from pathlib import Path
-from datetime import datetime
-
-# import codelists
-# from codelists import *
-
-study_dates = loads(
-    Path("lib/dates.json").read_text(),
+from ehrql.tables.tpp import (
+#  addresses,
+#  opa_cost,
+  clinical_events,
+# practice_registrations,
+# appointments,
+# vaccinations
 )
 
 
@@ -40,7 +25,7 @@ study_dates = loads(
 # Clinical functions
 ########
 
-# events occurring before booster date
+# events occurring before spec date
 # prior_events = clinical_events.where(clinical_events.date.is_on_or_before(spec_date))
 
 # query prior_events for existence of event-in-codelist
@@ -73,8 +58,7 @@ def first_prior_event(codelist, spec_date, where=True):
         .first_for_patient()
     )
 
-# meds occurring before booster date
-
+# meds occurring before spec date
 
 # query prior_meds for existence of event-in-codelist
 def has_prior_meds(codelist, spec_date, where=True):
