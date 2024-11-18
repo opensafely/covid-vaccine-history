@@ -172,7 +172,7 @@ summary_stratified <-
     vax_dosenumber, vax_type8, vax_campaign,
     sex, ageband, ethnicity5, region, imd_quintile,
     # PRIMIS
-    chd, cld
+    chd, cld, cv
   ) %>%
   summarise(
     n = ceiling_any(n(), 100)
@@ -266,6 +266,7 @@ plot_vax_dates(vax_dosenumber, all)
 #PRIMIS
 plot_vax_dates(chd, all)
 plot_vax_dates(cld, all)
+plot_vax_dates(cv, all)
 
 
 plot_vax_dates(sex, vax_dosenumber)
@@ -277,6 +278,8 @@ plot_vax_dates(vax_campaign, vax_dosenumber)
 #PRIMIS
 plot_vax_dates(chd, vax_dosenumber)
 plot_vax_dates(cld, vax_dosenumber)
+plot_vax_dates(cv, vax_dosenumber)
+
 
 ## output plots of time since previous vaccination by type, dose number, and other characteristics ----
 

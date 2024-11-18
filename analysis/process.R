@@ -34,7 +34,6 @@ fs::dir_create(output_dir)
 stopifnot(
   "inconsistency between ethnicity5 and ethnicity 16" = identical(data_extract_fixed$ethnicity5, ethnicity_16_to_5(data_extract_fixed$ethnicity16))
 )
-# with(data_extract_fixed, table(ethnicity16, ethnicity5, useNA="ifany"))
 
 
 # Process snapshot dataset
@@ -115,11 +114,12 @@ data_vax <-
   mutate(
     !!!standardise_characteristics,
     vax_campaign = cut(
-      vax_date, 
+      vax_date,
       breaks = c(campaign_dates$start, end_date),
       labels = campaign_dates$campaign,
       include.lowest = TRUE, right = TRUE
-    )
+    ),
+    cv = chd | cld #FIXME add additional vulnerability variables when defined and extracted
   )  %>%
   arrange(patient_id, vax_date) %>%
   mutate(

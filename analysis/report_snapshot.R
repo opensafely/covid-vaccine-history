@@ -21,7 +21,7 @@ args <- commandArgs(trailingOnly = TRUE)
 if (length(args) == 0) {
   # use for interactive testing
   # removeobjects <- FALSE
-  snapshot_date <- as.Date("2023-09-30", format = "%Y%m%d")
+  snapshot_date <- as.Date("20210906", format = "%Y%m%d")
 } else {
   # removeobjects <- TRUE
   snapshot_date <- as.Date(args[[1]], format = "%Y%m%d")
@@ -174,6 +174,7 @@ plot_date_of_last_dose(imd_quintile)
 #PRIMIS
 plot_date_of_last_dose(chd)
 plot_date_of_last_dose(cld)
+plot_date_of_last_dose(cv)
 
 
 
@@ -246,4 +247,5 @@ plot_vax_count(imd_quintile)
 #PRIMIS
 plot_vax_count(chd)
 plot_vax_count(cld)
+plot_vax_count(cv)
 
