@@ -27,6 +27,7 @@ if (length(args) == 0) {
   snapshot_date <- as.Date(args[[1]], format = "%Y%m%d")
 }
 
+
 # create string representation of date in compact format YYYMMDD
 snapshot_date_compact <- format(snapshot_date, "%Y%m%d")
 
@@ -87,7 +88,12 @@ data_snapshot <-
     last_vax_date = if_else(vax_count == 0, default_date + as.integer(runif(n(), 0, 10)), last_vax_date),
     last_vax_week = floor_date(last_vax_date, unit = "week", week_start = 1),
     all = ""
-  )
+    ) %>%
+    #impute values for no-clinical event
+    mutate(
+      chd = replace_na(chd, "no"),
+      cld = replace_na(cld, "no")
+    )
 
 
 # _______________________________________________________________________________________
@@ -170,7 +176,9 @@ plot_date_of_last_dose(ageband)
 plot_date_of_last_dose(ethnicity5)
 plot_date_of_last_dose(region)
 plot_date_of_last_dose(imd_quintile)
-
+#PRIMIS
+plot_date_of_last_dose(chd)
+plot_date_of_last_dose(cld)
 
 
 
@@ -243,5 +251,7 @@ plot_vax_count(ageband)
 plot_vax_count(ethnicity5)
 plot_vax_count(region)
 plot_vax_count(imd_quintile)
-
+#PRIMIS
+plot_vax_count(chd)
+plot_vax_count(cld)
 

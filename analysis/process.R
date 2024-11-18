@@ -24,12 +24,12 @@ fs::dir_create(output_dir)
 # Import and process fixed dataset ----
 
 # Import fixed dataset
-data_extract_fixed <-
-  import_extract(
-    here("lib", "dummydata", "dummyinput_fixed.arrow"),
-    here("output", "extracts", "extract_fixed.arrow")
-  )
-# data_extract_fixed <- read_feather(here("output", "extracts", "extract_fixed.arrow"))
+#data_extract_fixed <-
+#  import_extract(
+#    here("lib", "dummydata", "dummyinput_fixed.arrow"),
+#    here("output", "extracts", "extract_fixed.arrow")
+#  )
+ data_extract_fixed <- read_feather(here("output", "extracts", "extract_fixed.arrow"))
 
 stopifnot(
   "inconsistency between ethnicity5 and ethnicity 16" = identical(data_extract_fixed$ethnicity5, ethnicity_16_to_5(data_extract_fixed$ethnicity16))
@@ -73,11 +73,13 @@ rm(data_extract_fixed)
 # Import and process fixed dataset ----
 
 # import
-data_extract_varying <-
-  import_extract(
-    here("lib", "dummydata", "dummyinput_varying.arrow"),
-    here("output", "extracts", "extract_varying.arrow")
-  )
+#data_extract_varying <-
+#  import_extract(
+#    here("lib", "dummydata", "dummyinput_varying.arrow"),
+#    here("output", "extracts", "extract_varying.arrow")
+#  )
+
+data_extract_varying <- read_feather(here("output", "extracts", "extract_varying.arrow"))
 
 
 # Reshape vaccination data
@@ -96,6 +98,8 @@ data_vax <-
     matches("imd_\\d+"),
     matches("imd_quintile_\\d+"),
     # ... more clinical characteristics here
+    matches("chd_\\d+"),
+    matches("cld_\\d+")
   ) %>%
   pivot_longer(
     cols = -patient_id,
