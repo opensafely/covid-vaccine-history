@@ -26,7 +26,7 @@ from ehrql.tables.tpp import (
 from codelists import *
 
 #import function for clinical variables
-from analysis.cx_function import *
+from cx_function import *
 
 # all covid-19 vaccination events
 covid_vaccinations = (
@@ -54,18 +54,19 @@ for i in range(1, 16+1):
     registration = practice_registrations.for_patient_on(current_vax.date)
     
     ## --VARIABLES--
-    
+    # vaccine variables
     setattr(dataset, f"covid_vax_{i}_date", current_vax.date)
     setattr(dataset, f"covid_vax_type_{i}", current_vax.product_name)
-    setattr(dataset, f"age_{i}", patients.age_on(current_vax.date))
+    # demographic variables
     setattr(dataset, f"registered_{i}", registration.exists_for_patient())
     setattr(dataset, f"deregistered_{i}_date", registration.end_date)
+    setattr(dataset, f"age_{i}", patients.age_on(current_vax.date))
     setattr(dataset, f"region_{i}", registration.practice_nuts1_region_name)
     setattr(dataset, f"stp_{i}", registration.practice_stp)
     setattr(dataset, f"imd_{i}", addresses.for_patient_on(current_vax.date).imd_rounded)
-    #clinical variables
+    # clinical variables
     setattr(dataset, f"chd_{i}", has_prior_event(chd_cov, current_vax.date))
-    setattr(dataset, f"cld_{i}", has_prior_event(cld, current_vax.date))    
+    setattr(dataset, f"cld_{i}", has_prior_event(cld, current_vax.date))
 
     previous_vax_date = current_vax.date
 
