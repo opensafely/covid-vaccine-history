@@ -31,15 +31,15 @@ campaign_dates <-
     "Autumn 2021",    "2021-09-06", "2021-09-01",
     "Spring 2022",    "2022-04-01", "2022-04-01",
     "Autumn 2022",    "2022-09-12", "2022-09-01",
-    "Spring 2023",    "2023-04-03", "2023-04-01", 
+    "Spring 2023",    "2023-04-03", "2023-04-01",
     "Autumn 2023",    "2023-09-11", "2023-09-01",
     "Spring 2024",    "2024-04-01", "2023-04-01",
     "Autumn 2024",    "2024-10-03", "2024-09-01"
   ) %>%
   mutate(
-    across(c(start, start_rounded), as.Date) 
+    across(c(start, start_rounded), as.Date)
   )
-      
+
 roundmid_any <- function(x, to = 1) {
   # like ceiling_any, but centers on (integer) midpoint of the rounding points
   ceiling(x / to) * to - (floor(to / 2) * (x != 0))
@@ -131,6 +131,7 @@ standardise_characteristics <-
   rlang::quos(
 
     ## --VARIABLES--
+    ## demographics
     ageband = cut(
       age,
       breaks = c(-Inf, 18, 40, 55, 65, 75, Inf),
@@ -153,7 +154,9 @@ standardise_characteristics <-
       labels = c("1 (most deprived)", "2", "3", "4", "5 (least deprived)"),
       include.lowest = TRUE,
       right = FALSE
-    )
+    ),
+    ## clinical variables
+    cv = chd | cld #FIXME add additional vulnerability variables when defined and extracted
   )
 
 

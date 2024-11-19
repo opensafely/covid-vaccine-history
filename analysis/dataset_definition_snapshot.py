@@ -31,6 +31,8 @@ from ehrql.tables.tpp import (
 # import codelists
 from codelists import *
 
+from cx_function import *
+
 study_dates = loads(
     Path("lib/dates.json").read_text(),
 )
@@ -59,13 +61,7 @@ dataset.define_population(
   & alive
 )
 
-## --VARIABLES--
+# --VARIABLES--
 
-dataset.age = patients.age_on(snapshot_date)
-dataset.region = registered_patients.practice_nuts1_region_name
-dataset.stp = registered_patients.practice_stp
-dataset.imd = addresses.for_patient_on(snapshot_date).imd_rounded
-
-
-
-
+demographic_variables(dataset = dataset, index_date = snapshot_date)
+primis_variables(dataset = dataset, index_date = snapshot_date)

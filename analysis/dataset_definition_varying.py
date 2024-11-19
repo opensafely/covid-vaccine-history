@@ -25,6 +25,9 @@ from ehrql.tables.tpp import (
 # import codelists
 from codelists import *
 
+#import function for clinical variables
+from cx_function import *
+
 # all covid-19 vaccination events
 covid_vaccinations = (
   vaccinations
@@ -47,19 +50,25 @@ previous_vax_date = "1899-01-01"
 # extract info on vaccination date and type, and basic demographics
 for i in range(1, 16+1):
 
-    current_vax = covid_vaccinations.where(covid_vaccinations.date>previous_vax_date).first_for_patient()
-    registration = practice_registrations.for_patient_on(current_vax.date)
-    
+    suffix = f"_{i}"
+
     ## --VARIABLES--
     
-    setattr(dataset, f"covid_vax_{i}_date", current_vax.date)
-    setattr(dataset, f"covid_vax_type_{i}", current_vax.product_name)
-    setattr(dataset, f"age_{i}", patients.age_on(current_vax.date))
-    setattr(dataset, f"registered_{i}", registration.exists_for_patient())
-    setattr(dataset, f"deregistered_{i}_date", registration.end_date)
-    setattr(dataset, f"region_{i}", registration.practice_nuts1_region_name)
-    setattr(dataset, f"stp_{i}", registration.practice_stp)
-    setattr(dataset, f"imd_{i}", addresses.for_patient_on(current_vax.date).imd_rounded)
+    # vaccine variables
+    current_vax = covid_vaccinations.where(covid_vaccinations.date>previous_vax_date).first_for_patient()
+    dataset.add_column(f"covid_vax_{i}_date", current_vax.date)
+    dataset.add_column(f"covid_vax_type_{i}", current_vax.product_name)
     
+    # registration variables
+    registration = practice_registrations.for_patient_on(current_vax.date)
+    dataset.add_column(f"registered_{i}", registration.exists_for_patient())
+    dataset.add_column(f"deregistered_{i}_date", registration.end_date)
+    
+    # deomgraphic variables
+    demographic_variables(dataset = dataset, index_date = current_vax.date, var_name_suffix = suffix)
+    
+    # primis variables
+    primis_variables(dataset = dataset, index_date = current_vax.date, var_name_suffix = suffix)
+
     previous_vax_date = current_vax.date
 

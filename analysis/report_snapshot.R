@@ -89,7 +89,9 @@ data_snapshot <-
     data_fixed %>% select(patient_id, sex, ethnicity5, ethnicity16),
     by = "patient_id"
   ) %>%
-  mutate(!!!standardise_characteristics) %>%
+  mutate(
+    !!!standardise_characteristics
+  ) %>%
   left_join(
     data_last_vax_date_clean,
     by = "patient_id"
@@ -102,6 +104,9 @@ data_snapshot <-
     last_vax_week = floor_date(last_vax_date, unit = "week", week_start = 1), # starting on a monday
     last_vax_period = floor_dates[findInterval(last_vax_date, floor_dates)], # use floor_date(last_vax_date, unit = floor_dates) when lubridate package is updated 
     all = ""
+  ) %>%
+  mutate(
+    across(where(is.factor) | where(is.character), ~fct_explicit_na(.x, na_level ="Unknown"))
   )
 
 
@@ -113,9 +118,6 @@ data_snapshot <-
 
 plot_date_of_last_dose <- function(rows) {
   summary_by <- data_snapshot %>%
-    mutate(
-      "{{ rows }}" := fct_explicit_na({{ rows }}, na_level ="Unknown"),
-    ) %>%
     group_by({{ rows }}, last_vax_type, last_vax_period) %>%
     summarise(
       n = ceiling_any(n(), 100)
@@ -191,15 +193,15 @@ plot_date_of_last_dose(ageband)
 plot_date_of_last_dose(ethnicity5)
 plot_date_of_last_dose(region)
 plot_date_of_last_dose(imd_quintile)
-
+#PRIMIS
+plot_date_of_last_dose(chd)
+plot_date_of_last_dose(cld)
+plot_date_of_last_dose(cv)
 
 ## output plots of dose count by type and other characteristics ----
 
 plot_vax_count <- function(rows) {
   summary_by <- data_snapshot %>%
-    mutate(
-      "{{ rows }}" := fct_explicit_na({{ rows }}, na_level ="Unknown"),
-    ) %>%
     group_by({{ rows }}, vax_count) %>%
     summarise(
       n = ceiling_any(n(), 100),
@@ -270,3 +272,7 @@ plot_vax_count(ageband)
 plot_vax_count(ethnicity5)
 plot_vax_count(region)
 plot_vax_count(imd_quintile)
+#PRIMIS
+plot_vax_count(chd)
+plot_vax_count(cld)
+plot_vax_count(cv)
