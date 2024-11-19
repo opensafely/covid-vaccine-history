@@ -170,7 +170,7 @@ factor_levels <-
       "Mixed",
       "Asian or Asian British",
       "Black or Black British",
-      "Other Ethnic Groups"
+      "Chinese or Other Ethnic Groups"
     ),
     ethnicity16 = c(
       "White - British",

@@ -53,7 +53,7 @@ actions:
     needs: [extract_snapshot_20201208, process]
     outputs:
       moderately_sensitive:
-        #csv: output/report_snapshot_20201208/*.csv
+        csv: output/report_snapshot_20201208/*.csv
         png: output/report_snapshot_20201208/*.png
 
  # 2021-09-06
@@ -70,7 +70,7 @@ actions:
     needs: [extract_snapshot_20210906, process]
     outputs:
       moderately_sensitive:
-        #csv: output/report_snapshot_20210906/*.csv
+        csv: output/report_snapshot_20210906/*.csv
         png: output/report_snapshot_20210906/*.png
 
  # 2022-04-01
@@ -87,7 +87,7 @@ actions:
     needs: [extract_snapshot_20220401, process]
     outputs:
       moderately_sensitive:
-        #csv: output/report_snapshot_20220401/*.csv
+        csv: output/report_snapshot_20220401/*.csv
         png: output/report_snapshot_20220401/*.png
 
  # 2022-09-12
@@ -104,7 +104,7 @@ actions:
     needs: [extract_snapshot_20220912, process]
     outputs:
       moderately_sensitive:
-        #csv: output/report_snapshot_20220912/*.csv
+        csv: output/report_snapshot_20220912/*.csv
         png: output/report_snapshot_20220912/*.png
 
  # 2023-04-03
@@ -121,7 +121,7 @@ actions:
     needs: [extract_snapshot_20230403, process]
     outputs:
       moderately_sensitive:
-        #csv: output/report_snapshot_20230403/*.csv
+        csv: output/report_snapshot_20230403/*.csv
         png: output/report_snapshot_20230403/*.png
 
  # 2023-09-11
@@ -138,8 +138,8 @@ actions:
     needs: [extract_snapshot_20230911, process]
     outputs:
       moderately_sensitive:
-        #csv: output/report_snapshot_20230911/*.csv
-        png: output/report_snapshot_20230911/*.png
+        csv: output/report_snapshot_20230911/*.csv
+        png: output/report_snapshot_20230911/*.png    
 
  # 2024-04-01
   extract_snapshot_20240401:
@@ -155,8 +155,8 @@ actions:
     needs: [extract_snapshot_20240401, process]
     outputs:
       moderately_sensitive:
-        #csv: output/report_snapshot_20240401/*.csv
-        png: output/report_snapshot_20240401/*.png
+        csv: output/report_snapshot_20240401/*.csv
+        png: output/report_snapshot_20240401/*.png    
 
  # 2024-10-03
   extract_snapshot_20241003:
@@ -172,5 +172,5 @@ actions:
     needs: [extract_snapshot_20241003, process]
     outputs:
       moderately_sensitive:
-        #csv: output/report_snapshot_20241003/*.csv
-        png: output/report_snapshot_20241003/*.png
+        csv: output/report_snapshot_20241003/*.csv
+        png: output/report_snapshot_20241003/*.png    
