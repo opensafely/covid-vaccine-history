@@ -63,11 +63,5 @@ dataset.define_population(
 
 # --VARIABLES--
 
-dataset.age = patients.age_on(snapshot_date)
-dataset.region = registered_patients.practice_nuts1_region_name
-dataset.stp = registered_patients.practice_stp
-dataset.imd = addresses.for_patient_on(snapshot_date).imd_rounded
-
-## PRIMIS Variables ##
-dataset.chd = has_prior_event(chd_cov, snapshot_date) ## Chronic heart disease
-dataset.cld = has_prior_event(cld, snapshot_date) ## Chronic liver disease
+demographic_variables(dataset = dataset, index_date = snapshot_date)
+primis_variables(dataset = dataset, index_date = snapshot_date)

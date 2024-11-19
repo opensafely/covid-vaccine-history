@@ -6,16 +6,18 @@ from ehrql.codes import CTV3Code, ICD10Code
 
 from ehrql import case, days, when
 
+from codelists import *
+
 from ehrql.tables.core import (
   medications,
   patients
 )
 
 from ehrql.tables.tpp import (
-#  addresses,
+  addresses,
 #  opa_cost,
   clinical_events,
-# practice_registrations,
+  practice_registrations,
 # appointments,
 # vaccinations
 )
@@ -26,11 +28,11 @@ from ehrql.tables.tpp import (
 ########
 
 # events occurring before spec date
-# prior_events = clinical_events.where(clinical_events.date.is_on_or_before(spec_date))
+# prior_events = clinical_events.where(clinical_events.date.is_on_or_before(index_date))
 
 # query prior_events for existence of event-in-codelist
-def has_prior_event(codelist, spec_date, where=True):
-    prior_events = clinical_events.where(clinical_events.date.is_on_or_before(spec_date))
+def has_prior_event(codelist, index_date, where=True):
+    prior_events = clinical_events.where(clinical_events.date.is_on_or_before(index_date))
     return (
         prior_events
         .where(where)
@@ -39,8 +41,8 @@ def has_prior_event(codelist, spec_date, where=True):
     )
 
 # query prior_events for date of most recent event-in-codelist
-def last_prior_event(codelist, spec_date, where=True):
-    prior_events = clinical_events.where(clinical_events.date.is_on_or_before(spec_date))
+def last_prior_event(codelist, index_date, where=True):
+    prior_events = clinical_events.where(clinical_events.date.is_on_or_before(index_date))
     return (
         prior_events.where(where)
         .where(prior_events.snomedct_code.is_in(codelist))
@@ -49,8 +51,8 @@ def last_prior_event(codelist, spec_date, where=True):
     )
 
 # query prior_events for date of earliest event-in-codelist
-def first_prior_event(codelist, spec_date, where=True):
-    prior_events = clinical_events.where(clinical_events.date.is_on_or_before(spec_date))
+def first_prior_event(codelist, index_date, where=True):
+    prior_events = clinical_events.where(clinical_events.date.is_on_or_before(index_date))
     return (
         prior_events.where(where)
         .where(prior_events.snomedct_code.is_in(codelist))
@@ -61,8 +63,8 @@ def first_prior_event(codelist, spec_date, where=True):
 # meds occurring before spec date
 
 # query prior_meds for existence of event-in-codelist
-def has_prior_meds(codelist, spec_date, where=True):
-    prior_meds = medications.where(medications.date.is_on_or_before(spec_date))
+def has_prior_meds(codelist, index_date, where=True):
+    prior_meds = medications.where(medications.date.is_on_or_before(index_date))
     return (
         prior_meds.where(where)
         .where(prior_meds.dmd_code.is_in(codelist))
@@ -70,8 +72,8 @@ def has_prior_meds(codelist, spec_date, where=True):
     )
     
 # query prior meds for date of most recent med-in-codelist
-def last_prior_meds(codelist, spec_date, where=True):
-    prior_meds = medications.where(medications.date.is_on_or_before(spec_date))
+def last_prior_meds(codelist, index_date, where=True):
+    prior_meds = medications.where(medications.date.is_on_or_before(index_date))
     return (
         prior_meds.where(where)
         .where(prior_meds.dmd_code.is_in(codelist))
@@ -80,8 +82,8 @@ def last_prior_meds(codelist, spec_date, where=True):
     )
 
 # query prior_events for date of earliest event-in-codelist
-def first_prior_meds(codelist, spec_date, where=True):
-    prior_meds = medications.where(medications.date.is_on_or_before(spec_date))
+def first_prior_meds(codelist, index_date, where=True):
+    prior_meds = medications.where(medications.date.is_on_or_before(index_date))
     return (
         prior_meds.where(where)
         .where(prior_meds.dmd_code.is_in(codelist))
@@ -109,11 +111,18 @@ def first_prior_meds(codelist, spec_date, where=True):
 #    )
 
 
-# Asthma as per green book
-# Poorly controlled asthma is defined as:
-# - ≥2 courses of oral corticosteroids in the preceding 24 months OR
-# - on maintenance oral corticosteroids OR
-# - ≥1 hospital admission for asthma in the preceding 24 months
+## functions to define variables across  multiple study definitions
 
-# From PRIMIS
+# demogrpahic variables
+def demographic_variables(dataset, index_date, var_name_suffix=""):
+    registration = practice_registrations.for_patient_on(index_date)
+    setattr(dataset, f"age{var_name_suffix}", patients.age_on(index_date))
+    setattr(dataset, f"region{var_name_suffix}", registration.practice_nuts1_region_name)
+    setattr(dataset, f"stp{var_name_suffix}", registration.practice_stp)
+    setattr(dataset, f"imd{var_name_suffix}", addresses.for_patient_on(index_date).imd_rounded)
 
+# PRIMIS variables
+def primis_variables(dataset, index_date, var_name_suffix=""):
+    setattr(dataset, f"chd{var_name_suffix}", has_prior_event(chd_cov, index_date))
+    setattr(dataset, f"cld{var_name_suffix}", has_prior_event(cld, index_date))
+    ## more primis variables to go here!

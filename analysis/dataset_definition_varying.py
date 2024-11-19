@@ -50,23 +50,25 @@ previous_vax_date = "1899-01-01"
 # extract info on vaccination date and type, and basic demographics
 for i in range(1, 16+1):
 
-    current_vax = covid_vaccinations.where(covid_vaccinations.date>previous_vax_date).first_for_patient()
-    registration = practice_registrations.for_patient_on(current_vax.date)
-    
+    suffix = f"_{i}"
+
     ## --VARIABLES--
+    
     # vaccine variables
+    current_vax = covid_vaccinations.where(covid_vaccinations.date>previous_vax_date).first_for_patient()
     setattr(dataset, f"covid_vax_{i}_date", current_vax.date)
     setattr(dataset, f"covid_vax_type_{i}", current_vax.product_name)
-    # demographic variables
+    
+    # registration variables
+    registration = practice_registrations.for_patient_on(current_vax.date)
     setattr(dataset, f"registered_{i}", registration.exists_for_patient())
     setattr(dataset, f"deregistered_{i}_date", registration.end_date)
-    setattr(dataset, f"age_{i}", patients.age_on(current_vax.date))
-    setattr(dataset, f"region_{i}", registration.practice_nuts1_region_name)
-    setattr(dataset, f"stp_{i}", registration.practice_stp)
-    setattr(dataset, f"imd_{i}", addresses.for_patient_on(current_vax.date).imd_rounded)
-    # clinical variables
-    setattr(dataset, f"chd_{i}", has_prior_event(chd_cov, current_vax.date))
-    setattr(dataset, f"cld_{i}", has_prior_event(cld, current_vax.date))
+    
+    # deomgraphic variables
+    demographic_variables(dataset = dataset, index_date = current_vax.date, var_name_suffix = suffix)
+    
+    # primis variables
+    primis_variables(dataset = dataset, index_date = current_vax.date, var_name_suffix = suffix)
 
     previous_vax_date = current_vax.date
 
