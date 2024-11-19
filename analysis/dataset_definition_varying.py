@@ -56,13 +56,13 @@ for i in range(1, 16+1):
     
     # vaccine variables
     current_vax = covid_vaccinations.where(covid_vaccinations.date>previous_vax_date).first_for_patient()
-    setattr(dataset, f"covid_vax_{i}_date", current_vax.date)
-    setattr(dataset, f"covid_vax_type_{i}", current_vax.product_name)
+    dataset.add_column(f"covid_vax_{i}_date", current_vax.date)
+    dataset.add_column(f"covid_vax_type_{i}", current_vax.product_name)
     
     # registration variables
     registration = practice_registrations.for_patient_on(current_vax.date)
-    setattr(dataset, f"registered_{i}", registration.exists_for_patient())
-    setattr(dataset, f"deregistered_{i}_date", registration.end_date)
+    dataset.add_column(f"registered_{i}", registration.exists_for_patient())
+    dataset.add_column(f"deregistered_{i}_date", registration.end_date)
     
     # deomgraphic variables
     demographic_variables(dataset = dataset, index_date = current_vax.date, var_name_suffix = suffix)

@@ -116,13 +116,13 @@ def first_prior_meds(codelist, index_date, where=True):
 # demogrpahic variables
 def demographic_variables(dataset, index_date, var_name_suffix=""):
     registration = practice_registrations.for_patient_on(index_date)
-    setattr(dataset, f"age{var_name_suffix}", patients.age_on(index_date))
-    setattr(dataset, f"region{var_name_suffix}", registration.practice_nuts1_region_name)
-    setattr(dataset, f"stp{var_name_suffix}", registration.practice_stp)
-    setattr(dataset, f"imd{var_name_suffix}", addresses.for_patient_on(index_date).imd_rounded)
+    dataset.add_column(f"age{var_name_suffix}", patients.age_on(index_date))
+    dataset.add_column(f"region{var_name_suffix}", registration.practice_nuts1_region_name)
+    dataset.add_column(f"stp{var_name_suffix}", registration.practice_stp)
+    dataset.add_column(f"imd{var_name_suffix}", addresses.for_patient_on(index_date).imd_rounded)
 
 # PRIMIS variables
 def primis_variables(dataset, index_date, var_name_suffix=""):
-    setattr(dataset, f"chd{var_name_suffix}", has_prior_event(chd_cov, index_date))
-    setattr(dataset, f"cld{var_name_suffix}", has_prior_event(cld, index_date))
+    dataset.add_column(f"chd{var_name_suffix}", has_prior_event(chd_cov, index_date))
+    dataset.add_column(f"cld{var_name_suffix}", has_prior_event(cld, index_date))
     ## more primis variables to go here!
