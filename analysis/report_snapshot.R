@@ -76,7 +76,9 @@ data_snapshot <-
     data_fixed %>% select(patient_id, sex, ethnicity5, ethnicity16),
     by = "patient_id"
   ) %>%
-  mutate(!!!standardise_characteristics) %>%
+  mutate(
+    !!!standardise_characteristics
+  ) %>%
   left_join(
     data_last_vax_date_clean,
     by = "patient_id"

@@ -118,8 +118,7 @@ data_vax <-
       breaks = c(campaign_dates$start, end_date),
       labels = campaign_dates$campaign,
       include.lowest = TRUE, right = TRUE
-    ),
-    cv = chd | cld #FIXME add additional vulnerability variables when defined and extracted
+    )
   )  %>%
   arrange(patient_id, vax_date) %>%
   mutate(
