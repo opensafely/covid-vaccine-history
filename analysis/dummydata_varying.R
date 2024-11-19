@@ -200,10 +200,11 @@ sim_list_varying_i <- function(i) {
       ), p = c(0.2, 0.2, 0.3, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05)),
       needs = vax_variable
     ),
-    "chd_{i}" := bn_node( ~rbernoulli(n=..n, p = 0.02), 
+    "chd_{i}" := bn_node( ~rbernoulli(n=..n, p = 0.02),
       needs = vax_variable),
-    "cld_{i}" := bn_node( ~rbernoulli(n=..n, p = 0.02), 
+    "cld_{i}" := bn_node( ~rbernoulli(n=..n, p = 0.02),
       needs = vax_variable),
+  )
 }
 
 
