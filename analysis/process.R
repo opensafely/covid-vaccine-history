@@ -96,9 +96,22 @@ data_vax <-
     matches("stp_\\d+"),
     matches("imd_\\d+"),
     matches("imd_quintile_\\d+"),
-    # ... more clinical characteristics here
+    # ... more clinical (PRIMIS) characteristics here
     matches("chd_\\d+"),
-    matches("cld_\\d+")
+    matches("cld_\\d+"),
+    matches("ast_\\d+"),
+    matches("cns_\\d+"),
+    matches("asplen_\\d+"),
+    matches("sol_org_trans_\\d+"),
+    matches("hiv_\\d+"),
+    matches("learndis_\\d+"),
+    matches("crd_\\d+"),
+    matches("ckd_\\d+"),
+    matches("diab_\\d+"),
+    matches("sev_ment_\\d+"),
+    matches("immuno_\\d+"),
+    matches("cancer_\\d+"),
+    matches("obes_\\d+"),
   ) %>%
   pivot_longer(
     cols = -patient_id,

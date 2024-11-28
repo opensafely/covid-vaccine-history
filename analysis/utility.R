@@ -155,8 +155,8 @@ standardise_characteristics <-
       include.lowest = TRUE,
       right = FALSE
     ),
-    ## clinical variables
-    cv = chd | cld #FIXME add additional vulnerability variables when defined and extracted
+    ## PRIMIS clinical variables
+    cv =  chd | cld | cns | ast | asplen | sol_org_trans | hiv | learndis | crd | ckd | diab | sev_ment | immuno | cancer | obes #FIXME add additional vulnerability variables when defined and extracted
   )
 
 
