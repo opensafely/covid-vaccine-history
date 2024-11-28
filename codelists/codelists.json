@@ -138,6 +138,12 @@
       "downloaded_at": "2024-11-27 14:47:21.213013Z",
       "sha": "3ee06176c1949ea4322904562d9436c2d005ab66"
     },
+    "primis-covid19-vacc-uptake-immunosuppression-admin-codes.csv": {
+      "id": "primis-covid19-vacc-uptake/immunosuppression-admin-codes/v2.5",
+      "url": "https://www.opencodelists.org/codelist/primis-covid19-vacc-uptake/immunosuppression-admin-codes/v2.5/",
+      "downloaded_at": "2024-11-28 10:46:33.184210Z",
+      "sha": "9574df184e685339849cc2bb6b68b3c3e3b1f949"
+    },
     "primis-covid19-vacc-uptake-dxt_chemo_cod.csv": {
       "id": "primis-covid19-vacc-uptake/dxt_chemo_cod/v2.5",
       "url": "https://www.opencodelists.org/codelist/primis-covid19-vacc-uptake/dxt_chemo_cod/v2.5/",
