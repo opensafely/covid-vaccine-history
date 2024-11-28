@@ -111,7 +111,7 @@ data_vax <-
     matches("sev_ment_\\d+"),
     matches("immuno_\\d+"),
     matches("cancer_\\d+"),
-    matches("obes_\\d+"),
+#    matches("obes_\\d+"),
   ) %>%
   pivot_longer(
     cols = -patient_id,

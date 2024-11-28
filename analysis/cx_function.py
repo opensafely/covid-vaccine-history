@@ -237,42 +237,45 @@ def is_immunosuppressed(index_date):
 #Sever obesity
 
 
-def has_sev_obes (index_date): 
-    # Most recent BMI measurement and value
-    bmi_record = (
-        clinical_events.where(
-            clinical_events.snomedct_code.is_in(["60621009", "846931000000101"])
-            # Ignore out-of-range values
-            & (clinical_events.numeric_value > 4)
-            & (clinical_events.numeric_value < 200)
-            & (clinical_events.date >= index_date)
+#def has_sev_obes (index_date): 
+#    # Most recent BMI measurement and value
+#    bmi_record = (
+#        clinical_events.where(
+#            clinical_events.snomedct_code.is_in(["60621009", "846931000000101"])
+#            # Ignore out-of-range values
+#            & (clinical_events.numeric_value > 4)
+#            & (clinical_events.numeric_value < 200)
+#            & (clinical_events.date >= index_date)
             # Ignore measurements taken when patient was younger than 16
-            & (clinical_events.date >= patients.date_of_birth + years(16))
-        )
-        .sort_by(clinical_events.date)
-        .last_for_patient()
-        )
-    bmi = bmi_record.numeric_value
-    bmi_date = bmi_record.date
-    # Most recent BMI-related events
-    bmi_stage_event = last_prior_event(bmi_stage, index_date)
-    bmi_event = last_prior_event(
-        bmi,
-        where=(clinical_events.numeric_value != 0.0)
-    )
-    sev_obesity_event = last_prior_event(
-        sev_obesity,
-        where=(
-            (clinical_events.date >= bmi_stage_event.date) &
-            (clinical_events.numeric_value != 0.0)
-        )
-    )
-    # Severe obesity
-    return case(
-        when(sev_obesity_event.date > bmi_event.date).then(True),
-        when(bmi_value >= 40.0).then(True),
-        otherwise=False
-    )
+#            & (clinical_events.date >= patients.date_of_birth + years(16))
+#        )
+#        .sort_by(clinical_events.date)
+#        .last_for_patient()
+#        )
+#    bmi_num = bmi_record.numeric_value
+#    bmi_date = bmi_record.date
+#    # Most recent BMI-related events
+#    bmi_stage_event = last_prior_event(
+#        bmi_stage, 
+#        index_date)
+#    bmi_event = last_prior_event(
+#        bmi,
+#        index_date,
+#        where=(clinical_events.numeric_value != 0.0)
+#    )
+#    sev_obesity_event = last_prior_event(
+#        sev_obesity,
+#        where=(
+#            (clinical_events.date >= bmi_stage_event.date) &
+#            (clinical_events.numeric_value != 0.0)
+#        )
+#    )
+#    # Severe obesity
+#    return case(
+#        when(sev_obesity_event.date > bmi_event.date).then(True),
+#        when(bmi_num >= 40.0).then(True),
+#        otherwise=False
+#    )
 
 ## functions to define variables across  multiple study definitions
 
@@ -295,7 +298,7 @@ def primis_variables(dataset, index_date, var_name_suffix=""):
     dataset.add_column(f"sol_org_trans{var_name_suffix}", has_prior_event(solid_organ_transplant, index_date)) # Organs transplant
     dataset.add_column(f"hiv{var_name_suffix}", has_prior_event(hiv_aids, index_date)) #HIV/AIDS
     dataset.add_column(f"learndis{var_name_suffix}", has_prior_event(learndis, index_date)) # Wider Learning Disability
-    print(dataset)
+    
     ## mx codes
     dataset.add_column(f"ast{var_name_suffix}", has_asthma(index_date)) #asthma
     dataset.add_column(f"crd{var_name_suffix}", has_prior_event(resp_cov, index_date)| has_asthma(index_date)) #cronic respiratory disease
@@ -307,6 +310,6 @@ def primis_variables(dataset, index_date, var_name_suffix=""):
                        has_prior_event(cancer_nonhaem_snomed, index_date, where=clinical_events.date.is_after(index_date - days(int(3 * 365.25))))|
                        has_prior_event(cancer_haem_snomed, index_date, where=clinical_events.date.is_after(index_date - days(int(3 * 365.25))))
                        ) #cancer
-    dataset.add_column(f"obes{var_name_suffix}", has_sev_obes(index_date)) #immunosuppress grouped
+   # dataset.add_column(f"obes{var_name_suffix}", has_sev_obes(index_date)) #immunosuppress grouped
 
     

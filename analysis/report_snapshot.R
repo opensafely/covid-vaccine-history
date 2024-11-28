@@ -208,7 +208,7 @@ plot_date_of_last_dose(diab)
 plot_date_of_last_dose(sev_ment)
 plot_date_of_last_dose(immuno)
 plot_date_of_last_dose(cancer)
-plot_date_of_last_dose(obes)
+#plot_date_of_last_dose(obes)
 ## output plots of dose count by type and other characteristics ----
 
 plot_vax_count <- function(rows) {
@@ -299,4 +299,4 @@ plot_vax_count(diab)
 plot_vax_count(sev_ment)
 plot_vax_count(immuno)
 plot_vax_count(cancer)
-plot_vax_count(obes)
+#plot_vax_count(obes)

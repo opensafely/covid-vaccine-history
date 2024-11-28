@@ -172,7 +172,7 @@ summary_stratified <-
     vax_dosenumber, vax_type8, vax_campaign,
     sex, ageband, ethnicity5, region, imd_quintile,
     # PRIMIS
-    chd, cld, ast, cns, asplen, sol_org_trans, hiv, learndis, crd, ckd, diab, sev_ment, immuno, cancer, obes
+    chd, cld, ast, cns, asplen, sol_org_trans, hiv, learndis, crd, ckd, diab, sev_ment, immuno, cancer#, obes
   ) %>%
   summarise(
     n = ceiling_any(n(), 100)
@@ -279,7 +279,7 @@ plot_vax_dates(diab, all)
 plot_vax_dates(sev_ment, all)
 plot_vax_dates(immuno, all)
 plot_vax_dates(cancer, all)
-plot_vax_dates(obes, all)
+#plot_vax_dates(obes, all)
 
 
 plot_vax_dates(sex, vax_dosenumber)
@@ -303,7 +303,7 @@ plot_vax_dates(diab, vax_dosenumber)
 plot_vax_dates(sev_ment, vax_dosenumber)
 plot_vax_dates(immuno, vax_dosenumber)
 plot_vax_dates(cancer, vax_dosenumber)
-plot_vax_dates(obes, vax_dosenumber)
+#plot_vax_dates(obes, vax_dosenumber)
 ## output plots of time since previous vaccination by type, dose number, and other characteristics ----
 
 plot_vax_intervals <- function(rows, cols) {
@@ -397,5 +397,5 @@ plot_vax_intervals(diab, vax_dosenumber)
 plot_vax_intervals(sev_ment, vax_dosenumber)
 plot_vax_intervals(immuno, vax_dosenumber)
 plot_vax_intervals(cancer, vax_dosenumber)
-plot_vax_intervals(obes, vax_dosenumber)
+# plot_vax_intervals(obes, vax_dosenumber)
 
