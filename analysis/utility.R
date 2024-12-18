@@ -154,9 +154,9 @@ standardise_characteristics <-
       labels = c("1 (most deprived)", "2", "3", "4", "5 (least deprived)"),
       include.lowest = TRUE,
       right = FALSE
-    ),
+    ) #,
     ## PRIMIS clinical variables
-    cv = crd | ast | chd | ckd | cld | cns | learndis | diab | immuno | asplen | obes | sev_ment
+   # cv = crd | ast | chd | ckd | cld | cns | learndis | diab | immuno | asplen | obes | sev_ment
  #FIXME add additional vulnerability variables when defined and extracted
   )
 

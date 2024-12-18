@@ -194,19 +194,18 @@ plot_date_of_last_dose(ethnicity5)
 plot_date_of_last_dose(region)
 plot_date_of_last_dose(imd_quintile)
 #PRIMIS
-plot_date_of_last_dose(crd) #chronic respiratory disease
-plot_date_of_last_dose(ast) #asthma
-plot_date_of_last_dose(chd) #chronic heart disease
+plot_date_of_last_dose(crd) #cronic respiratory disease
+plot_date_of_last_dose(chd) #cronic heart disease
 plot_date_of_last_dose(ckd) #chronic kidney disease
-plot_date_of_last_dose(cld) # chronic liver disease
-plot_date_of_last_dose(cns) # chronic neurological disease
-plot_date_of_last_dose(learndis) # learning disability
-plot_date_of_last_dose(diab) #diabetes
-plot_date_of_last_dose(immuno) #immunosuppress grouped
-plot_date_of_last_dose(asplen) # asplenia or dysfunction of the spleen
-plot_date_of_last_dose(obes) #immunosuppress grouped
-plot_date_of_last_dose(sev_ment) #severe mental illness
-plot_date_of_last_dose(cv) # clinically vulnerable 
+plot_date_of_last_dose(cld) # cronic liver disease
+plot_date_of_last_dose(cns) 
+plot_date_of_last_dose(learndis) # Wider Learning Disability
+plot_date_of_last_dose(diabetes) #diabetes
+plot_date_of_last_dose(immunosuppressed) #immunosuppress grouped
+plot_date_of_last_dose(asplenia) # Asplenia or Dysfunction of the Spleen codes
+plot_date_of_last_dose(severe_obesity) #immunosuppress grouped
+plot_date_of_last_dose(smi) #severe mental illness
+plot_date_of_last_dose(primis_atrisk) # clinically vulnerable 
 ## output plots of dose count by type and other characteristics ----
 
 plot_vax_count <- function(rows) {
@@ -283,19 +282,18 @@ plot_vax_count(region)
 plot_vax_count(imd_quintile)
 
 #PRIMIS
-plot_vax_count(crd) #chronic respiratory disease
-plot_vax_count(ast) #asthma
-plot_vax_count(chd) #chronic heart disease
+plot_vax_count(crd) #cronic respiratory disease
+plot_vax_count(chd) #cronic heart disease
 plot_vax_count(ckd) #chronic kidney disease
-plot_vax_count(cld) # chronic liver disease
-plot_vax_count(cns) # chronic neurological disease
-plot_vax_count(learndis) # learning disability
-plot_vax_count(diab) #diabetes
-plot_vax_count(immuno) #immunosuppress grouped
-plot_vax_count(asplen) # asplenia or Dysfunction of the Spleen codes
-plot_vax_count(obes) # morbid obesity
-plot_vax_count(sev_ment) #severe mental illness
-plot_vax_count(cv) # clinically vulnerable 
+plot_vax_count(cld) # cronic liver disease
+plot_vax_count(cns) 
+plot_vax_count(learndis) # Wider Learning Disability
+plot_vax_count(diabetes) #diabetes
+plot_vax_count(immunosuppressed) #immunosuppress grouped
+plot_vax_count(asplenia) # Asplenia or Dysfunction of the Spleen codes
+plot_vax_count(severe_obesity) #immunosuppress grouped
+plot_vax_count(smi) #severe mental illness
+plot_vax_count(primis_atrisk) # clinically vulnerable 
 
 #Table
 create_summary_table <- function(rows) {
@@ -351,16 +349,15 @@ create_summary_table(region)
 create_summary_table(imd_quintile)
 
 #PRIMIS
-create_summary_table(crd) #chronic respiratory disease
-create_summary_table(ast) #asthma
-create_summary_table(chd) #chronic heart disease
+create_summary_table(crd) #cronic respiratory disease
+create_summary_table(chd) #cronic heart disease
 create_summary_table(ckd) #chronic kidney disease
-create_summary_table(cld) # chronic liver disease
-create_summary_table(cns) # chronic neurological disease
-create_summary_table(learndis) # learning Disability
-create_summary_table(diab) #diabetes
-create_summary_table(immuno) #immunosuppress grouped
-create_summary_table(asplen) # asplenia or dysfunction of the spleen
-create_summary_table(obes) #immunosuppress grouped
-create_summary_table(sev_ment) #severe mental illness
-create_summary_table(cv) # clinically vulnerable 
+create_summary_table(cld) # cronic liver disease
+create_summary_table(cns) 
+create_summary_table(learndis) # Wider Learning Disability
+create_summary_table(diabetes) #diabetes
+create_summary_table(immunosuppressed) #immunosuppress grouped
+create_summary_table(asplenia) # Asplenia or Dysfunction of the Spleen codes
+create_summary_table(severe_obesity) #immunosuppress grouped
+create_summary_table(smi) #severe mental illness
+create_summary_table(primis_atrisk) # clinically vulnerable 

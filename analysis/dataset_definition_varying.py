@@ -26,7 +26,7 @@ from ehrql.tables.tpp import (
 from codelists import *
 
 #import function for clinical variables
-from cx_function import *
+from analysis.variables_function import *
 
 # all covid-19 vaccination events
 covid_vaccinations = (
@@ -69,6 +69,9 @@ for i in range(1, 16+1):
     
     # primis variables
     primis_variables(dataset = dataset, index_date = current_vax.date, var_name_suffix = suffix)
+
+    # primis variables
+    other_cx_variables(dataset = dataset, index_date = current_vax.date, var_name_suffix = suffix)
 
     previous_vax_date = current_vax.date
 

@@ -97,20 +97,18 @@ data_vax <-
     matches("imd_\\d+"),
     matches("imd_quintile_\\d+"),
     # ... more clinical (PRIMIS) characteristics here
-    matches("cv_\\d+"), # Clinically vulnerable
+    matches("primis_atrisk_\\d+"), # Clinically vulnerable
     matches("crd_\\d+"), #chronic respiratory disease
-    matches("ast_\\d+"), #asthma
     matches("chd_\\d+"), #chronic heart disease
     matches("ckd_\\d+"), #chronic kidney disease
     matches("cld_\\d+"), # chronic liver disease
     matches("cns_\\d+"), # chronic neurological disease 
     matches("learndis_\\d+"), # learning Disability
-    matches("diab_\\d+"), #diabetes
-    matches("immuno_\\d+"), #immunosuppress grouped
-    matches("asplen_\\d+"), # asplenia or dysfunction of the spleen
-    matches("obes_\\d+"), #immunosuppress grouped
-    matches("sev_ment_\\d+"), #severe mental illness
-    matches("cv_\\d+") # clinically vulnerable 
+    matches("diabetes_\\d+"), #diabetes
+    matches("immunosuppressed_\\d+"), #immunosuppress grouped
+    matches("asplenia_\\d+"), # asplenia or dysfunction of the spleen
+    matches("severe_obesity_\\d+"), #immunosuppress grouped
+    matches("smi_\\d+"), #severe mental illness
   ) %>%
   pivot_longer(
     cols = -patient_id,
