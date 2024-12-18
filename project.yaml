@@ -27,6 +27,8 @@ actions:
     outputs:
       highly_sensitive:
         rds: output/process/*.rds
+      moderately_sensitive:
+        txt: output/process/*.txt
 
 # report vaccine history over entire observational period ---
   report_history:
@@ -55,6 +57,7 @@ actions:
       moderately_sensitive:
         csv: output/report_snapshot_20201208/*.csv
         png: output/report_snapshot_20201208/*.png
+        txt: output/report_snapshot_20201208/*.txt
 
  # 2021-09-06
   extract_snapshot_20210906:
@@ -72,6 +75,7 @@ actions:
       moderately_sensitive:
         csv: output/report_snapshot_20210906/*.csv
         png: output/report_snapshot_20210906/*.png
+        txt: output/report_snapshot_20210906/*.txt
 
  # 2022-04-01
   extract_snapshot_20220401:
@@ -89,6 +93,7 @@ actions:
       moderately_sensitive:
         csv: output/report_snapshot_20220401/*.csv
         png: output/report_snapshot_20220401/*.png
+        txt: output/report_snapshot_20220401/*.txt
 
  # 2022-09-12
   extract_snapshot_20220912:
@@ -106,6 +111,7 @@ actions:
       moderately_sensitive:
         csv: output/report_snapshot_20220912/*.csv
         png: output/report_snapshot_20220912/*.png
+        txt: output/report_snapshot_20220912/*.txt
 
  # 2023-04-03
   extract_snapshot_20230403:
@@ -123,6 +129,7 @@ actions:
       moderately_sensitive:
         csv: output/report_snapshot_20230403/*.csv
         png: output/report_snapshot_20230403/*.png
+        txt: output/report_snapshot_20230403/*.txt
 
  # 2023-09-11
   extract_snapshot_20230911:
@@ -140,6 +147,7 @@ actions:
       moderately_sensitive:
         csv: output/report_snapshot_20230911/*.csv
         png: output/report_snapshot_20230911/*.png    
+        txt: output/report_snapshot_20230911/*.txt
 
  # 2024-04-01
   extract_snapshot_20240401:
@@ -156,7 +164,8 @@ actions:
     outputs:
       moderately_sensitive:
         csv: output/report_snapshot_20240401/*.csv
-        png: output/report_snapshot_20240401/*.png    
+        png: output/report_snapshot_20240401/*.png  
+        txt: output/report_snapshot_20240401/*.txt
 
  # 2024-10-03
   extract_snapshot_20241003:
@@ -174,3 +183,4 @@ actions:
       moderately_sensitive:
         csv: output/report_snapshot_20241003/*.csv
         png: output/report_snapshot_20241003/*.png    
+        txt: output/report_snapshot_20241003/*.txt

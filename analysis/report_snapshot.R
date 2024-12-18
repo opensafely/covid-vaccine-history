@@ -49,6 +49,7 @@ default_date <- firstpossiblevax_date
 ## Create output directory
 output_dir <- here("output", glue("report_snapshot_{snapshot_date_compact}"))
 fs::dir_create(output_dir)
+options(width=200) # set output width for capture.output
 
 
 stopifnot("snapshot date is greater than observation end date - extend end date to pick up all vaccinations prior to snapshot date" = snapshot_date <= end_date)
@@ -59,6 +60,12 @@ data_snapshot <- read_feather(here("output", "extracts", glue("extract_snapshot_
 data_vax <- read_rds(here("output", "process", "data_vax.rds"))
 data_vax_clean <- read_rds(here("output", "process", "data_vax_clean.rds"))
 data_fixed <- read_rds(here("output", "process", "data_fixed.rds"))
+
+capture.output(
+  skimr::skim_without_charts(data_snapshot),
+  file = fs::path(output_dir, "data_snapshot_skim.txt"),
+  split = FALSE
+)
 
 # select most recent vaccine _before_ snapshot date, and summarise
 data_last_vax_date_clean <-
