@@ -49,6 +49,7 @@ default_date <- firstpossiblevax_date
 ## Create output directory
 output_dir <- here("output", glue("report_snapshot_{snapshot_date_compact}"))
 fs::dir_create(output_dir)
+options(width=200) # set output width for capture.output
 
 
 stopifnot("snapshot date is greater than observation end date - extend end date to pick up all vaccinations prior to snapshot date" = snapshot_date <= end_date)
@@ -59,6 +60,12 @@ data_snapshot <- read_feather(here("output", "extracts", glue("extract_snapshot_
 data_vax <- read_rds(here("output", "process", "data_vax.rds"))
 data_vax_clean <- read_rds(here("output", "process", "data_vax_clean.rds"))
 data_fixed <- read_rds(here("output", "process", "data_fixed.rds"))
+
+capture.output(
+  skimr::skim_without_charts(data_snapshot),
+  file = fs::path(output_dir, "data_snapshot_skim.txt"),
+  split = FALSE
+)
 
 # select most recent vaccine _before_ snapshot date, and summarise
 data_last_vax_date_clean <-
@@ -194,10 +201,18 @@ plot_date_of_last_dose(ethnicity5)
 plot_date_of_last_dose(region)
 plot_date_of_last_dose(imd_quintile)
 #PRIMIS
-plot_date_of_last_dose(chd)
-plot_date_of_last_dose(cld)
-plot_date_of_last_dose(cv)
-
+plot_date_of_last_dose(crd) # cronic respiratory disease
+plot_date_of_last_dose(chd) # cronic heart disease
+plot_date_of_last_dose(ckd) # chronic kidney disease
+plot_date_of_last_dose(cld) # cronic liver disease
+plot_date_of_last_dose(cns) # chronic neurological 
+plot_date_of_last_dose(learndis) # learning disability
+plot_date_of_last_dose(diabetes) # diabetes
+plot_date_of_last_dose(immunosuppressed) # immunosuppressed
+plot_date_of_last_dose(asplenia) # asplenia or dysfunction of the spleen
+plot_date_of_last_dose(severe_obesity) # obesity
+plot_date_of_last_dose(smi) # severe mental illness
+plot_date_of_last_dose(primis_atrisk) # clinically vulnerable 
 ## output plots of dose count by type and other characteristics ----
 
 plot_vax_count <- function(rows) {
@@ -272,7 +287,84 @@ plot_vax_count(ageband)
 plot_vax_count(ethnicity5)
 plot_vax_count(region)
 plot_vax_count(imd_quintile)
+
 #PRIMIS
-plot_vax_count(chd)
-plot_vax_count(cld)
-plot_vax_count(cv)
+plot_vax_count(crd) # cronic respiratory disease
+plot_vax_count(chd) # cronic heart disease
+plot_vax_count(ckd) # chronic kidney disease
+plot_vax_count(cld) # cronic liver disease
+plot_vax_count(cns) # chronic neurologicalS
+plot_vax_count(learndis) # learning disability
+plot_vax_count(diabetes) # diabetes
+plot_vax_count(immunosuppressed) # immunosuppressed
+plot_vax_count(asplenia) # asplenia or dysfunction of the spleen
+plot_vax_count(severe_obesity) # obesity
+plot_vax_count(smi) # severe mental illness
+plot_vax_count(primis_atrisk) # clinically vulnerable 
+
+#Table
+create_summary_table <- function(rows) {
+  summary_table <- data_snapshot %>%
+    mutate(
+      # Calculate months since last dose
+      months_since_last_dose = round(as.numeric(days_since_vax/30.4), 1)
+    ) %>%
+    group_by({{ rows }}) %>%
+    summarise(
+      # Dose counts
+      Total = n(),
+      `0` = sum(vax_count == 0, na.rm = TRUE),
+      `1` = sum(vax_count == 1, na.rm = TRUE),
+      `2` = sum(vax_count == 2, na.rm = TRUE),
+      `3` = sum(vax_count == 3, na.rm = TRUE),
+      `4` = sum(vax_count == 4, na.rm = TRUE),
+      `5+` = sum(vax_count >= 5, na.rm = TRUE),
+      # Dose percentages
+      `0_per` = round(sum(vax_count == 0, na.rm = TRUE) / n() * 100, 1),
+      `1_per` = round(sum(vax_count == 1, na.rm = TRUE) / n() * 100, 1),
+      `2_per` = round(sum(vax_count == 2, na.rm = TRUE) / n() * 100, 1),
+      `3_per` = round(sum(vax_count == 3, na.rm = TRUE) / n() * 100, 1),
+      `4_per` = round(sum(vax_count == 4, na.rm = TRUE) / n() * 100, 1),
+      `5+_per` = round(sum(vax_count >= 5, na.rm = TRUE) / n() * 100, 1),
+      # Dose summary
+      Dose_median = median(vax_count, na.rm = TRUE),
+      Dose_25 = quantile(vax_count, probs = 0.25, na.rm = TRUE), 
+      Dose_75 = quantile(vax_count, probs = 0.75, na.rm = TRUE),
+      # Vaccination in past 12 and 24 months
+      Vacc_12m_n = sum(months_since_last_dose <= 12, na.rm = TRUE),
+      Vacc_12m_perc = round(Vacc_12m_n / n() * 100, 1),
+      Vacc_24m_n = sum(months_since_last_dose <= 24, na.rm = TRUE),
+      Vacc_24m_perc = round(Vacc_24m_n / n() * 100, 1),
+      # Time since last dose
+      Time_last_dose_median = round(median(months_since_last_dose, na.rm = TRUE), 1),
+      Time_last_dose_25 = round(quantile(months_since_last_dose, probs = 0.25, na.rm = TRUE), 1),
+      Time_last_dose_75 = round(quantile(months_since_last_dose, probs = 0.75, na.rm = TRUE), 1)
+    ) %>%
+    ungroup()
+  row_name <- deparse(substitute(rows))
+  # Write table to a CSV file
+  write_csv(summary_table, fs::path(output_dir, glue("summary_table_{row_name}.csv")))
+  print(summary_table)
+}
+
+## --VARIABLES--
+create_summary_table(all)
+create_summary_table(sex)
+create_summary_table(ageband)
+create_summary_table(ethnicity5)
+create_summary_table(region)
+create_summary_table(imd_quintile)
+
+#PRIMIS
+create_summary_table(crd) # cronic respiratory disease
+create_summary_table(chd) # cronic heart disease
+create_summary_table(ckd) # chronic kidney disease
+create_summary_table(cld) # cronic liver disease
+create_summary_table(cns) # chronic neurological
+create_summary_table(learndis) # learning disability
+create_summary_table(diabetes) # diabetes
+create_summary_table(immunosuppressed) # immunosuppressed
+create_summary_table(asplenia) # asplenia or dysfunction of the spleen
+create_summary_table(severe_obesity) # obesity
+create_summary_table(smi) # severe mental illness
+create_summary_table(primis_atrisk) # clinically vulnerable 

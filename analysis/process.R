@@ -19,7 +19,7 @@ source(here("analysis", "utility.R"))
 # create output directory
 output_dir <- here("output", "process")
 fs::dir_create(output_dir)
-
+options(width=200) # set output width for capture.output
 
 # Import and process fixed dataset ----
 
@@ -35,6 +35,12 @@ stopifnot(
   "inconsistency between ethnicity5 and ethnicity 16" = identical(data_extract_fixed$ethnicity5, ethnicity_16_to_5(data_extract_fixed$ethnicity16))
 )
 
+# print details about dataset
+capture.output(
+  skimr::skim_without_charts(data_extract_fixed),
+  file = fs::path(output_dir, "data_extract_fixed_skim.txt"),
+  split = FALSE
+)
 
 # Process snapshot dataset
 data_processed_fixed <- data_extract_fixed %>%
@@ -62,6 +68,12 @@ data_processed_fixed %>%
   ) %>%
   write_rds(fs::path(output_dir, "data_fixed.rds"), compress = "gz")
 
+# print details about dataset
+capture.output(
+  skimr::skim_without_charts(data_processed_fixed),
+  file = fs::path(output_dir, "data_processed_fixed_skim.txt"),
+  split = FALSE
+)
 
 ## delete in-memory objects to save space
 rm(data_processed_fixed)
@@ -96,9 +108,19 @@ data_vax <-
     matches("stp_\\d+"),
     matches("imd_\\d+"),
     matches("imd_quintile_\\d+"),
-    # ... more clinical characteristics here
-    matches("chd_\\d+"),
-    matches("cld_\\d+")
+    # ... more clinical (PRIMIS) characteristics here
+    matches("primis_atrisk_\\d+") #, # Clinically vulnerable
+#    matches("crd_\\d+"), #chronic respiratory disease
+#    matches("chd_\\d+"), #chronic heart disease
+#    matches("ckd_\\d+"), #chronic kidney disease
+#    matches("cld_\\d+"), # chronic liver disease
+#    matches("cns_\\d+"), # chronic neurological disease
+#    matches("learndis_\\d+"), # learning Disability
+#    matches("diabetes_\\d+"), #diabetes
+#    matches("immunosuppressed_\\d+"), #immunosuppress grouped
+#    matches("asplenia_\\d+"), # asplenia or dysfunction of the spleen
+#    matches("severe_obesity_\\d+"), #immunosuppress grouped
+#    matches("smi_\\d+"), #severe mental illness
   ) %>%
   pivot_longer(
     cols = -patient_id,
@@ -130,6 +152,12 @@ data_vax <-
   ) %>%
   ungroup()
 
+capture.output(
+  skimr::skim_without_charts(data_vax),
+  file = fs::path(output_dir, "data_vax_skim.txt"),
+  split = FALSE
+)
+
 # save dataset with all vaccines
 write_rds(data_vax, fs::path(output_dir, "data_vax.rds"), compress = "gz")
 
@@ -149,5 +177,11 @@ data_vax_clean <-
   ) %>%
   ungroup()
 
-# save ataset with <14-day vaccines removed
+capture.output(
+  skimr::skim_without_charts(data_vax_clean),
+  file = fs::path(output_dir, "data_vax_clean_skim.txt"),
+  split = FALSE
+)
+
+# save dataset with <14-day vaccines removed
 write_rds(data_vax_clean, fs::path(output_dir, "data_vax_clean.rds"), compress = "gz")
