@@ -26,12 +26,12 @@ from ehrql.tables.tpp import (
   vaccinations, 
   clinical_events, 
   ons_deaths,
-  addresses,
+
 )
 # import codelists
 from codelists import *
 
-from cx_function import *
+from analysis.variables_function import *
 
 study_dates = loads(
     Path("lib/dates.json").read_text(),
@@ -65,3 +65,4 @@ dataset.define_population(
 
 demographic_variables(dataset = dataset, index_date = snapshot_date)
 primis_variables(dataset = dataset, index_date = snapshot_date)
+# other_cx_variables(dataset = dataset, index_date = snapshot_date)
