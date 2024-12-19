@@ -172,7 +172,8 @@ summary_stratified <-
     vax_dosenumber, vax_type8, vax_campaign,
     sex, ageband, ethnicity5, region, imd_quintile,
     # PRIMIS
-    crd, chd, ckd, cld, cns, learndis, diabetes, immunosuppressed, asplenia, severe_obesity, smi, primis_atrisk
+ #   crd, chd, ckd, cld, cns, learndis, diabetes, immunosuppressed, asplenia, severe_obesity, smi, 
+ primis_atrisk
   ) %>%
   summarise(
     n = ceiling_any(n(), 100)
@@ -265,17 +266,17 @@ plot_vax_dates(vax_campaign, all)
 plot_vax_dates(vax_dosenumber, all)
 
 #PRIMIS
-plot_vax_dates(crd, all) # chronic respiratory disease
-plot_vax_dates(chd, all) # chronic heart disease
-plot_vax_dates(ckd, all) # chronic kidney disease
-plot_vax_dates(cld, all) # chronic liver disease
-plot_vax_dates(cns, all) #chronic neurological
-plot_vax_dates(learndis, all) # learning disability
-plot_vax_dates(diabetes, all) # diabetes
-plot_vax_dates(immunosuppressed, all) # immunosuppressed
-plot_vax_dates(asplenia, all) # asplenia or dysfunction of the spleen
-plot_vax_dates(severe_obesity, all) # obesity
-plot_vax_dates(smi, all) # severe mental illness
+#plot_vax_dates(crd, all) # chronic respiratory disease
+#plot_vax_dates(chd, all) # chronic heart disease
+#plot_vax_dates(ckd, all) # chronic kidney disease
+#plot_vax_dates(cld, all) # chronic liver disease
+# plot_vax_dates(cns, all) #chronic neurological
+# plot_vax_dates(learndis, all) # learning disability
+# plot_vax_dates(diabetes, all) # diabetes
+# plot_vax_dates(immunosuppressed, all) # immunosuppressed
+# plot_vax_dates(asplenia, all) # asplenia or dysfunction of the spleen
+# plot_vax_dates(severe_obesity, all) # obesity
+# plot_vax_dates(smi, all) # severe mental illness
 plot_vax_dates(primis_atrisk, all) # clinically vulnerable 
 
 
@@ -286,17 +287,17 @@ plot_vax_dates(region, vax_dosenumber)
 plot_vax_dates(imd_quintile, vax_dosenumber)
 plot_vax_dates(vax_campaign, vax_dosenumber)
 #PRIMIS
-plot_vax_dates(crd, vax_dosenumber) # chronic respiratory disease
-plot_vax_dates(chd, vax_dosenumber) # chronic heart disease
-plot_vax_dates(ckd, vax_dosenumber) # chronic kidney disease
-plot_vax_dates(cld, vax_dosenumber) # chronic liver disease
-plot_vax_dates(cns, vax_dosenumber) # chronic neurological disease
-plot_vax_dates(learndis, vax_dosenumber) # learning Disability
-plot_vax_dates(diabetes, vax_dosenumber) # diabetes
-plot_vax_dates(immunosuppressed, vax_dosenumber) # immunosuppressed
-plot_vax_dates(asplenia, vax_dosenumber) # asplenia or dysfunction of the spleen
-plot_vax_dates(severe_obesity, vax_dosenumber) # obesity
-plot_vax_dates(smi, vax_dosenumber) # severe mental illness
+#plot_vax_dates(crd, vax_dosenumber) # chronic respiratory disease
+#plot_vax_dates(chd, vax_dosenumber) # chronic heart disease
+# plot_vax_dates(ckd, vax_dosenumber) # chronic kidney disease
+# plot_vax_dates(cld, vax_dosenumber) # chronic liver disease
+# plot_vax_dates(cns, vax_dosenumber) # chronic neurological disease
+# plot_vax_dates(learndis, vax_dosenumber) # learning Disability
+# plot_vax_dates(diabetes, vax_dosenumber) # diabetes
+# plot_vax_dates(immunosuppressed, vax_dosenumber) # immunosuppressed
+# plot_vax_dates(asplenia, vax_dosenumber) # asplenia or dysfunction of the spleen
+# plot_vax_dates(severe_obesity, vax_dosenumber) # obesity
+# plot_vax_dates(smi, vax_dosenumber) # severe mental illness
 plot_vax_dates(primis_atrisk, vax_dosenumber) # Clinically vulnerable
 
 ## output plots of time since previous vaccination by type, dose number, and other characteristics ----
@@ -379,15 +380,15 @@ plot_vax_intervals(vax_dosenumber, all)
 
 #PRIMIS
 
-plot_vax_intervals(crd, vax_dosenumber) # chronic respiratory disease
-plot_vax_intervals(chd, vax_dosenumber) # chronic heart disease
-plot_vax_intervals(ckd, vax_dosenumber) # chronic kidney disease
-plot_vax_intervals(cld, vax_dosenumber) # chronic liver disease
-plot_vax_intervals(cns, vax_dosenumber) # chronic neurological
-plot_vax_intervals(learndis, vax_dosenumber) # learning disability
-plot_vax_intervals(diabetes, vax_dosenumber) # diabetes
-plot_vax_intervals(immunosuppressed, vax_dosenumber) # immunosuppressed
-plot_vax_intervals(asplenia, vax_dosenumber) # asplenia or dysfunction of the spleen
-plot_vax_intervals(severe_obesity, vax_dosenumber) # obesity
-plot_vax_intervals(smi, vax_dosenumber) # severe mental illness
+# plot_vax_intervals(crd, vax_dosenumber) # chronic respiratory disease
+# plot_vax_intervals(chd, vax_dosenumber) # chronic heart disease
+# plot_vax_intervals(ckd, vax_dosenumber) # chronic kidney disease
+# plot_vax_intervals(cld, vax_dosenumber) # chronic liver disease
+# plot_vax_intervals(cns, vax_dosenumber) # chronic neurological
+# plot_vax_intervals(learndis, vax_dosenumber) # learning disability
+# plot_vax_intervals(diabetes, vax_dosenumber) # diabetes
+# plot_vax_intervals(immunosuppressed, vax_dosenumber) # immunosuppressed
+# plot_vax_intervals(asplenia, vax_dosenumber) # asplenia or dysfunction of the spleen
+# plot_vax_intervals(severe_obesity, vax_dosenumber) # obesity
+# plot_vax_intervals(smi, vax_dosenumber) # severe mental illness
 plot_vax_intervals(primis_atrisk, vax_dosenumber) # Clinically vulnerable

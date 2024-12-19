@@ -148,7 +148,11 @@ def has_severe_obesity(index_date):
     event_bmi = last_prior_event(
         bmi, 
         index_date,
-        where=(clinical_events.numeric_value.is_not_null())
+        where=(
+            clinical_events.numeric_value.is_not_null() & 
+            (clinical_events.numeric_value > 4) & 
+            (clinical_events.numeric_value < 200)
+        )
     )
     # Severe obesity
     severe_obesity = case(
@@ -308,14 +312,14 @@ def primis_variables(dataset, index_date, var_name_suffix=""):
 ##################################################################
 
 
-def other_cx_variables(dataset, index_date, var_name_suffix=""):
+# def other_cx_variables(dataset, index_date, var_name_suffix=""):
     ## others of interest
-    dataset.add_column(f"sol_org_trans{var_name_suffix}", has_prior_event(solid_organ_transplant, index_date)) # Organs transplant
-    dataset.add_column(f"hiv{var_name_suffix}", has_prior_event(hiv_aids, index_date)) #HIV/AIDS
-    dataset.add_column(f"cancer{var_name_suffix}", 
-                       has_prior_event(cancer_nonhaem_snomed, index_date, where=clinical_events.date.is_after(index_date - days(int(3 * 365.25))))|
-                       has_prior_event(cancer_haem_snomed, index_date, where=clinical_events.date.is_after(index_date - days(int(3 * 365.25))))
-                       ) #cancer   
+#    dataset.add_column(f"sol_org_trans{var_name_suffix}", has_prior_event(solid_organ_transplant, index_date)) # Organs transplant
+#    dataset.add_column(f"hiv{var_name_suffix}", has_prior_event(hiv_aids, index_date)) #HIV/AIDS
+#    dataset.add_column(f"cancer{var_name_suffix}", 
+#                       has_prior_event(cancer_nonhaem_snomed, index_date, where=clinical_events.date.is_after(index_date - days(int(3 * 365.25))))|
+#                       has_prior_event(cancer_haem_snomed, index_date, where=clinical_events.date.is_after(index_date - days(int(3 * 365.25))))
+#                       ) #cancer   
 
 
 
