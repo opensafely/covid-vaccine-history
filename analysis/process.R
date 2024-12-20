@@ -7,6 +7,7 @@
 # Preliminaries ----
 
 # Import libraries
+library("dtplyr")
 library("tidyverse")
 library("lubridate")
 library("arrow")
@@ -44,6 +45,7 @@ capture.output(
 
 # Process snapshot dataset
 data_processed_fixed <- data_extract_fixed %>%
+  lazy_dt() %>%
   mutate(
     sex = fct_case_when(
       sex == "female" ~ "Female",
@@ -57,6 +59,13 @@ data_processed_fixed <- data_extract_fixed %>%
       fct_relabel(~ str_extract(.x, "(?<= - )(.*)")), # pick up everything after " - "
   )
 
+# print details about dataset
+capture.output(
+  skimr::skim_without_charts(data_processed_fixed),
+  file = fs::path(output_dir, "data_processed_fixed_skim.txt"),
+  split = FALSE
+)
+
 # save processed fixed dataset
 data_processed_fixed %>%
   select(
@@ -68,12 +77,7 @@ data_processed_fixed %>%
   ) %>%
   write_rds(fs::path(output_dir, "data_fixed.rds"), compress = "gz")
 
-# print details about dataset
-capture.output(
-  skimr::skim_without_charts(data_processed_fixed),
-  file = fs::path(output_dir, "data_processed_fixed_skim.txt"),
-  split = FALSE
-)
+
 
 ## delete in-memory objects to save space
 rm(data_processed_fixed)
@@ -96,6 +100,7 @@ data_extract_varying <- read_feather(here("output", "extracts", "extract_varying
 # Reshape vaccination data
 data_vax <-
   data_extract_varying %>%
+  lazy_dt() %>%
   select(
     patient_id,
     matches("covid_vax\\_\\d+\\_date"),
@@ -108,7 +113,8 @@ data_vax <-
     matches("stp_\\d+"),
     matches("imd_\\d+"),
     matches("imd_quintile_\\d+"),
-    # ... more clinical (PRIMIS) characteristics here
+
+    # PRIMIS variables
 #    matches("primis_atrisk_\\d+") #, # Clinically vulnerable
 #    matches("crd_\\d+"), # chronic respiratory disease
 #    matches("chd_\\d+"), # chronic heart disease
@@ -126,13 +132,18 @@ data_vax <-
     cols = -patient_id,
     names_to = c(".value", "vax_index"),
     names_pattern = "^(.*)_(\\d+)",
-    values_drop_na = TRUE,
-    names_transform = list(vax_index = as.integer)
+    # values_drop_na = TRUE, # this causes an error in dtplyr - replace with filter(!is_na(covid_vax))
+    # names_transform = list(vax_index = as.integer) # not supported by dtplyr - use vax_index = as.integer(vax_index) in a mutate step
+  ) %>%
+  filter(!is.na(covid_vax)) %>%
+  mutate(
+    vax_index = as.integer(vax_index)
   ) %>%
   rename(
     vax_date = covid_vax,
     vax_type = covid_vax_type,
   ) %>%
+  as_tibble() %>% # insert this here to revert to standard dplyr as `cut` function doesn't work with dtplyr
   mutate(
     !!!standardise_characteristics,
     vax_campaign = cut(
@@ -141,7 +152,7 @@ data_vax <-
       labels = campaign_dates$campaign,
       include.lowest = TRUE, right = TRUE
     )
-  )  %>%
+  ) %>%
   arrange(patient_id, vax_date) %>%
   mutate(
     vax_type = fct_recode(factor(vax_type, vax_product_lookup), !!!vax_product_lookup) %>% fct_explicit_na("other")
@@ -150,7 +161,8 @@ data_vax <-
   mutate(
     vax_interval = as.integer(vax_date - lag(vax_date, 1))
   ) %>%
-  ungroup()
+  ungroup() %>%
+  as_tibble()
 
 capture.output(
   skimr::skim_without_charts(data_vax),
