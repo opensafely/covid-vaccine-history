@@ -144,7 +144,7 @@ data_vax <-
     vax_date = covid_vax,
     vax_type = covid_vax_type,
   ) %>%
-  as_tibble() %>% # insert this here to revert to standard dplyr as `cut` function doesn't work with dtplyr
+  #as_tibble() %>% # insert this here to revert to standard dplyr as `cut` function doesn't work with dtplyr
   mutate(
     !!!standardise_characteristics,
     vax_campaign = cut(
@@ -156,14 +156,14 @@ data_vax <-
   ) %>%
   arrange(patient_id, vax_date) %>%
   mutate(
+    vax_type_raw = vax_type,
     vax_type = fct_recode(factor(vax_type, vax_product_lookup), !!!vax_product_lookup) %>% fct_explicit_na("other")
   ) %>%
   group_by(patient_id) %>%
   mutate(
     vax_interval = as.integer(vax_date - lag(vax_date, 1))
   ) %>%
-  ungroup() %>%
-  as_tibble()
+  ungroup()
 
 capture.output(
   skimr::skim_without_charts(data_vax),
@@ -173,6 +173,17 @@ capture.output(
 
 # save dataset with all vaccines
 write_rds(data_vax, fs::path(output_dir, "data_vax.rds"), compress = "gz")
+
+data_vax %>%
+  mutate(
+    vax_type_raw = if_else(is.na(vax_type_raw), "NULL", vax_type_raw),
+  ) %>%
+  group_by(vax_type_raw) %>%
+  summarise(
+    n = ceiling_any(n(), 100),
+  ) %>%
+  write_csv(fs::path(output_dir, "vax_type_count.csv"))
+
 
 # remove vaccinations occurring within 14 days of a previous vaccination
 data_vax_clean <-

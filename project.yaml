@@ -28,6 +28,7 @@ actions:
       highly_sensitive:
         rds: output/process/*.rds
       moderately_sensitive:
+        csv: output/process/*.csv
         txt: output/process/*.txt
 
 # report vaccine history over entire observational period ---
