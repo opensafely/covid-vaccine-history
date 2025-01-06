@@ -120,7 +120,7 @@ data_snapshot <-
   mutate(
     across(where(is.factor) | where(is.character), ~fct_explicit_na(.x, na_level ="Unknown"))
   )
-
+  
 
 
 # _______________________________________________________________________________________
@@ -318,33 +318,35 @@ create_summary_table <- function(rows) {
     group_by({{ rows }}) %>%
     summarise(
       # Dose counts
-      Total = n(),
-      `0` = sum(vax_count == 0, na.rm = TRUE),
-      `1` = sum(vax_count == 1, na.rm = TRUE),
-      `2` = sum(vax_count == 2, na.rm = TRUE),
-      `3` = sum(vax_count == 3, na.rm = TRUE),
-      `4` = sum(vax_count == 4, na.rm = TRUE),
-      `5+` = sum(vax_count >= 5, na.rm = TRUE),
+      total = ceiling_any(n(), 100),
+      `0` = ceiling_any(sum(vax_count == 0, na.rm = TRUE), 100),
+      `1` = ceiling_any(sum(vax_count == 1, na.rm = TRUE), 100),
+      `2` = ceiling_any(sum(vax_count == 2, na.rm = TRUE), 100),
+      `3` = ceiling_any(sum(vax_count == 3, na.rm = TRUE), 100),
+      `4` = ceiling_any(sum(vax_count == 4, na.rm = TRUE), 100),
+      `5+` = ceiling_any(sum(vax_count >= 5, na.rm = TRUE), 100),
       # Dose percentages
-      `0_per` = round(sum(vax_count == 0, na.rm = TRUE) / n() * 100, 1),
-      `1_per` = round(sum(vax_count == 1, na.rm = TRUE) / n() * 100, 1),
-      `2_per` = round(sum(vax_count == 2, na.rm = TRUE) / n() * 100, 1),
-      `3_per` = round(sum(vax_count == 3, na.rm = TRUE) / n() * 100, 1),
-      `4_per` = round(sum(vax_count == 4, na.rm = TRUE) / n() * 100, 1),
-      `5+_per` = round(sum(vax_count >= 5, na.rm = TRUE) / n() * 100, 1),
+      `0_per` = round(`0`*100 / total, 1),
+      `1_per` = round(`1`*100 / total, 1),
+      `2_per` = round(`2`*100 / total, 1),
+      `3_per` = round(`3`*100 / total, 1),
+      `4_per` = round(`4`*100 / total, 1),
+      `5+_per` = round(`5+`*100 / total, 1),
       # Dose summary
       Dose_median = median(vax_count, na.rm = TRUE),
       Dose_25 = quantile(vax_count, probs = 0.25, na.rm = TRUE), 
       Dose_75 = quantile(vax_count, probs = 0.75, na.rm = TRUE),
       # Vaccination in past 12 and 24 months
-      Vacc_12m_n = sum(months_since_last_dose <= 12, na.rm = TRUE),
-      Vacc_12m_perc = round(Vacc_12m_n / n() * 100, 1),
-      Vacc_24m_n = sum(months_since_last_dose <= 24, na.rm = TRUE),
-      Vacc_24m_perc = round(Vacc_24m_n / n() * 100, 1),
+      Vacc_12m_n = ceiling_any(sum(months_since_last_dose <= 12, na.rm = TRUE), 100),
+      Vacc_12m_per = round(Vacc_12m_n / total * 100, 1),
+      Vacc_24m_n = ceiling_any(sum(months_since_last_dose <= 24, na.rm = TRUE), 100),
+      Vacc_24m_per = round(Vacc_24m_n / total * 100, 1),
       # Time since last dose
       Time_last_dose_median = round(median(months_since_last_dose, na.rm = TRUE), 1),
+      Time_last_dose_10 = round(quantile(months_since_last_dose, probs = 0.10, na.rm = TRUE), 1),
       Time_last_dose_25 = round(quantile(months_since_last_dose, probs = 0.25, na.rm = TRUE), 1),
-      Time_last_dose_75 = round(quantile(months_since_last_dose, probs = 0.75, na.rm = TRUE), 1)
+      Time_last_dose_75 = round(quantile(months_since_last_dose, probs = 0.75, na.rm = TRUE), 1),
+      Time_last_dose_90 = round(quantile(months_since_last_dose, probs = 0.90, na.rm = TRUE), 1)
     ) %>%
     ungroup()
   row_name <- deparse(substitute(rows))
