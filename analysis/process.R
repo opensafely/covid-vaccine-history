@@ -7,8 +7,8 @@
 # Preliminaries ----
 
 # Import libraries
-library("dtplyr")
 library("tidyverse")
+library("dtplyr")
 library("lubridate")
 library("arrow")
 library("here")
@@ -57,7 +57,8 @@ data_processed_fixed <- data_extract_fixed %>%
     ethnicity5 = factor(ethnicity5, levels = factor_levels$ethnicity5),
     ethnicity16 = factor(ethnicity16, levels = factor_levels$ethnicity16) %>%
       fct_relabel(~ str_extract(.x, "(?<= - )(.*)")), # pick up everything after " - "
-  )
+  ) %>%
+  as_tibble()
 
 # print details about dataset
 capture.output(
@@ -100,7 +101,7 @@ data_extract_varying <- read_feather(here("output", "extracts", "extract_varying
 # Reshape vaccination data
 data_vax <-
   data_extract_varying %>%
-  lazy_dt() %>%
+  #lazy_dt() %>%
   select(
     patient_id,
     matches("covid_vax\\_\\d+\\_date"),
@@ -197,3 +198,4 @@ capture.output(
 
 # save dataset with <14-day vaccines removed
 write_rds(data_vax_clean, fs::path(output_dir, "data_vax_clean.rds"), compress = "gz")
+

@@ -8,6 +8,7 @@
 
 # Import libraries
 library("tidyverse")
+library("dtplyr")
 library("lubridate")
 library("glue")
 library("here")
@@ -57,7 +58,7 @@ stopifnot("snapshot date is greater than observation end date - extend end date 
 
 # Import processed data ----
 data_snapshot <- read_feather(here("output", "extracts", glue("extract_snapshot_{snapshot_date_compact}.arrow")))
-data_vax <- read_rds(here("output", "process", "data_vax.rds"))
+#data_vax <- read_rds(here("output", "process", "data_vax.rds"))
 data_vax_clean <- read_rds(here("output", "process", "data_vax_clean.rds"))
 data_fixed <- read_rds(here("output", "process", "data_fixed.rds"))
 
@@ -92,17 +93,21 @@ stopifnot("data_last_vax_date_clean should not have multiple rows per patient" =
 # note that in dummy data this doesn't work very well because patient IDs might not be matched across all datasets
 data_snapshot <-
   data_snapshot %>%
+  lazy_dt() %>%
   left_join(
     data_fixed %>% select(patient_id, sex, ethnicity5, ethnicity16),
     by = "patient_id"
   ) %>%
+  as_tibble() %>%
   mutate(
     !!!standardise_characteristics
   ) %>%
+  lazy_dt() %>%
   left_join(
     data_last_vax_date_clean,
     by = "patient_id"
   ) %>%
+  as_tibble() %>%
   mutate(
     # impute values for people with no previous vaccination
     vax_count = replace_na(vax_count, 0L),
@@ -115,6 +120,7 @@ data_snapshot <-
   mutate(
     across(where(is.factor) | where(is.character), ~fct_explicit_na(.x, na_level ="Unknown"))
   )
+
 
 
 # _______________________________________________________________________________________
