@@ -8,6 +8,7 @@
 
 # Import libraries
 library("tidyverse")
+library("dtplyr")
 library("lubridate")
 library("glue")
 library("here")
@@ -57,7 +58,7 @@ stopifnot("snapshot date is greater than observation end date - extend end date 
 
 # Import processed data ----
 data_snapshot <- read_feather(here("output", "extracts", glue("extract_snapshot_{snapshot_date_compact}.arrow")))
-data_vax <- read_rds(here("output", "process", "data_vax.rds"))
+#data_vax <- read_rds(here("output", "process", "data_vax.rds"))
 data_vax_clean <- read_rds(here("output", "process", "data_vax_clean.rds"))
 data_fixed <- read_rds(here("output", "process", "data_fixed.rds"))
 
@@ -92,17 +93,21 @@ stopifnot("data_last_vax_date_clean should not have multiple rows per patient" =
 # note that in dummy data this doesn't work very well because patient IDs might not be matched across all datasets
 data_snapshot <-
   data_snapshot %>%
+  lazy_dt() %>%
   left_join(
     data_fixed %>% select(patient_id, sex, ethnicity5, ethnicity16),
     by = "patient_id"
   ) %>%
+  as_tibble() %>%
   mutate(
     !!!standardise_characteristics
   ) %>%
+  lazy_dt() %>%
   left_join(
     data_last_vax_date_clean,
     by = "patient_id"
   ) %>%
+  as_tibble() %>%
   mutate(
     # impute values for people with no previous vaccination
     vax_count = replace_na(vax_count, 0L),
@@ -115,6 +120,7 @@ data_snapshot <-
   mutate(
     across(where(is.factor) | where(is.character), ~fct_explicit_na(.x, na_level ="Unknown"))
   )
+  
 
 
 # _______________________________________________________________________________________
@@ -312,33 +318,35 @@ create_summary_table <- function(rows) {
     group_by({{ rows }}) %>%
     summarise(
       # Dose counts
-      Total = n(),
-      `0` = sum(vax_count == 0, na.rm = TRUE),
-      `1` = sum(vax_count == 1, na.rm = TRUE),
-      `2` = sum(vax_count == 2, na.rm = TRUE),
-      `3` = sum(vax_count == 3, na.rm = TRUE),
-      `4` = sum(vax_count == 4, na.rm = TRUE),
-      `5+` = sum(vax_count >= 5, na.rm = TRUE),
+      total = ceiling_any(n(), 100),
+      `0` = ceiling_any(sum(vax_count == 0, na.rm = TRUE), 100),
+      `1` = ceiling_any(sum(vax_count == 1, na.rm = TRUE), 100),
+      `2` = ceiling_any(sum(vax_count == 2, na.rm = TRUE), 100),
+      `3` = ceiling_any(sum(vax_count == 3, na.rm = TRUE), 100),
+      `4` = ceiling_any(sum(vax_count == 4, na.rm = TRUE), 100),
+      `5+` = ceiling_any(sum(vax_count >= 5, na.rm = TRUE), 100),
       # Dose percentages
-      `0_per` = round(sum(vax_count == 0, na.rm = TRUE) / n() * 100, 1),
-      `1_per` = round(sum(vax_count == 1, na.rm = TRUE) / n() * 100, 1),
-      `2_per` = round(sum(vax_count == 2, na.rm = TRUE) / n() * 100, 1),
-      `3_per` = round(sum(vax_count == 3, na.rm = TRUE) / n() * 100, 1),
-      `4_per` = round(sum(vax_count == 4, na.rm = TRUE) / n() * 100, 1),
-      `5+_per` = round(sum(vax_count >= 5, na.rm = TRUE) / n() * 100, 1),
+      `0_per` = round(`0`*100 / total, 1),
+      `1_per` = round(`1`*100 / total, 1),
+      `2_per` = round(`2`*100 / total, 1),
+      `3_per` = round(`3`*100 / total, 1),
+      `4_per` = round(`4`*100 / total, 1),
+      `5+_per` = round(`5+`*100 / total, 1),
       # Dose summary
       Dose_median = median(vax_count, na.rm = TRUE),
       Dose_25 = quantile(vax_count, probs = 0.25, na.rm = TRUE), 
       Dose_75 = quantile(vax_count, probs = 0.75, na.rm = TRUE),
       # Vaccination in past 12 and 24 months
-      Vacc_12m_n = sum(months_since_last_dose <= 12, na.rm = TRUE),
-      Vacc_12m_perc = round(Vacc_12m_n / n() * 100, 1),
-      Vacc_24m_n = sum(months_since_last_dose <= 24, na.rm = TRUE),
-      Vacc_24m_perc = round(Vacc_24m_n / n() * 100, 1),
+      Vacc_12m_n = ceiling_any(sum(months_since_last_dose <= 12, na.rm = TRUE), 100),
+      Vacc_12m_per = round(Vacc_12m_n / total * 100, 1),
+      Vacc_24m_n = ceiling_any(sum(months_since_last_dose <= 24, na.rm = TRUE), 100),
+      Vacc_24m_per = round(Vacc_24m_n / total * 100, 1),
       # Time since last dose
       Time_last_dose_median = round(median(months_since_last_dose, na.rm = TRUE), 1),
+      Time_last_dose_10 = round(quantile(months_since_last_dose, probs = 0.10, na.rm = TRUE), 1),
       Time_last_dose_25 = round(quantile(months_since_last_dose, probs = 0.25, na.rm = TRUE), 1),
-      Time_last_dose_75 = round(quantile(months_since_last_dose, probs = 0.75, na.rm = TRUE), 1)
+      Time_last_dose_75 = round(quantile(months_since_last_dose, probs = 0.75, na.rm = TRUE), 1),
+      Time_last_dose_90 = round(quantile(months_since_last_dose, probs = 0.90, na.rm = TRUE), 1)
     ) %>%
     ungroup()
   row_name <- deparse(substitute(rows))

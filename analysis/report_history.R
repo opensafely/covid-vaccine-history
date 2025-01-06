@@ -7,6 +7,7 @@
 
 # Import libraries
 library("tidyverse")
+library("dtplyr")
 library("lubridate")
 library("glue")
 library("here")
@@ -35,8 +36,8 @@ vax_shortname_8 <- vax_shortname_lookup[c(1:8)] # , length(vax_shortname_lookup)
 
 data_vax <-
   left_join(
-    data_varying,
-    data_fixed %>% select(patient_id, sex, ethnicity5, ethnicity16, death_date),
+    lazy_dt(data_varying),
+    lazy_dt(data_fixed) %>% select(patient_id, sex, ethnicity5, ethnicity16, death_date),
     by = "patient_id"
   ) %>%
   mutate(
@@ -44,12 +45,13 @@ data_vax <-
     vax_week = floor_date(vax_date, unit = "week", week_start = 1),
     vax_type8 = fct_collapse(vax_type, !!!vax_shortname_8, other_level="Other"),
     all = ""
-  )
+  ) %>%
+  as_tibble()
 
 data_vax_clean <-
   left_join(
-    data_varying_clean,
-    data_fixed %>% select(patient_id, sex, ethnicity5, ethnicity16, death_date),
+    lazy_dt(data_varying_clean),
+    lazy_dt(data_fixed) %>% select(patient_id, sex, ethnicity5, ethnicity16, death_date),
     by = "patient_id"
   ) %>%
   mutate(
@@ -59,9 +61,11 @@ data_vax_clean <-
     all = "",
     all2 = ""
   ) %>%
+  as_tibble() %>%
   mutate(
     across(where(is.factor) | where(is.character), ~fct_explicit_na(.x, na_level ="Unknown"))
   )
+
 
 # _______________________________________________________________________________________
 # data validation checks ----
@@ -172,7 +176,7 @@ summary_stratified <-
     vax_dosenumber, vax_type8, vax_campaign,
     sex, ageband, ethnicity5, region, imd_quintile,
     # PRIMIS
- #   crd, chd, ckd, cld, cns, learndis, diabetes, immunosuppressed, asplenia, severe_obesity, smi, 
+ #   crd, chd, ckd, cld, cns, learndis, diabetes, immunosuppressed, asplenia, severe_obesity, smi,
  #   primis_atrisk
   ) %>%
   summarise(
@@ -277,7 +281,7 @@ plot_vax_dates(vax_dosenumber, all)
 #plot_vax_dates(asplenia, all) # asplenia or dysfunction of the spleen
 #plot_vax_dates(severe_obesity, all) # obesity
 #plot_vax_dates(smi, all) # severe mental illness
-#plot_vax_dates(primis_atrisk, all) # clinically vulnerable 
+#plot_vax_dates(primis_atrisk, all) # clinically vulnerable
 
 
 plot_vax_dates(sex, vax_dosenumber)
