@@ -33,7 +33,7 @@ if (length(args) == 0) {
 temporal_resolution <- 28
 
 # dates to round down to
-# use this with `findInterval` until lubridate package is updated in the opensafely R image
+# use this with `findInterval` until lubridate package is updated in the opensafely R image 
 # (then use `floor_date(date, unit=floor_dates`)
 floor_dates <- seq(
   as.Date("2020-06-01"), # monday
@@ -86,8 +86,8 @@ data_last_vax_date_clean <-
 # check there's only one patient per row:
 check_1rpp <-
   data_last_vax_date_clean %>%
-  lazy_dt() %>%
-  group_by(patient_id) %>%
+ # lazy_dt() %>%
+  #group_by(patient_id) %>%
   filter(row_number() != 1) %>%
   as_tibble()
 stopifnot("data_last_vax_date_clean should not have multiple rows per patient" = nrow(check_1rpp) == 0)
@@ -101,13 +101,12 @@ data_snapshot <-
     data_fixed %>% select(patient_id, sex, ethnicity5, ethnicity16),
     by = "patient_id"
   ) %>%
-  as_tibble() %>%
   mutate(
     !!!standardise_characteristics
   ) %>%
-  lazy_dt() %>%
+ # lazy_dt() %>%
   left_join(
-    data_last_vax_date_clean,
+    data_last_vax_date_clean %>% ungroup(),
     by = "patient_id"
   ) %>%
   as_tibble() %>%
@@ -117,13 +116,13 @@ data_snapshot <-
     last_vax_type = fct_explicit_na(last_vax_type, "unvaccinated"),
     last_vax_date = if_else(vax_count == 0, default_date + as.integer(runif(n(), 0, 10)), last_vax_date),
     last_vax_week = floor_date(last_vax_date, unit = "week", week_start = 1), # starting on a monday
-    last_vax_period = floor_dates[findInterval(last_vax_date, floor_dates)], # use floor_date(last_vax_date, unit = floor_dates) when lubridate package is updated
+    last_vax_period = floor_dates[findInterval(last_vax_date, floor_dates)], # use floor_date(last_vax_date, unit = floor_dates) when lubridate package is updated 
     all = ""
   ) %>%
   mutate(
     across(where(is.factor) | where(is.character), ~fct_explicit_na(.x, na_level ="Unknown"))
-  )
-
+  ) 
+  
 
 
 # _______________________________________________________________________________________
@@ -133,16 +132,20 @@ data_snapshot <-
 ## output plots of date of last dose by type and other characteristics ----
 
 plot_date_of_last_dose <- function(rows) {
-  summary_by <- data_snapshot %>%
+  summary_by <- 
+    data_snapshot %>%
+    lazy_dt() %>%
     group_by({{ rows }}, last_vax_type, last_vax_period) %>%
     summarise(
       n = ceiling_any(n(), 100)
     ) %>%
     ungroup() %>%
+    as_tibble() %>%
     complete(
       {{ rows }}, last_vax_type, last_vax_period,
       fill = list(n = 0)
-    )
+    ) 
+  
 
   temp_plot <-
     ggplot(summary_by) +
@@ -214,23 +217,26 @@ plot_date_of_last_dose(crd) # cronic respiratory disease
 plot_date_of_last_dose(chd) # cronic heart disease
 plot_date_of_last_dose(ckd) # chronic kidney disease
 plot_date_of_last_dose(cld) # cronic liver disease
-plot_date_of_last_dose(cns) # chronic neurological
+plot_date_of_last_dose(cns) # chronic neurological 
 plot_date_of_last_dose(learndis) # learning disability
 plot_date_of_last_dose(diabetes) # diabetes
 plot_date_of_last_dose(immunosuppressed) # immunosuppressed
 plot_date_of_last_dose(asplenia) # asplenia or dysfunction of the spleen
 plot_date_of_last_dose(severe_obesity) # obesity
 plot_date_of_last_dose(smi) # severe mental illness
-plot_date_of_last_dose(primis_atrisk) # clinically vulnerable
+plot_date_of_last_dose(primis_atrisk) # clinically vulnerable 
 ## output plots of dose count by type and other characteristics ----
 
 plot_vax_count <- function(rows) {
-  summary_by <- data_snapshot %>%
+  summary_by <- 
+    data_snapshot %>%
+    lazy_dt() %>%
     group_by({{ rows }}, vax_count) %>%
     summarise(
       n = ceiling_any(n(), 100),
     ) %>%
     ungroup() %>%
+    as_tibble() %>%
     complete(
       {{ rows }}, vax_count,
       fill = list(n = 0)
@@ -284,7 +290,7 @@ plot_vax_count <- function(rows) {
   # col_name = deparse(substitute(cols))
 
   ggsave(fs::path(output_dir, glue("vax_count_{row_name}.png")), plot = temp_plot)
-
+ 
   # write tables that capture underlying plotting data
   write_csv(summary_by, fs::path(output_dir, glue("vax_count_{row_name}.csv")))
 }
@@ -309,15 +315,13 @@ plot_vax_count(immunosuppressed) # immunosuppressed
 plot_vax_count(asplenia) # asplenia or dysfunction of the spleen
 plot_vax_count(severe_obesity) # obesity
 plot_vax_count(smi) # severe mental illness
-plot_vax_count(primis_atrisk) # clinically vulnerable
+plot_vax_count(primis_atrisk) # clinically vulnerable 
 
 #Table
 create_summary_table <- function(rows) {
-  summary_table <- data_snapshot %>%
-    mutate(
-      # Calculate months since last dose
-      months_since_last_dose = round(as.numeric(days_since_vax/30.4), 1)
-    ) %>%
+  summary_table <- 
+    data_snapshot %>%
+    lazy_dt() %>%
     group_by({{ rows }}) %>%
     summarise(
       # Dose counts
@@ -328,30 +332,34 @@ create_summary_table <- function(rows) {
       `3` = ceiling_any(sum(vax_count == 3, na.rm = TRUE), 100),
       `4` = ceiling_any(sum(vax_count == 4, na.rm = TRUE), 100),
       `5+` = ceiling_any(sum(vax_count >= 5, na.rm = TRUE), 100),
-      # Dose percentages
+      # Dose summary
+      Dose_median = quantile(vax_count, probs = 0.5, na.rm = TRUE),
+      Dose_25 = quantile(vax_count, probs = 0.25, na.rm = TRUE), 
+      Dose_75 = quantile(vax_count, probs = 0.75, na.rm = TRUE),
+      # Vaccination in past 12 and 24 months
+      Vacc_12m_n = ceiling_any(sum(days_since_vax <= 365, na.rm = TRUE), 100),
+      Vacc_24m_n = ceiling_any(sum(days_since_vax <= 365*2, na.rm = TRUE), 100),
+      # Time since last dose
+      Time_last_dose_median = quantile(days_since_vax, probs = 0.5, na.rm = TRUE),
+      Time_last_dose_10 = quantile(days_since_vax, probs = 0.10, na.rm = TRUE),
+      Time_last_dose_25 = quantile(days_since_vax, probs = 0.25, na.rm = TRUE),
+      Time_last_dose_75 = quantile(days_since_vax, probs = 0.75, na.rm = TRUE),
+      Time_last_dose_90 = quantile(days_since_vax, probs = 0.90, na.rm = TRUE),
+    ) %>%
+    ungroup() %>%
+    mutate(
+      # Dose percentages - put this here and not in earlier summarise step so that it works with dtplyr
       `0_per` = round(`0`*100 / total, 1),
       `1_per` = round(`1`*100 / total, 1),
       `2_per` = round(`2`*100 / total, 1),
       `3_per` = round(`3`*100 / total, 1),
       `4_per` = round(`4`*100 / total, 1),
       `5+_per` = round(`5+`*100 / total, 1),
-      # Dose summary
-      Dose_median = median(vax_count, na.rm = TRUE),
-      Dose_25 = quantile(vax_count, probs = 0.25, na.rm = TRUE),
-      Dose_75 = quantile(vax_count, probs = 0.75, na.rm = TRUE),
-      # Vaccination in past 12 and 24 months
-      Vacc_12m_n = ceiling_any(sum(months_since_last_dose <= 12, na.rm = TRUE), 100),
+      # Vaccination % in past 12 and 24 months
       Vacc_12m_per = round(Vacc_12m_n / total * 100, 1),
-      Vacc_24m_n = ceiling_any(sum(months_since_last_dose <= 24, na.rm = TRUE), 100),
       Vacc_24m_per = round(Vacc_24m_n / total * 100, 1),
-      # Time since last dose
-      Time_last_dose_median = round(median(months_since_last_dose, na.rm = TRUE), 1),
-      Time_last_dose_10 = round(quantile(months_since_last_dose, probs = 0.10, na.rm = TRUE), 1),
-      Time_last_dose_25 = round(quantile(months_since_last_dose, probs = 0.25, na.rm = TRUE), 1),
-      Time_last_dose_75 = round(quantile(months_since_last_dose, probs = 0.75, na.rm = TRUE), 1),
-      Time_last_dose_90 = round(quantile(months_since_last_dose, probs = 0.90, na.rm = TRUE), 1)
     ) %>%
-    ungroup()
+    as_tibble()
   row_name <- deparse(substitute(rows))
   # Write table to a CSV file
   write_csv(summary_table, fs::path(output_dir, glue("summary_table_{row_name}.csv")))
@@ -378,4 +386,4 @@ create_summary_table(immunosuppressed) # immunosuppressed
 create_summary_table(asplenia) # asplenia or dysfunction of the spleen
 create_summary_table(severe_obesity) # obesity
 create_summary_table(smi) # severe mental illness
-create_summary_table(primis_atrisk) # clinically vulnerable
+create_summary_table(primis_atrisk) # clinically vulnerable 
