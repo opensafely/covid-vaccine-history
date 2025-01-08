@@ -83,28 +83,31 @@ data_last_vax_date_clean <-
     days_since_vax = snapshot_date - last_vax_date
   )
 
+rm(data_vax_clean)
+
 # check there's only one patient per row:
 check_1rpp <-
   data_last_vax_date_clean %>%
- # lazy_dt() %>%
-  #group_by(patient_id) %>%
   filter(row_number() != 1) %>%
   as_tibble()
 stopifnot("data_last_vax_date_clean should not have multiple rows per patient" = nrow(check_1rpp) == 0)
 
 # merge fixed data and vaccine data onto snapshot data
 # note that in dummy data this doesn't work very well because patient IDs might not be matched across all datasets
-data_snapshot <-
+data_combined0 <-
   data_snapshot %>%
   lazy_dt() %>%
   left_join(
-    data_fixed %>% select(patient_id, sex, ethnicity5, ethnicity16),
+    lazy_dt(data_fixed) %>% select(patient_id, sex, ethnicity5, ethnicity16),
     by = "patient_id"
   ) %>%
   mutate(
     !!!standardise_characteristics
-  ) %>%
- # lazy_dt() %>%
+  )  
+rm(data_snapshot, data_fixed)
+
+data_combined <- 
+  data_combined0 %>%
   left_join(
     data_last_vax_date_clean %>% ungroup(),
     by = "patient_id"
@@ -123,7 +126,7 @@ data_snapshot <-
     across(where(is.factor) | where(is.character), ~fct_explicit_na(.x, na_level ="Unknown"))
   ) 
   
-
+rm(data_combined0)
 
 # _______________________________________________________________________________________
 # Report vaccination info, stratifying by characteristics recorded on the "snapshot_date" ----
@@ -133,7 +136,7 @@ data_snapshot <-
 
 plot_date_of_last_dose <- function(rows) {
   summary_by <- 
-    data_snapshot %>%
+    data_combined %>%
     lazy_dt() %>%
     group_by({{ rows }}, last_vax_type, last_vax_period) %>%
     summarise(
@@ -229,7 +232,7 @@ plot_date_of_last_dose(primis_atrisk) # clinically vulnerable
 
 plot_vax_count <- function(rows) {
   summary_by <- 
-    data_snapshot %>%
+    data_combined %>%
     lazy_dt() %>%
     group_by({{ rows }}, vax_count) %>%
     summarise(
@@ -320,7 +323,7 @@ plot_vax_count(primis_atrisk) # clinically vulnerable
 #Table
 create_summary_table <- function(rows) {
   summary_table <- 
-    data_snapshot %>%
+    data_combined %>%
     lazy_dt() %>%
     group_by({{ rows }}) %>%
     summarise(
