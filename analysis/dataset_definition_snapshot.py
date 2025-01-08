@@ -4,13 +4,12 @@
 # vaccination dates and info will be joined onto this later using the "varying" dataset
 ##########################
 
-
+# import libraries and functions
 
 from json import loads
-from sys import argv
 from pathlib import Path
+from sys import argv
 from datetime import datetime
-
 
 from ehrql import (
     case,
@@ -23,11 +22,9 @@ from ehrql import (
 from ehrql.tables.tpp import (
   patients,
   practice_registrations, 
-  vaccinations, 
-  clinical_events, 
   ons_deaths,
-
 )
+
 # import codelists
 from codelists import *
 
@@ -54,11 +51,13 @@ registered_patients = practice_registrations.for_patient_on(snapshot_date)
 
 registered = registered_patients.exists_for_patient()
 alive = (ons_deaths.date>snapshot_date) | ons_deaths.date.is_null()
+age = patients.age_on(snapshot_date)
 
 # define dataset poppulation
 dataset.define_population(
   registered 
   & alive
+  & (age >= 16)
 )
 
 # --VARIABLES--

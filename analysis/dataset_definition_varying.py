@@ -5,7 +5,11 @@
 # column set 2 = details of second vaccination event
 # _________________________________________________
 
-# import libraries
+# import libraries and functions
+
+from json import loads
+from pathlib import Path
+
 from ehrql import (
     case,
     create_dataset,
@@ -25,6 +29,15 @@ from ehrql.tables.tpp import (
 # import codelists
 from codelists import *
 
+
+study_dates = loads(
+    Path("lib/dates.json").read_text(),
+)
+
+# Change these in ./lib/dates.json if necessary
+start_date = study_dates["start_date"]
+end_date = study_dates["end_date"]
+
 #import function for clinical variables
 from analysis.variables_function import *
 
@@ -40,7 +53,10 @@ dataset = create_dataset()
 dataset.configure_dummy_data(population_size=1000)
 
 # define dataset poppulation
-dataset.define_population(covid_vaccinations.exists_for_patient())
+dataset.define_population(
+   covid_vaccinations.exists_for_patient()
+   & (patients.age_on(end_date) >=16) # only include people who are aged 16 or over during at least one season
+)
 
 
 # Arbitrary date guaranteed to be before any vaccination events of interest

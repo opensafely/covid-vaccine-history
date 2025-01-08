@@ -6,6 +6,7 @@
 # alsoextract count of previous vaccines as at that date
 ##########################
 
+# import libraries and functions
 
 from json import loads
 from pathlib import Path
@@ -27,7 +28,6 @@ from ehrql.tables.tpp import (
 )
 # import codelists
 from codelists import *
-
 
 study_dates = loads(
     Path("lib/dates.json").read_text(),
@@ -64,7 +64,10 @@ dataset = create_dataset()
 dataset.configure_dummy_data(population_size=1000)
 
 # define dataset poppulation
-dataset.define_population(registered_at_any_time_in_observation_period.exists_for_patient())
+dataset.define_population(
+  registered_at_any_time_in_observation_period.exists_for_patient()
+  & (patients.age_on(end_date) >=16) # only include people who are aged 16 or over during at least one season
+)
 
 # patient sex
 dataset.sex = patients.sex
