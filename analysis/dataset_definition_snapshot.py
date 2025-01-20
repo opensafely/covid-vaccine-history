@@ -65,3 +65,15 @@ dataset.define_population(
 demographic_variables(dataset = dataset, index_date = snapshot_date)
 primis_variables(dataset = dataset, index_date = snapshot_date)
 # other_cx_variables(dataset = dataset, index_date = snapshot_date)
+
+# Deregistration dates after the snapshot date
+dereg_date = (
+    practice_registrations
+    .where(practice_registrations.end_date.is_not_null())
+    .where(practice_registrations.end_date.is_on_or_after(snapshot_date))
+    .sort_by(practice_registrations.end_date)
+    .first_for_patient()
+    .end_date
+)
+# Add deregistration to dataset
+dataset.add_column(f"dereg_date", dereg_date)

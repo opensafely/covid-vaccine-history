@@ -107,7 +107,7 @@ data_vax <-
     matches("covid_vax\\_\\d+\\_date"),
     matches("covid_vax_type_\\d+"),
     matches("registered_\\d+"),
-    matches("deregistration_\\d+"),
+ #   matches("deregistered_\\d+\\_date"),
     matches("age_\\d+"),
     matches("ageband_\\d+"),
     matches("region_\\d+"),
@@ -142,7 +142,7 @@ data_vax <-
   ) %>%
   rename(
     vax_date = covid_vax,
-    vax_type = covid_vax_type,
+    vax_type = covid_vax_type
   ) %>%
   #as_tibble() %>% # insert this here to revert to standard dplyr as `cut` function doesn't work with dtplyr
   mutate(

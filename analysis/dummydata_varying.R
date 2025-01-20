@@ -164,7 +164,7 @@ sim_list_varying_i <- function(i) {
   vax_variable <- glue("covid_vax_{i}_day")
 
   lst(
-    "deregistered_{i}_day" := bn_node(
+    "dereg_{i}_date" := bn_node(
       ~ as.integer(runif(n = ..n, index_day, index_day + 1200)),
       missing_rate = ~0.99,
       needs = vax_variable
