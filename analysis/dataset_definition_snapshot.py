@@ -25,9 +25,6 @@ from ehrql.tables.tpp import (
   ons_deaths,
 )
 
-# import codelists
-from codelists import *
-
 from analysis.variables_function import *
 
 study_dates = loads(
