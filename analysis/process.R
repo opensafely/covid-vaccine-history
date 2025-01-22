@@ -101,13 +101,13 @@ data_extract_varying <- read_feather(here("output", "extracts", "extract_varying
 # Reshape vaccination data
 data_vax <-
   data_extract_varying %>%
-  #lazy_dt() %>%
+  lazy_dt() %>%
   select(
     patient_id,
     matches("covid_vax\\_\\d+\\_date"),
     matches("covid_vax_type_\\d+"),
     matches("registered_\\d+"),
-    matches("deregistration_\\d+"),
+ #   matches("deregistered_\\d+\\_date"),
     matches("age_\\d+"),
     matches("ageband_\\d+"),
     matches("region_\\d+"),
@@ -142,9 +142,9 @@ data_vax <-
   ) %>%
   rename(
     vax_date = covid_vax,
-    vax_type = covid_vax_type,
+    vax_type = covid_vax_type
   ) %>%
-  #as_tibble() %>% # insert this here to revert to standard dplyr as `cut` function doesn't work with dtplyr
+  as_tibble() %>% # insert this here to revert to standard dplyr as `cut` function doesn't work with dtplyr
   mutate(
     !!!standardise_characteristics,
     vax_campaign = cut(
@@ -157,7 +157,7 @@ data_vax <-
   arrange(patient_id, vax_date) %>%
   mutate(
     vax_type_raw = vax_type,
-    vax_type = fct_recode(factor(vax_type, vax_product_lookup), !!!vax_product_lookup) %>% fct_explicit_na("other")
+    vax_type = fct_recode(factor(vax_type, vax_product_lookup), !!!vax_product_lookup) %>% fct_na_value_to_level("other")
   ) %>%
   group_by(patient_id) %>%
   mutate(

@@ -12,6 +12,7 @@ from sys import argv
 from datetime import datetime
 
 from ehrql import (
+    show,
     case,
     create_dataset,
     days,
@@ -24,9 +25,6 @@ from ehrql.tables.tpp import (
   practice_registrations, 
   ons_deaths,
 )
-
-# import codelists
-from codelists import *
 
 from analysis.variables_function import *
 
@@ -65,3 +63,6 @@ dataset.define_population(
 demographic_variables(dataset = dataset, index_date = snapshot_date)
 primis_variables(dataset = dataset, index_date = snapshot_date)
 # other_cx_variables(dataset = dataset, index_date = snapshot_date)
+
+# Deregistration dates after the snapshot date
+dataset.dereg_date = registered_patients.end_date

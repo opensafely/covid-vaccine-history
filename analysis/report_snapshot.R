@@ -40,6 +40,8 @@ floor_dates <- seq(
   as.Date("2029-12-31"),  # to monday!
   by = temporal_resolution
 )
+#Create next campaign start date
+next_campaign_date <- min(campaign_dates$start[campaign_dates$start > snapshot_date], as.Date(Inf), na.rm=TRUE)
 
 # create string representation of date in compact format YYYMMDD
 snapshot_date_compact <- format(snapshot_date, "%Y%m%d")
@@ -74,7 +76,8 @@ data_last_vax_date_clean <-
   lazy_dt() %>%
   filter(vax_date < snapshot_date) %>%
   group_by(patient_id) %>%
-  filter(vax_index == max(vax_index)) %>%
+  filter(vax_index == max(vax_index, na.rm=TRUE)) %>%
+  ungroup() %>%
   transmute(
     patient_id,
     vax_count = vax_index,
@@ -83,14 +86,39 @@ data_last_vax_date_clean <-
     days_since_vax = snapshot_date - last_vax_date
   )
 
-rm(data_vax_clean)
-
 # check there's only one patient per row:
-check_1rpp <-
+check_last_1rpp <-
   data_last_vax_date_clean %>%
+  group_by(patient_id) %>%
   filter(row_number() != 1) %>%
   as_tibble()
-stopifnot("data_last_vax_date_clean should not have multiple rows per patient" = nrow(check_1rpp) == 0)
+stopifnot("data_last_vax_date_clean should not have multiple rows per patient" = nrow(check_last_1rpp) == 0)
+
+# select earliest vaccine _after_ snapshot date and before next campaign, and summarise
+data_next_vax_date_clean <-
+  data_vax_clean %>%
+  lazy_dt() %>%
+  group_by(patient_id) %>%
+  filter(vax_date >= snapshot_date &  vax_date < next_campaign_date) %>%
+  group_by(patient_id) %>%
+  filter(vax_index == min(vax_index, na.rm=TRUE)) %>%
+  ungroup() %>%
+  transmute(
+    patient_id,
+    vax_date = vax_date,
+    vax_type = vax_type,
+  )
+
+# check there's only one patient per row:
+check_next_1rpp <-
+  data_next_vax_date_clean %>%
+  group_by(patient_id) %>%
+  filter(row_number() != 1) %>%
+  as_tibble()
+stopifnot("data_next_vax_date_clean should not have multiple rows per patient" = nrow(check_next_1rpp) == 0)
+
+rm(data_vax_clean)
+
 
 # merge fixed data and vaccine data onto snapshot data
 # note that in dummy data this doesn't work very well because patient IDs might not be matched across all datasets
@@ -98,7 +126,7 @@ data_combined0 <-
   data_snapshot %>%
   lazy_dt() %>%
   left_join(
-    lazy_dt(data_fixed) %>% select(patient_id, sex, ethnicity5, ethnicity16),
+    lazy_dt(data_fixed) %>% select(patient_id, sex, ethnicity5, ethnicity16, death_date),
     by = "patient_id"
   ) %>%
   mutate(
@@ -112,21 +140,44 @@ data_combined <-
     data_last_vax_date_clean %>% ungroup(),
     by = "patient_id"
   ) %>%
-  as_tibble() %>%
+  left_join(
+    data_next_vax_date_clean %>% ungroup(),
+    by = "patient_id"
+  ) %>% 
   mutate(
     # impute values for people with no previous vaccination
     vax_count = replace_na(vax_count, 0L),
-    last_vax_type = fct_explicit_na(last_vax_type, "unvaccinated"),
+    last_vax_type = fct_na_value_to_level(last_vax_type, "unvaccinated"),
     last_vax_date = if_else(vax_count == 0, default_date + as.integer(runif(n(), 0, 10)), last_vax_date),
     last_vax_week = floor_date(last_vax_date, unit = "week", week_start = 1), # starting on a monday
     last_vax_period = floor_dates[findInterval(last_vax_date, floor_dates)], # use floor_date(last_vax_date, unit = floor_dates) when lubridate package is updated 
-    all = ""
+    all = "",
+    vax_type = fct_na_value_to_level(vax_type, "unvaccinated")
   ) %>%
+  as_tibble() %>%
   mutate(
-    across(where(is.factor) | where(is.character), ~fct_explicit_na(.x, na_level ="Unknown"))
-  ) 
-  
+    across(where(is.factor) | where(is.character), ~fct_na_value_to_level(.x, "Unknown"))
+  )
+
 rm(data_combined0)
+
+## output data for within-campaign vaccine coverage analysis in separate script
+data_combined %>%
+  transmute(
+    patient_id,
+    start_date = as.Date(snapshot_date),
+    censor_date = pmin(dereg_date, death_date, next_campaign_date - 1, na.rm=TRUE),
+    vax_date,
+    vax_type,
+    ageband,
+    sex,
+    ethnicity5,
+    region,
+    vax_count,
+    imd_quintile,
+    primis_atrisk,
+  ) %>%
+  write_feather(sink = fs::path(output_dir, glue("data_.arrow")))
 
 # _______________________________________________________________________________________
 # Report vaccination info, stratifying by characteristics recorded on the "snapshot_date" ----
@@ -143,11 +194,11 @@ plot_date_of_last_dose <- function(rows) {
       n = ceiling_any(n(), 100)
     ) %>%
     ungroup() %>%
-    as_tibble() %>%
     complete(
       {{ rows }}, last_vax_type, last_vax_period,
       fill = list(n = 0)
-    ) 
+    ) %>%
+    as_tibble()
   
 
   temp_plot <-
@@ -239,7 +290,6 @@ plot_vax_count <- function(rows) {
       n = ceiling_any(n(), 100),
     ) %>%
     ungroup() %>%
-    as_tibble() %>%
     complete(
       {{ rows }}, vax_count,
       fill = list(n = 0)
@@ -249,7 +299,8 @@ plot_vax_count <- function(rows) {
     mutate(
       row_total = sum(n),
       prop = n / row_total,
-    )
+    ) %>%
+    as_tibble()
 
   temp_plot <-
     ggplot(summary_by) +
@@ -390,3 +441,4 @@ create_summary_table(asplenia) # asplenia or dysfunction of the spleen
 create_summary_table(severe_obesity) # obesity
 create_summary_table(smi) # severe mental illness
 create_summary_table(primis_atrisk) # clinically vulnerable 
+
