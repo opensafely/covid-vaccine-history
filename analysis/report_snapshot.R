@@ -41,7 +41,7 @@ floor_dates <- seq(
   by = temporal_resolution
 )
 #Create next campaign start date
-next_campaign_date <- campaign_dates$start[campaign_dates$start > snapshot_date][1]
+next_campaign_date <- min(campaign_dates$start[campaign_dates$start > snapshot_date], as.Date(Inf), na.rm=TRUE)
 
 # create string representation of date in compact format YYYMMDD
 snapshot_date_compact <- format(snapshot_date, "%Y%m%d")
@@ -61,7 +61,7 @@ stopifnot("snapshot date is greater than observation end date - extend end date 
 # Import processed data ----
 data_snapshot <- read_feather(here("output", "extracts", glue("extract_snapshot_{snapshot_date_compact}.arrow")))
 #data_vax <- read_rds(here("output", "process", "data_vax.rds"))
-data_vax_clean <-  read_rds(here("output", "process", "data_vax_clean.rds"))
+data_vax_clean <- read_rds(here("output", "process", "data_vax_clean.rds"))
 data_fixed <- read_rds(here("output", "process", "data_fixed.rds"))
 
 capture.output(
@@ -76,7 +76,8 @@ data_last_vax_date_clean <-
   lazy_dt() %>%
   filter(vax_date < snapshot_date) %>%
   group_by(patient_id) %>%
-  filter(vax_index == max(vax_index)) %>%
+  filter(vax_index == max(vax_index, na.rm=TRUE)) %>%
+  ungroup() %>%
   transmute(
     patient_id,
     vax_count = vax_index,
@@ -85,31 +86,39 @@ data_last_vax_date_clean <-
     days_since_vax = snapshot_date - last_vax_date
   )
 
+# check there's only one patient per row:
+check_last_1rpp <-
+  data_last_vax_date_clean %>%
+  group_by(patient_id) %>%
+  filter(row_number() != 1) %>%
+  as_tibble()
+stopifnot("data_last_vax_date_clean should not have multiple rows per patient" = nrow(check_last_1rpp) == 0)
 
-# select most recent vaccine _after_ snapshot date, and summarise (deregistred)
+# select earliest vaccine _after_ snapshot date and before next campaign, and summarise
 data_next_vax_date_clean <-
   data_vax_clean %>%
   lazy_dt() %>%
   group_by(patient_id) %>%
   filter(vax_date >= snapshot_date &  vax_date < next_campaign_date) %>%
   group_by(patient_id) %>%
-  filter(vax_index == min(vax_index)) %>%
+  filter(vax_index == min(vax_index, na.rm=TRUE)) %>%
+  ungroup() %>%
   transmute(
     patient_id,
-    next_vax_date = vax_date,
-    next_vax_type = vax_type,
-    snapshot_vacc_delay = next_vax_date - snapshot_date
+    vax_date = vax_date,
+    vax_type = vax_type,
   )
+
+# check there's only one patient per row:
+check_next_1rpp <-
+  data_next_vax_date_clean %>%
+  group_by(patient_id) %>%
+  filter(row_number() != 1) %>%
+  as_tibble()
+stopifnot("data_next_vax_date_clean should not have multiple rows per patient" = nrow(check_next_1rpp) == 0)
 
 rm(data_vax_clean)
 
-
-# check there's only one patient per row:
-check_1rpp <-
-  data_last_vax_date_clean %>%
-  filter(row_number() != 1) %>%
-  as_tibble()
-stopifnot("data_last_vax_date_clean should not have multiple rows per patient" = nrow(check_1rpp) == 0)
 
 # merge fixed data and vaccine data onto snapshot data
 # note that in dummy data this doesn't work very well because patient IDs might not be matched across all datasets
@@ -147,21 +156,28 @@ data_combined <-
   ) %>%
   as_tibble() %>%
   mutate(
-    across(where(is.factor) | where(is.character), ~fct_explicit_na(.x, na_level ="Unknown"))
-  ) %>% 
-  #Kaplan Meier end/start date
-  mutate(
-    start_date = snapshot_date,
-    end_date = next_campaign_date -1,
-    censor_dereg_date = case_when(
-      !is.na(dereg_date) & dereg_date < next_campaign_date ~ dereg_date,
-      TRUE ~ as.Date(NA)
-    )
+    across(where(is.factor) | where(is.character), ~fct_na_value_to_level(.x, "Unknown"))
   )
-  
+
 rm(data_combined0)
 
-write_csv(data_combined, fs::path(output_dir, glue("km_cohort.csv")))
+## output data for within-campaign vaccine coverage analysis in separate script
+data_combined %>%
+  transmute(
+    patient_id,
+    start_date = as.Date(snapshot_date),
+    censor_date = pmin(dereg_date, death_date, next_campaign_date - 1, na.rm=TRUE),
+    vax_date,
+    vax_type,
+    ageband,
+    sex,
+    ethnicity5,
+    region,
+    vax_count,
+    imd_quintile,
+    primis_atrisk,
+  ) %>%
+  write_feather(sink = fs::path(output_dir, glue("data_.arrow")))
 
 # _______________________________________________________________________________________
 # Report vaccination info, stratifying by characteristics recorded on the "snapshot_date" ----
@@ -425,24 +441,4 @@ create_summary_table(asplenia) # asplenia or dysfunction of the spleen
 create_summary_table(severe_obesity) # obesity
 create_summary_table(smi) # severe mental illness
 create_summary_table(primis_atrisk) # clinically vulnerable 
-
-
-
-# # Kaplan-Meier cohorts
-# #missing deregistration variable
-# cohort_km <- data_combined %>%
-#   select(patient_id, 
-#          sex,
-#          ageband, 
-#          imd_quintile,
-#          ethnicity5, 
-#          ethnicity16, 
-#          death_date, 
-#          next_vax_date
-#          ) %>% 
-#   mutate(
-#     start_date = snapshot_date,
-#     end_date = next_campaign_date -1
-#   )
-
 

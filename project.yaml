@@ -55,6 +55,8 @@ actions:
     run: r:v2 analysis/report_snapshot.R 20201208
     needs: [extract_snapshot_20201208, process]
     outputs:
+      highly_sensitive:
+        arrow: output/report_snapshot_20201208/*.arrow
       moderately_sensitive:
         csv: output/report_snapshot_20201208/*.csv
         png: output/report_snapshot_20201208/*.png
@@ -73,6 +75,8 @@ actions:
     run: r:v2 analysis/report_snapshot.R 20210906
     needs: [extract_snapshot_20210906, process]
     outputs:
+      highly_sensitive:
+        arrow: output/report_snapshot_20210906/*.arrow
       moderately_sensitive:
         csv: output/report_snapshot_20210906/*.csv
         png: output/report_snapshot_20210906/*.png
@@ -91,6 +95,8 @@ actions:
     run: r:v2 analysis/report_snapshot.R 20220401
     needs: [extract_snapshot_20220401, process]
     outputs:
+      highly_sensitive:
+        arrow: output/report_snapshot_20220401/*.arrow
       moderately_sensitive:
         csv: output/report_snapshot_20220401/*.csv
         png: output/report_snapshot_20220401/*.png
@@ -109,6 +115,8 @@ actions:
     run: r:v2 analysis/report_snapshot.R 20220912
     needs: [extract_snapshot_20220912, process]
     outputs:
+      highly_sensitive:
+        arrow: output/report_snapshot_20220912/*.arrow
       moderately_sensitive:
         csv: output/report_snapshot_20220912/*.csv
         png: output/report_snapshot_20220912/*.png
@@ -127,6 +135,8 @@ actions:
     run: r:v2 analysis/report_snapshot.R 20230403
     needs: [extract_snapshot_20230403, process]
     outputs:
+      highly_sensitive:
+        arrow: output/report_snapshot_20230403/*.arrow
       moderately_sensitive:
         csv: output/report_snapshot_20230403/*.csv
         png: output/report_snapshot_20230403/*.png
@@ -145,6 +155,8 @@ actions:
     run: r:v2 analysis/report_snapshot.R 20230911
     needs: [extract_snapshot_20230911, process]
     outputs:
+      highly_sensitive:
+        arrow: output/report_snapshot_20230911/*.arrow
       moderately_sensitive:
         csv: output/report_snapshot_20230911/*.csv
         png: output/report_snapshot_20230911/*.png    
@@ -163,6 +175,8 @@ actions:
     run: r:v2 analysis/report_snapshot.R 20240401
     needs: [extract_snapshot_20240401, process]
     outputs:
+      highly_sensitive:
+        arrow: output/report_snapshot_20240401/*.arrow
       moderately_sensitive:
         csv: output/report_snapshot_20240401/*.csv
         png: output/report_snapshot_20240401/*.png  
@@ -181,6 +195,8 @@ actions:
     run: r:v2 analysis/report_snapshot.R 20241003
     needs: [extract_snapshot_20241003, process]
     outputs:
+      highly_sensitive:
+        arrow: output/report_snapshot_20241003/*.arrow
       moderately_sensitive:
         csv: output/report_snapshot_20241003/*.csv
         png: output/report_snapshot_20241003/*.png    
