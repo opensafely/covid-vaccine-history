@@ -63,7 +63,7 @@ data_vax_clean <-
   ) %>%
   as_tibble() %>%
   mutate(
-    across(where(is.factor) | where(is.character), ~fct_explicit_na(.x, na_level ="Unknown"))
+    across(where(is.factor) | where(is.character), ~fct_na_value_to_level(.x, "Unknown"))
   )
 
 

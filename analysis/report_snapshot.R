@@ -89,7 +89,8 @@ data_last_vax_date_clean <-
 # select most recent vaccine _after_ snapshot date, and summarise (deregistred)
 data_next_vax_date_clean <-
   data_vax_clean %>%
-#  lazy_dt() %>%
+  lazy_dt() %>%
+  group_by(patient_id) %>%
   filter(vax_date >= snapshot_date &  vax_date < next_campaign_date) %>%
   group_by(patient_id) %>%
   filter(vax_index == min(vax_index)) %>%
@@ -134,17 +135,17 @@ data_combined <-
     data_next_vax_date_clean %>% ungroup(),
     by = "patient_id"
   ) %>% 
-  as_tibble() %>%
   mutate(
     # impute values for people with no previous vaccination
     vax_count = replace_na(vax_count, 0L),
-    last_vax_type = fct_explicit_na(last_vax_type, "unvaccinated"),
+    last_vax_type = fct_na_value_to_level(last_vax_type, "unvaccinated"),
     last_vax_date = if_else(vax_count == 0, default_date + as.integer(runif(n(), 0, 10)), last_vax_date),
     last_vax_week = floor_date(last_vax_date, unit = "week", week_start = 1), # starting on a monday
     last_vax_period = floor_dates[findInterval(last_vax_date, floor_dates)], # use floor_date(last_vax_date, unit = floor_dates) when lubridate package is updated 
     all = "",
-    next_vax_type = fct_explicit_na(next_vax_type, "unvaccinated")
+    vax_type = fct_na_value_to_level(vax_type, "unvaccinated")
   ) %>%
+  as_tibble() %>%
   mutate(
     across(where(is.factor) | where(is.character), ~fct_explicit_na(.x, na_level ="Unknown"))
   ) %>% 
@@ -177,11 +178,11 @@ plot_date_of_last_dose <- function(rows) {
       n = ceiling_any(n(), 100)
     ) %>%
     ungroup() %>%
-    as_tibble() %>%
     complete(
       {{ rows }}, last_vax_type, last_vax_period,
       fill = list(n = 0)
-    ) 
+    ) %>%
+    as_tibble()
   
 
   temp_plot <-
@@ -273,7 +274,6 @@ plot_vax_count <- function(rows) {
       n = ceiling_any(n(), 100),
     ) %>%
     ungroup() %>%
-    as_tibble() %>%
     complete(
       {{ rows }}, vax_count,
       fill = list(n = 0)
@@ -283,7 +283,8 @@ plot_vax_count <- function(rows) {
     mutate(
       row_total = sum(n),
       prop = n / row_total,
-    )
+    ) %>%
+    as_tibble()
 
   temp_plot <-
     ggplot(summary_by) +

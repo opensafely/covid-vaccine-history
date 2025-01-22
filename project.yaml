@@ -22,7 +22,7 @@ actions:
         cohort: output/extracts/extract_varying.arrow
 
   process:
-    run: r:latest analysis/process.R
+    run: r:v2 analysis/process.R
     needs: [extract_fixed, extract_varying]
     outputs:
       highly_sensitive:
@@ -33,7 +33,7 @@ actions:
 
 # report vaccine history over entire observational period ---
   report_history:
-    run: r:latest analysis/report_history.R
+    run: r:v2 analysis/report_history.R
     needs: [process]
     outputs:
       moderately_sensitive:
@@ -52,7 +52,7 @@ actions:
         cohort: output/extracts/extract_snapshot_20201208.arrow
 
   report_snapshot_20201208:
-    run: r:latest analysis/report_snapshot.R 20201208
+    run: r:v2 analysis/report_snapshot.R 20201208
     needs: [extract_snapshot_20201208, process]
     outputs:
       moderately_sensitive:
@@ -70,7 +70,7 @@ actions:
         cohort: output/extracts/extract_snapshot_20210906.arrow
 
   report_snapshot_20210906:
-    run: r:latest analysis/report_snapshot.R 20210906
+    run: r:v2 analysis/report_snapshot.R 20210906
     needs: [extract_snapshot_20210906, process]
     outputs:
       moderately_sensitive:
@@ -88,7 +88,7 @@ actions:
         cohort: output/extracts/extract_snapshot_20220401.arrow
 
   report_snapshot_20220401:
-    run: r:latest analysis/report_snapshot.R 20220401
+    run: r:v2 analysis/report_snapshot.R 20220401
     needs: [extract_snapshot_20220401, process]
     outputs:
       moderately_sensitive:
@@ -106,7 +106,7 @@ actions:
         cohort: output/extracts/extract_snapshot_20220912.arrow
 
   report_snapshot_20220912:
-    run: r:latest analysis/report_snapshot.R 20220912
+    run: r:v2 analysis/report_snapshot.R 20220912
     needs: [extract_snapshot_20220912, process]
     outputs:
       moderately_sensitive:
@@ -124,7 +124,7 @@ actions:
         cohort: output/extracts/extract_snapshot_20230403.arrow
 
   report_snapshot_20230403:
-    run: r:latest analysis/report_snapshot.R 20230403
+    run: r:v2 analysis/report_snapshot.R 20230403
     needs: [extract_snapshot_20230403, process]
     outputs:
       moderately_sensitive:
@@ -142,7 +142,7 @@ actions:
         cohort: output/extracts/extract_snapshot_20230911.arrow
 
   report_snapshot_20230911:
-    run: r:latest analysis/report_snapshot.R 20230911
+    run: r:v2 analysis/report_snapshot.R 20230911
     needs: [extract_snapshot_20230911, process]
     outputs:
       moderately_sensitive:
@@ -160,7 +160,7 @@ actions:
         cohort: output/extracts/extract_snapshot_20240401.arrow
 
   report_snapshot_20240401:
-    run: r:latest analysis/report_snapshot.R 20240401
+    run: r:v2 analysis/report_snapshot.R 20240401
     needs: [extract_snapshot_20240401, process]
     outputs:
       moderately_sensitive:
@@ -178,7 +178,7 @@ actions:
         cohort: output/extracts/extract_snapshot_20241003.arrow
 
   report_snapshot_20241003:
-    run: r:latest analysis/report_snapshot.R 20241003
+    run: r:v2 analysis/report_snapshot.R 20241003
     needs: [extract_snapshot_20241003, process]
     outputs:
       moderately_sensitive:
