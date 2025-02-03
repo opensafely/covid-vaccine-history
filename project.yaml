@@ -81,9 +81,9 @@ actions:
         csv: output/report_snapshot_20210906/*.csv
         png: output/report_snapshot_20210906/*.png
         txt: output/report_snapshot_20210906/*.txt
-        
+
   km_action_20210906:
-    run: r:v2 kaplan-meier-function:v0.0.4
+    run: kaplan-meier-function:v0.0.4
       --df_input=output/report_snapshot_20210906/*.arrow
       --df_output=output/km_estimates.feather
     needs: [report_snapshot_20210906]  
