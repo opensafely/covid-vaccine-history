@@ -59,6 +59,13 @@ dataset.define_population(
 )
 
 
+dataset.add_event_table(
+    "vaccinations",
+    date=covid_vaccinations.date,
+    product=covid_vaccinations.product_name,
+    age=patients.age_on(covid_vaccinations.date)
+)
+
 # Arbitrary date guaranteed to be before any vaccination events of interest
 previous_vax_date = "1899-01-01"
 

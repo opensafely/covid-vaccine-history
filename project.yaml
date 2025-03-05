@@ -15,11 +15,11 @@ actions:
 
   extract_varying:
     run: ehrql:v1 generate-dataset analysis/dataset_definition_varying.py
-      --output output/extracts/extract_varying.arrow
+      --output output/extracts/extract_varying:arrow
       #--dummy-data-file lib/dummydata/dummyinput_varying.arrow
     outputs:
       highly_sensitive:
-        cohort: output/extracts/extract_varying.arrow
+        cohort: output/extracts/extract_varying/*.arrow
 
   process:
     run: r:latest analysis/process.R
