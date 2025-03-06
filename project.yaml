@@ -16,6 +16,7 @@ actions:
   extract_varying:
     run: ehrql:v1 generate-dataset analysis/dataset_definition_varying.py
       --output output/extracts/extract_varying:arrow
+      -- --keep-validator-happy output/extracts/extract_varying/*.arrow
       #--dummy-data-file lib/dummydata/dummyinput_varying.arrow
     outputs:
       highly_sensitive:
@@ -147,7 +148,7 @@ actions:
     outputs:
       moderately_sensitive:
         csv: output/report_snapshot_20230911/*.csv
-        png: output/report_snapshot_20230911/*.png    
+        png: output/report_snapshot_20230911/*.png
         txt: output/report_snapshot_20230911/*.txt
 
  # 2024-04-01
@@ -165,7 +166,7 @@ actions:
     outputs:
       moderately_sensitive:
         csv: output/report_snapshot_20240401/*.csv
-        png: output/report_snapshot_20240401/*.png  
+        png: output/report_snapshot_20240401/*.png
         txt: output/report_snapshot_20240401/*.txt
 
  # 2024-10-03
@@ -183,5 +184,5 @@ actions:
     outputs:
       moderately_sensitive:
         csv: output/report_snapshot_20241003/*.csv
-        png: output/report_snapshot_20241003/*.png    
+        png: output/report_snapshot_20241003/*.png
         txt: output/report_snapshot_20241003/*.txt

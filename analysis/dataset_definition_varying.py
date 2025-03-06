@@ -61,9 +61,11 @@ dataset.define_population(
 
 dataset.add_event_table(
     "vaccinations",
-    date=covid_vaccinations.date,
-    product=covid_vaccinations.product_name,
-    age=patients.age_on(covid_vaccinations.date)
+    date = covid_vaccinations.date,
+    product = covid_vaccinations.product_name,
+    age = patients.age_on(covid_vaccinations.date),
+    registration_status = practice_registrations.for_patient_on(covid_vaccinations.date).exists_for_patient()
+    #imd = addresses.for_patient_on(covid_vaccinations.date).imd_rounded
 )
 
 # Arbitrary date guaranteed to be before any vaccination events of interest

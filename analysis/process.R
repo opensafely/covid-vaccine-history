@@ -95,12 +95,11 @@ rm(data_extract_fixed)
 #    here("output", "extracts", "extract_varying.arrow")
 #  )
 
-data_extract_varying <- read_feather(here("output", "extracts", "extract_varying.arrow"))
-
+data_extract_varying_wide <- read_feather(here("output", "extracts", "extract_varying.arrow"))
 
 # Reshape vaccination data
 data_vax <-
-  data_extract_varying %>%
+  data_extract_varying_wide %>%
   #lazy_dt() %>%
   select(
     patient_id,
@@ -170,6 +169,13 @@ capture.output(
   file = fs::path(output_dir, "data_vax_skim.txt"),
   split = FALSE
 )
+
+### alternative using new event-level-data extract:
+
+data_extract_vaccinations_dataset <- read_feather(here("output", "extracts", "extract_varying", "dataset.arrow"))
+data_extract_vaccinations_long <- read_feather(here("output", "extracts", "extract_varying", "vaccinations.arrow"))
+
+
 
 # save dataset with all vaccines
 write_rds(data_vax, fs::path(output_dir, "data_vax.rds"), compress = "gz")
