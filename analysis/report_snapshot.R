@@ -177,7 +177,7 @@ data_combined %>%
     imd_quintile,
     primis_atrisk,
   ) %>%
-  write_feather(sink = fs::path(output_dir, glue("data_.arrow")))
+  write_feather(sink = fs::path(output_dir, glue("data_vax_dates.arrow")))
 
 # _______________________________________________________________________________________
 # Report vaccination info, stratifying by characteristics recorded on the "snapshot_date" ----
