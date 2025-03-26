@@ -84,21 +84,21 @@ actions:
 
   coverage_20210906_sex:
     run: kaplan-meier-function:v0.0.16
-      --df_input=output/report_snapshot_20210906/*.arrow
+      --df_input=output/report_snapshot_20210906/data_vax_dates.arrow
       --dir_output=output/report_snapshot_20210906/coverage/
       --subgroups=sex
-      --origin_date=snapshot_date
+      --origin_date=start_date
       --event_date=vax_date
       --censor_date=censor_date
       --min_count=10
       --method=constant
-      --plot=TRUE
+      --plot=FALSE
       --contrast=FALSE
-      --filename_suffix=sex
+      --filename_suffix=_sex
     needs: [report_snapshot_20210906]
     outputs:
       moderately_sensitive:
-        png: output/report_snapshot_20210906/coverage/*.png
+        #png: output/report_snapshot_20210906/coverage/*.png
         csv: output/report_snapshot_20210906/coverage/*.csv
 
  # 2022-04-01
