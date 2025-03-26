@@ -82,14 +82,24 @@ actions:
         png: output/report_snapshot_20210906/*.png
         txt: output/report_snapshot_20210906/*.txt
 
-  km_action_20210906:
-    run: kaplan-meier-function:v0.0.4
+  coverage_20210906_sex:
+    run: kaplan-meier-function:v0.0.16
       --df_input=output/report_snapshot_20210906/*.arrow
-      --df_output=output/km_estimates.feather
-    needs: [report_snapshot_20210906]  
+      --dir_output=output/report_snapshot_20210906/coverage/
+      --subgroups=sex
+      --origin_date=snapshot_date
+      --event_date=vax_date
+      --censor_date=censor_date
+      --min_count=10
+      --method=constant
+      --plot=TRUE
+      --contrast=FALSE
+      --filename_suffix=sex
+    needs: [report_snapshot_20210906]
     outputs:
-      highly_sensitive:
-        output: output/km_estimates/*.feather
+      moderately_sensitive:
+        png: output/report_snapshot_20210906/coverage/*.png
+        csv: output/report_snapshot_20210906/coverage/*.csv
 
  # 2022-04-01
   extract_snapshot_20220401:
@@ -168,7 +178,7 @@ actions:
         arrow: output/report_snapshot_20230911/*.arrow
       moderately_sensitive:
         csv: output/report_snapshot_20230911/*.csv
-        png: output/report_snapshot_20230911/*.png    
+        png: output/report_snapshot_20230911/*.png
         txt: output/report_snapshot_20230911/*.txt
 
  # 2024-04-01
@@ -188,7 +198,7 @@ actions:
         arrow: output/report_snapshot_20240401/*.arrow
       moderately_sensitive:
         csv: output/report_snapshot_20240401/*.csv
-        png: output/report_snapshot_20240401/*.png  
+        png: output/report_snapshot_20240401/*.png
         txt: output/report_snapshot_20240401/*.txt
 
  # 2024-10-03
@@ -208,5 +218,5 @@ actions:
         arrow: output/report_snapshot_20241003/*.arrow
       moderately_sensitive:
         csv: output/report_snapshot_20241003/*.csv
-        png: output/report_snapshot_20241003/*.png    
+        png: output/report_snapshot_20241003/*.png
         txt: output/report_snapshot_20241003/*.txt
