@@ -83,7 +83,7 @@ actions:
         txt: output/report_snapshot_20210906/*.txt
 
   coverage_20210906_sex:
-    run: kaplan-meier-function:v0.0.16
+    run: kaplan-meier-function:v0.0.17
       --df_input=output/report_snapshot_20210906/data_vax_dates.arrow
       --dir_output=output/report_snapshot_20210906/coverage/
       --subgroups=sex
