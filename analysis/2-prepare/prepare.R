@@ -1,7 +1,7 @@
 # _________________________________________________
 # Purpose:
 # import vaccination date data extracted by cohort extractor
-# organise vaccination date data to "vax X type", "vax X date" (rather than "pfizer X date", "az X date", ...)
+# organise vaccination date data to "vax X product", "vax X date" (rather than "pfizer X date", "az X date", ...)
 # _________________________________________________
 
 # Preliminaries ----
@@ -15,10 +15,10 @@ library("here")
 library("glue")
 
 # Import custom functions
-source(here("analysis", "utility.R"))
+source(here("analysis", "0-lib", "design.R"))
 
 # create output directory
-output_dir <- here("output", "process")
+output_dir <- here("output", "2-prepare", "prepare")
 fs::dir_create(output_dir)
 options(width=200) # set output width for capture.output
 
@@ -30,7 +30,7 @@ options(width=200) # set output width for capture.output
 #    here("lib", "dummydata", "dummyinput_fixed.arrow"),
 #    here("output", "extracts", "extract_fixed.arrow")
 #  )
- data_extract_fixed <- read_feather(here("output", "extracts", "extract_fixed.arrow"))
+data_extract_fixed <- read_feather(here("output", "1-extract", "extract_fixed.arrow"))
 
 stopifnot(
   "inconsistency between ethnicity5 and ethnicity 16" = identical(data_extract_fixed$ethnicity5, ethnicity_16_to_5(data_extract_fixed$ethnicity16))
@@ -44,8 +44,9 @@ capture.output(
 )
 
 # Process snapshot dataset
-data_processed_fixed <- data_extract_fixed %>%
-  lazy_dt() %>%
+data_processed_fixed <-
+  data_extract_fixed |>
+  lazy_dt() |>
   mutate(
     sex = fct_case_when(
       sex == "female" ~ "Female",
@@ -55,9 +56,9 @@ data_processed_fixed <- data_extract_fixed %>%
       TRUE ~ NA_character_
     ),
     ethnicity5 = factor(ethnicity5, levels = factor_levels$ethnicity5),
-    ethnicity16 = factor(ethnicity16, levels = factor_levels$ethnicity16) %>%
+    ethnicity16 = factor(ethnicity16, levels = factor_levels$ethnicity16) |>
       fct_relabel(~ str_extract(.x, "(?<= - )(.*)")), # pick up everything after " - "
-  ) %>%
+  ) |>
   as_tibble()
 
 # print details about dataset
@@ -68,22 +69,21 @@ capture.output(
 )
 
 # save processed fixed dataset
-data_processed_fixed %>%
+data_processed_fixed |>
   select(
     patient_id,
     sex,
     ethnicity5,
     ethnicity16,
     death_date
-  ) %>%
-  write_rds(fs::path(output_dir, "data_fixed.rds"), compress = "gz")
+  ) |>
+  write_feather(fs::path(output_dir, "data_fixed.arrow"))
 
 
 
 ## delete in-memory objects to save space
 rm(data_processed_fixed)
 rm(data_extract_fixed)
-
 
 
 # Import and process fixed dataset ----
@@ -95,17 +95,17 @@ rm(data_extract_fixed)
 #    here("output", "extracts", "extract_varying.arrow")
 #  )
 
-data_extract_varying <- read_feather(here("output", "extracts", "extract_varying.arrow"))
+data_extract_varying <- read_feather(here("output", "1-extract", "extract_varying.arrow"))
 
 
 # Reshape vaccination data
 data_vax <-
-  data_extract_varying %>%
-  #lazy_dt() %>%
+  data_extract_varying |>
+  #lazy_dt() |>
   select(
     patient_id,
     matches("covid_vax\\_\\d+\\_date"),
-    matches("covid_vax_type_\\d+"),
+    matches("covid_vax_product_\\d+"),
     matches("registered_\\d+"),
     matches("deregistration_\\d+"),
     matches("age_\\d+"),
@@ -128,23 +128,23 @@ data_vax <-
 #    matches("asplenia_\\d+"), # asplenia or dysfunction of the spleen
 #    matches("severe_obesity_\\d+"), # obesity
 #    matches("smi_\\d+"), #severe mental illness
-  ) %>%
+  ) |>
   pivot_longer(
     cols = -patient_id,
     names_to = c(".value", "vax_index"),
     names_pattern = "^(.*)_(\\d+)",
     # values_drop_na = TRUE, # this causes an error in dtplyr - replace with filter(!is_na(covid_vax))
     # names_transform = list(vax_index = as.integer) # not supported by dtplyr - use vax_index = as.integer(vax_index) in a mutate step
-  ) %>%
-  filter(!is.na(covid_vax)) %>%
+  ) |>
+  filter(!is.na(covid_vax)) |>
   mutate(
     vax_index = as.integer(vax_index)
-  ) %>%
+  ) |>
   rename(
     vax_date = covid_vax,
-    vax_type = covid_vax_type,
-  ) %>%
-  #as_tibble() %>% # insert this here to revert to standard dplyr as `cut` function doesn't work with dtplyr
+    vax_product = covid_vax_product,
+  ) |>
+  #as_tibble() |> # insert this here to revert to standard dplyr as `cut` function doesn't work with dtplyr
   mutate(
     !!!standardise_characteristics,
     vax_campaign = cut(
@@ -153,16 +153,16 @@ data_vax <-
       labels = campaign_dates$campaign,
       include.lowest = TRUE, right = TRUE
     )
-  ) %>%
-  arrange(patient_id, vax_date) %>%
+  ) |>
+  arrange(patient_id, vax_date) |>
   mutate(
-    vax_type_raw = vax_type,
-    vax_type = fct_recode(factor(vax_type, vax_product_lookup), !!!vax_product_lookup) %>% fct_explicit_na("other")
-  ) %>%
-  group_by(patient_id) %>%
+    vax_product_raw = vax_product,
+    vax_product = fct_recode(factor(vax_product, vax_product_lookup), !!!vax_product_lookup) |> fct_na_value_to_level("other")
+  ) |>
+  group_by(patient_id) |>
   mutate(
     vax_interval = as.integer(vax_date - lag(vax_date, 1))
-  ) %>%
+  ) |>
   ungroup()
 
 capture.output(
@@ -172,33 +172,33 @@ capture.output(
 )
 
 # save dataset with all vaccines
-write_rds(data_vax, fs::path(output_dir, "data_vax.rds"), compress = "gz")
+write_feather(data_vax, fs::path(output_dir, "data_vax.arrow"))
 
-data_vax %>%
+data_vax |>
   mutate(
-    vax_type_raw = if_else(is.na(vax_type_raw), "NULL", vax_type_raw),
-  ) %>%
-  group_by(vax_type_raw) %>%
+    vax_product_raw = if_else(is.na(vax_product_raw), "NULL", vax_product_raw),
+  ) |>
+  group_by(vax_product_raw) |>
   summarise(
     n = ceiling_any(n(), 100),
-  ) %>%
-  write_csv(fs::path(output_dir, "vax_type_count.csv"))
+  ) |>
+  write_csv(fs::path(output_dir, "vax_product_count.csv"))
 
 
 # remove vaccinations occurring within 14 days of a previous vaccination
 data_vax_clean <-
   # remove vaccine events occurring within 14 days of a previous vaccine event
-  data_vax %>%
+  data_vax |>
   filter(
     !is.na(vax_date),
     is.na(vax_interval) | vax_interval >= 14,
     vax_date >= start_date,
     vax_date <= end_date
-  ) %>%
-  group_by(patient_id) %>%
+  ) |>
+  group_by(patient_id) |>
   mutate(
     vax_index = row_number()
-  ) %>%
+  ) |>
   ungroup()
 
 capture.output(
@@ -208,5 +208,5 @@ capture.output(
 )
 
 # save dataset with <14-day vaccines removed
-write_rds(data_vax_clean, fs::path(output_dir, "data_vax_clean.rds"), compress = "gz")
+write_feather(data_vax_clean, fs::path(output_dir, "data_vax_clean.arrow"))
 
