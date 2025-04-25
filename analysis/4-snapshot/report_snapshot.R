@@ -39,7 +39,8 @@ max_fup <- 24*7 # 24 weeks
 # rounding precision
 sdc_threshold <- 10
 
-
+#Create next campaign start date
+next_campaign_date <- min(campaign_dates$start[campaign_dates$start > snapshot_date], as.Date(Inf), na.rm=TRUE)
 
 # dates to round down to
 # use this with `findInterval` until lubridate package is updated in the opensafely R image
@@ -82,9 +83,10 @@ capture.output(
 # data_last_vax_date_clean <-
 #   data_vax_clean |>
 #   lazy_dt() |>
-#   filter(vax_date < snapshot_date) |>
+#   filter(vax_date < snapshot_date ) |>
 #   group_by(patient_id) |>
-#   filter(vax_index == max(vax_index)) |>
+#   filter(vax_index == max(vax_index, na.rm=TRUE)) |>
+#   ungroup() |>
 #   transmute(
 #     patient_id,
 #     vax_count = vax_index,
@@ -95,12 +97,40 @@ capture.output(
 #
 # rm(data_vax_clean)
 #
-# # check there's only one patient per row:
-# check_1rpp <-
-#   data_last_vax_date_clean |>
-#   filter(row_number() != 1) |>
+# check there's only one patient per row:
+# check_last_1rpp <-
+#   data_last_vax_date_clean %>%
+#   group_by(patient_id) %>%
+#   filter(row_number() != 1) %>%
 #   as_tibble()
-# stopifnot("data_last_vax_date_clean should not have multiple rows per patient" = nrow(check_1rpp) == 0)
+# stopifnot("data_last_vax_date_clean should not have multiple rows per patient" = nrow(check_last_1rpp) == 0)
+
+
+# select earliest vaccine _after_ snapshot date and before next campaign, and summarise
+# data_next_vax_date_clean <-
+#   data_vax_clean |>
+#   lazy_dt() |>
+#   group_by(patient_id) |>
+#   filter(vax_date >= snapshot_date &  vax_date < next_campaign_date) %>%
+#   group_by(patient_id) |>
+#   filter(vax_index == min(vax_index, na.rm=TRUE)) %>%
+#   ungroup() |>
+#   transmute(
+#     patient_id,
+#     vax_date,s
+#     vax_product,
+#   )
+
+# check there's only one patient per row:
+# check_next_1rpp <-
+#   data_next_vax_date_clean %>%
+#   group_by(patient_id) %>%
+#   filter(row_number() != 1) %>%
+#   as_tibble()
+# stopifnot("data_next_vax_date_clean should not have multiple rows per patient" = nrow(check_next_1rpp) == 0)
+#
+# rm(data_vax_clean)
+
 
 # merge fixed data and vaccine data onto snapshot data
 # note that in dummy data this doesn't work very well because patient IDs might not be matched across all datasets
@@ -127,7 +157,7 @@ data_combined <-
     last_vax_week = floor_date(last_vax_date, unit = "week", week_start = 1), # starting on a monday
     last_vax_period = floor_dates[findInterval(last_vax_date, floor_dates)], # use floor_date(last_vax_date, unit = floor_dates) when lubridate package is updated
 
-    # info on first vaccine(s) recieved after snapshot date
+    # info on first vaccine(s) received after snapshot date
     next_vax_date = covid_vax_1_date,
     next_vax_product = covid_vax_1_product,
     next2_vax_date = covid_vax_2_date,
@@ -135,10 +165,11 @@ data_combined <-
     censor_date = pmin(
       death_date,
       deregistered_date,
+      next_campaign_date - 1,
       snapshot_date + max_fup,
       na.rm=TRUE
     ),
-    # time from snashot date until next vaccination
+    # time from snapshot date until next vaccination
     event_time = as.integer(pmin(next_vax_date, censor_date, na.rm=TRUE) - snapshot_date) + 1L, # +1 because vaccination on snapshot date is allowed, but events at time zero are not
     event_indicator = (!is.na(next_vax_date)) & (next_vax_date <= censor_date)
    ) |>
@@ -146,7 +177,6 @@ data_combined <-
   mutate(
    across(where(is.factor) | where(is.character), ~fct_na_value_to_level(.x, level ="Unknown"))
   )
-
 
 
 # ________________________________________________________________________________________
