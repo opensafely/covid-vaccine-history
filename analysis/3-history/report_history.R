@@ -11,18 +11,19 @@ library("dtplyr")
 library("lubridate")
 library("glue")
 library("here")
+library("arrow")
 
 # Import custom functions
-source(here("analysis", "utility.R"))
+source(here("analysis", "0-lib", "design.R"))
 
 ## Create output directory
-output_dir <- here("output", "report_history")
+output_dir <- here("output", "3-history", "report_history")
 fs::dir_create(output_dir)
 
-# Import processed data ----
-data_fixed <- read_rds(here("output", "process", "data_fixed.rds"))
-data_varying <- read_rds(here("output", "process", "data_vax.rds"))
-data_varying_clean <- read_rds(here("output", "process", "data_vax_clean.rds"))
+# Import prepared data ----
+data_fixed <- read_feather(here("output", "2-prepare", "prepare", "data_fixed.arrow"))
+data_varying <- read_feather(here("output", "2-prepare", "prepare", "data_vax.arrow"))
+data_varying_clean <- read_feather(here("output", "2-prepare", "prepare", "data_vax_clean.arrow"))
 
 # _______________________________________________________________________________________
 # Process datasets ----
@@ -37,31 +38,31 @@ vax_shortname_8 <- vax_shortname_lookup[c(1:8)] # , length(vax_shortname_lookup)
 data_vax <-
   left_join(
     lazy_dt(data_varying),
-    lazy_dt(data_fixed) %>% select(patient_id, sex, ethnicity5, ethnicity16, death_date),
+    lazy_dt(data_fixed) |> select(patient_id, sex, ethnicity5, ethnicity16, death_date),
     by = "patient_id"
-  ) %>%
+  ) |>
   mutate(
     vax_dosenumber = factor(vax_index, levels = sort(unique(vax_index)), labels = paste("Dose", sort(unique(vax_index)))),
     vax_week = floor_date(vax_date, unit = "week", week_start = 1),
-    vax_type8 = fct_collapse(vax_type, !!!vax_shortname_8, other_level="Other"),
+    vax_product8 = fct_collapse(vax_product, !!!vax_shortname_8, other_level="Other"),
     all = ""
-  ) %>%
+  ) |>
   as_tibble()
 
 data_vax_clean <-
   left_join(
     lazy_dt(data_varying_clean),
-    lazy_dt(data_fixed) %>% select(patient_id, sex, ethnicity5, ethnicity16, death_date),
+    lazy_dt(data_fixed) |> select(patient_id, sex, ethnicity5, ethnicity16, death_date),
     by = "patient_id"
-  ) %>%
+  ) |>
   mutate(
     vax_dosenumber = factor(vax_index, levels = sort(unique(vax_index)), labels = paste("Dose", sort(unique(vax_index)))),
     vax_week = floor_date(vax_date, unit = "week", week_start = 1),
-    vax_type8 = fct_collapse(vax_type, !!!vax_shortname_8, other_level="Other"),
+    vax_product8 = fct_collapse(vax_product, !!!vax_shortname_8, other_level="Other"),
     all = "",
     all2 = ""
-  ) %>%
-  as_tibble() %>%
+  ) |>
+  as_tibble() |>
   mutate(
     across(where(is.factor) | where(is.character), ~fct_explicit_na(.x, na_level ="Unknown"))
   )
@@ -74,8 +75,8 @@ data_vax_clean <-
 ## output vax date validation info ----
 
 summary_validation <-
-  data_vax %>%
-  #group_by(vax_campaign) %>%
+  data_vax |>
+  #group_by(vax_campaign) |>
   summarise(
     n = ceiling_any(n(), 100),
     n_missing_date = ceiling_any(sum(is.na(vax_date)), 100),
@@ -86,19 +87,19 @@ summary_validation <-
     pct_earlier_than_firstpossiblevax_date = n_earlier_than_firstpossiblevax_date / n,
     n_interval_within_14days = ceiling_any(sum(vax_interval < 14, na.rm = TRUE), 100),
     pct_interval_within_14days = n_interval_within_14days / n,
-  ) %>%
+  ) |>
   ungroup()
 
 write_csv(summary_validation, fs::path(output_dir, "validation.csv"))
 
 
-## output vax date validation info, stratified by dose number and type ----
+## output vax date validation info, stratified by dose number and product ----
 
 summary_validation_stratified <-
-  data_vax %>%
+  data_vax |>
   group_by(
-    vax_dosenumber, vax_type8
-  ) %>%
+    vax_dosenumber, vax_product8
+  ) |>
   summarise(
     n = ceiling_any(n(), 100),
     n_missing_date = ceiling_any(sum(is.na(vax_date)), 100),
@@ -109,7 +110,7 @@ summary_validation_stratified <-
     pct_earlier_than_firstpossiblevax_date = n_earlier_than_firstpossiblevax_date / n,
     n_interval_within_14days = ceiling_any(sum(vax_interval < 14, na.rm = TRUE), 100),
     pct_interval_within_14days = n_interval_within_14days / n,
-  ) %>%
+  ) |>
   ungroup()
 
 write_csv(summary_validation_stratified, fs::path(output_dir, "validation_stratified.csv"))
@@ -118,43 +119,43 @@ write_csv(summary_validation_stratified, fs::path(output_dir, "validation_strati
 ## output frequency of total number of doses (vax_count)
 
 summary_vax_count <-
-  data_vax %>%
-  group_by(patient_id) %>%
-  summarise(vax_count=n()) %>%
-  group_by(vax_count) %>%
+  data_vax |>
+  group_by(patient_id) |>
+  summarise(vax_count=n()) |>
+  group_by(vax_count) |>
   summarise(frequency=ceiling_any(n(), 100))
 
 write_csv(summary_vax_count, fs::path(output_dir, "validation_vax_count.csv"))
 
 
-## output frequency of vaccination type by campaign
+## output frequency of vaccination product by campaign
 
-summary_vax_type_campaign <-
-  data_vax %>%
+summary_vax_product_campaign <-
+  data_vax |>
   group_by(
-    vax_campaign, vax_type
-  ) %>%
+    vax_campaign, vax_product
+  ) |>
   summarise(
     n = ceiling_any(n(), 100)
-  ) %>%
+  ) |>
   ungroup()
 
-write_csv(summary_vax_type_campaign, fs::path(output_dir, "vax_counts_type_campaign.csv"))
+write_csv(summary_vax_product_campaign, fs::path(output_dir, "vax_counts_product_campaign.csv"))
 
 
-## output frequency of vaccination type by dose number
+## output frequency of vaccination product by dose number
 
-summary_vax_type_dosenumber <-
-  data_vax %>%
+summary_vax_product_dosenumber <-
+  data_vax |>
   group_by(
-    vax_dosenumber, vax_type
-  ) %>%
+    vax_dosenumber, vax_product
+  ) |>
   summarise(
     n = ceiling_any(n(), 100)
-  ) %>%
+  ) |>
   ungroup()
 
-write_csv(summary_vax_type_dosenumber, fs::path(output_dir, "vax_counts_type_dosenumber.csv"))
+write_csv(summary_vax_product_dosenumber, fs::path(output_dir, "vax_counts_product_dosenumber.csv"))
 
 
 
@@ -171,17 +172,17 @@ write_csv(summary_vax_type_dosenumber, fs::path(output_dir, "vax_counts_type_dos
 ## However, the row count current exceeds the limit for viewing outputs in Airlock, so we also break these down in uni / bivariate tables below
 
 summary_stratified <-
-  data_vax %>%
+  data_vax |>
   group_by(
-    vax_dosenumber, vax_type8, vax_campaign,
+    vax_dosenumber, vax_product8, vax_campaign,
     sex, ageband, ethnicity5, region, imd_quintile,
     # PRIMIS
  #   crd, chd, ckd, cld, cns, learndis, diabetes, immunosuppressed, asplenia, severe_obesity, smi,
  #   primis_atrisk
-  ) %>%
+  ) |>
   summarise(
     n = ceiling_any(n(), 100)
-  ) %>%
+  ) |>
   ungroup()
 
 write_csv(summary_stratified, fs::path(output_dir, "vax_counts_stratified.csv"))
@@ -189,12 +190,12 @@ write_csv(summary_stratified, fs::path(output_dir, "vax_counts_stratified.csv"))
 
 
 ## output plots of vaccine counts per week ---
-## stratified by type, dose number, and other characteristics
+## stratified by product, dose number, and other characteristics
 
 plot_vax_dates <- function(rows, cols) {
-  summary_by <- data_vax_clean %>%
-    group_by(vax_type8, vax_week) %>%
-    group_by({{ rows }}, {{ cols }}, .add = TRUE) %>%
+  summary_by <- data_vax_clean |>
+    group_by(vax_product8, vax_week) |>
+    group_by({{ rows }}, {{ cols }}, .add = TRUE) |>
     summarise(
       n = ceiling_any(n(), 100)
     )
@@ -202,7 +203,7 @@ plot_vax_dates <- function(rows, cols) {
   temp_plot <-
     ggplot(summary_by) +
     geom_col(
-      aes(x = vax_week, y = n, fill = vax_type8, group = vax_type8),
+      aes(x = vax_week, y = n, fill = vax_product8, group = vax_product8),
       alpha = 0.5,
       position = position_stack(reverse = TRUE),
       # position=position_identity(),
@@ -235,7 +236,7 @@ plot_vax_dates <- function(rows, cols) {
       date_labels = "%Y", # labels = scales::label_date("%b"),
       # sec.axis = sec_axis(
       #   breaks=as.Date(c("2021-01-01","2022-01-01","2023-01-01","2024-01-01")),
-      #   trans = ~as.Date(.),
+      #   transform = ~as.Date(.),
       #   labels = scales::label_date("%Y")
       # )
     ) +
@@ -304,17 +305,17 @@ plot_vax_dates(vax_campaign, vax_dosenumber)
 #plot_vax_dates(smi, vax_dosenumber) # severe mental illness
 #plot_vax_dates(primis_atrisk, vax_dosenumber) # Clinically vulnerable
 
-## output plots of time since previous vaccination by type, dose number, and other characteristics ----
+## output plots of time since previous vaccination by product, dose number, and other characteristics ----
 
 plot_vax_intervals <- function(rows, cols) {
-  summary_by <- data_vax_clean %>%
-    filter(vax_index != 1) %>%
+  summary_by <- data_vax_clean |>
+    filter(vax_index != 1) |>
     mutate(
       vax_interval = roundmid_any(vax_interval + 1, 7), # to split into 0-6, 7-13, 14-20, 21-28, ....
       vax_dosenumber = factor(vax_index, levels = sort(unique(vax_index)), labels = paste("Dose ", sort(unique(vax_index))-1, "-", sort(unique(vax_index)))),
-    ) %>%
-    group_by(vax_dosenumber, vax_type8, vax_interval) %>%
-    group_by({{ rows }}, {{ cols }}, .add = TRUE) %>%
+    ) |>
+    group_by(vax_dosenumber, vax_product8, vax_interval) |>
+    group_by({{ rows }}, {{ cols }}, .add = TRUE) |>
     summarise(
       n = ceiling_any(n(), 100),
     )
@@ -322,7 +323,7 @@ plot_vax_intervals <- function(rows, cols) {
   temp_plot <-
     ggplot(summary_by) +
     geom_col(
-      aes(x = vax_interval, y = n, fill = vax_type8, group = vax_type8),
+      aes(x = vax_interval, y = n, fill = vax_product8, group = vax_product8),
       alpha = 0.5,
       position = position_stack(reverse = TRUE),
       # position=position_identity(),
@@ -352,7 +353,7 @@ plot_vax_intervals <- function(rows, cols) {
       breaks = (0:100) * 4 * 7,
       # limits = c(0, NA),
       sec.axis = sec_axis(
-        trans = ~ . / 7
+        transform = ~ . / 7
       )
     ) +
     # scale_y_continuous(limits=c(0,100))+
