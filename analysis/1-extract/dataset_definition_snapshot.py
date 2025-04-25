@@ -12,6 +12,7 @@ from sys import argv
 from datetime import datetime
 
 from ehrql import (
+    show,
     case,
     create_dataset,
     days,
@@ -113,3 +114,5 @@ dataset.covid_vax_prior_count = (
   .count_for_patient()
 )
 
+# Deregistration dates after the snapshot date
+dataset.dereg_date = registered_patients.end_date
