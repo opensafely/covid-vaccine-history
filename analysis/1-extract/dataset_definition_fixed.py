@@ -30,7 +30,7 @@ from ehrql.tables.tpp import (
 from codelists import *
 
 study_dates = loads(
-    Path("lib/dates.json").read_text(),
+    Path("analysis/0-lib/dates.json").read_text(),
 )
 
 # Change these in ./lib/dates.json if necessary

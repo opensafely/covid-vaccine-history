@@ -31,7 +31,7 @@ from codelists import *
 
 
 study_dates = loads(
-    Path("lib/dates.json").read_text(),
+    Path("analysis/0-lib/dates.json").read_text(),
 )
 
 # Change these in ./lib/dates.json if necessary
@@ -39,7 +39,7 @@ start_date = study_dates["start_date"]
 end_date = study_dates["end_date"]
 
 #import function for clinical variables
-from analysis.variables_function import *
+from variables_function import *
 
 # all covid-19 vaccination events
 covid_vaccinations = (
@@ -63,7 +63,7 @@ dataset.define_population(
 previous_vax_date = "1899-01-01"
 
 # loop over first, second, ..., nth vaccination event for each person
-# extract info on vaccination date and type, and basic demographics
+# extract info on vaccination date and product, and basic demographics
 for i in range(1, 16+1):
 
     suffix = f"_{i}"
@@ -73,7 +73,7 @@ for i in range(1, 16+1):
     # vaccine variables
     current_vax = covid_vaccinations.where(covid_vaccinations.date>previous_vax_date).first_for_patient()
     dataset.add_column(f"covid_vax_{i}_date", current_vax.date)
-    dataset.add_column(f"covid_vax_type_{i}", current_vax.product_name)
+    dataset.add_column(f"covid_vax_product_{i}", current_vax.product_name)
     
     # registration variables
     registration = practice_registrations.for_patient_on(current_vax.date)

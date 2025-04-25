@@ -28,10 +28,10 @@ from ehrql.tables.tpp import (
 # import codelists
 from codelists import *
 
-from analysis.variables_function import *
+from variables_function import *
 
 study_dates = loads(
-    Path("lib/dates.json").read_text(),
+    Path("analysis/0-lib/dates.json").read_text(),
 )
 
 # get arguments supplied in the yaml file, stored in argv[1], argv[2], etc
@@ -62,6 +62,54 @@ dataset.define_population(
 
 # --VARIABLES--
 
+## demographic variables ----
+
+dataset.deregistered_date = registered_patients.end_date
+
 demographic_variables(dataset = dataset, index_date = snapshot_date)
+
+## primis variables ----
+
 primis_variables(dataset = dataset, index_date = snapshot_date)
+
+
 # other_cx_variables(dataset = dataset, index_date = snapshot_date)
+
+# COVID-19 vaccination history ----
+
+covid_vaccinations = (
+  vaccinations
+  .where(vaccinations.target_disease.is_in(["SARS-2 CORONAVIRUS"]))
+  .sort_by(vaccinations.date)
+)
+
+# retrieve first 3 vaccines before and first 2 vaccines on or after snapshot date
+
+
+# add next 2 recorded covid vaccination
+add_n_vaccines(
+    dataset = dataset, 
+    index_date = snapshot_date, 
+    target_disease = "SARS-2 CORONAVIRUS", 
+    name = "covid_vax", 
+    direction = "on_or_after",
+    number_of_vaccines = 2
+)
+
+# add most recent 3 vaccines prior to snapshot date
+add_n_vaccines(
+    dataset = dataset, 
+    index_date = snapshot_date, 
+    target_disease = "SARS-2 CORONAVIRUS", 
+    name = "covid_vax_prior", 
+    direction = "before",
+    number_of_vaccines = 3
+)
+
+# count total number of vaccines prior to vaccine date
+dataset.covid_vax_prior_count = (
+  covid_vaccinations
+  .where(vaccinations.date.is_before(snapshot_date))
+  .count_for_patient()
+)
+
