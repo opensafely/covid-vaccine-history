@@ -107,7 +107,7 @@ data_vax <-
     matches("covid_vax\\_\\d+\\_date"),
     matches("covid_vax_product_\\d+"),
     matches("registered_\\d+"),
-    matches("deregistration_\\d+"),
+    matches("deregistered_\\d+"),
     matches("age_\\d+"),
     matches("ageband_\\d+"),
     matches("region_\\d+"),

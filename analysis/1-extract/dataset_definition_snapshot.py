@@ -65,8 +65,6 @@ dataset.define_population(
 
 ## demographic variables ----
 
-dataset.deregistered_date = registered_patients.end_date
-
 demographic_variables(dataset = dataset, index_date = snapshot_date)
 
 ## primis variables ----
@@ -115,4 +113,4 @@ dataset.covid_vax_prior_count = (
 )
 
 # Deregistration dates after the snapshot date
-dataset.dereg_date = registered_patients.end_date
+dataset.deregistered_date = registered_patients.end_date
