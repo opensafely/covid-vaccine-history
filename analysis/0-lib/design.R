@@ -11,18 +11,18 @@
 # key study dates
 # The dates are defined in json format so they can be read in by R and python scripts
 # json has no easy way to comment, so explanation for dates is here:
-# - firstpossibleax_date is the date from which we want to identify covid vaccines. the mass vax programme was 8 Dec 2020 but other people were vaccinated earlier in trials, so want to pick these people up too (and possibly exclude them)
+# - firstpossiblevax_date is the date from which we want to identify covid vaccines. the mass vax programme was 8 Dec 2020 but other people were vaccinated earlier in trials, so want to pick these people up too (and possibly exclude them)
 # - start_date is when we start the observational period proper, at the start of the mass vax programme
 # - end_date is when we stopthe observation period. This may be extended as the study progresses
 study_dates <-
-  jsonlite::read_json(path = here("lib", "dates.json")) %>%
+  jsonlite::read_json(path = here("analysis", "0-lib", "dates.json")) %>%
   map(as.Date)
 
 # make these available in the global environment
 # so we don't have to use `study_dates$start_date` or `start_date <- study_dates$start_date` in each script
 list2env(study_dates, globalenv())
 
-# covid-19 vacacine campaign dates
+# covid-19 vaccine campaign dates
 campaign_dates <-
   tribble(
     ~campaign,        ~start,       ~start_rounded,
@@ -34,7 +34,8 @@ campaign_dates <-
     "Spring 2023",    "2023-04-03", "2023-04-01",
     "Autumn 2023",    "2023-09-11", "2023-09-01",
     "Spring 2024",    "2024-04-01", "2023-04-01",
-    "Autumn 2024",    "2024-10-03", "2024-09-01"
+    "Autumn 2024",    "2024-10-03", "2024-09-01",
+    #"Spring 2025",    "", "",
   ) %>%
   mutate(
     across(c(start, start_rounded), as.Date)
