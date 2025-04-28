@@ -36,9 +36,6 @@ temporal_resolution <- 28
 # maximum follow-up after snapshot date
 max_fup <- 24*7 # 24 weeks
 
-# rounding precision
-sdc_threshold <- 10
-
 #Create next campaign start date
 next_campaign_date <- min(campaign_dates$start[campaign_dates$start > snapshot_date], as.Date(Inf), na.rm=TRUE)
 
@@ -148,6 +145,7 @@ data_combined <-
     # previous vaccine summary
     # add more variables here based on covid_vax_prior_1_date, covid_vax_prior_2_date,... etc if needed
     vax_count = covid_vax_prior_count,
+    vax_count_group = ,
     last_vax_date = covid_vax_prior_1_date,
     last_vax_product = covid_vax_prior_1_product,
     days_since_vax = snapshot_date - last_vax_date,
@@ -195,7 +193,7 @@ plot_date_of_last_dose <- function(subgroup) {
     lazy_dt() |>
     group_by({{ subgroup }}, last_vax_product, last_vax_period) |>
     summarise(
-      n = ceiling_any(n(), 100)
+      n = ceiling_any(n(), sdc_threshold)
     ) |>
     ungroup() |>
     as_tibble() |>
@@ -295,7 +293,7 @@ plot_vax_count <- function(subgroup) {
     lazy_dt() |>
     group_by({{ subgroup }}, vax_count) |>
     summarise(
-      n = ceiling_any(n(), 100),
+      n = ceiling_any(n(), sdc_threshold),
     ) |>
     ungroup() |>
     as_tibble() |>
@@ -366,11 +364,11 @@ plot_vax_count(region)
 plot_vax_count(imd_quintile)
 
 #PRIMIS
-plot_vax_count(crd) # cronic respiratory disease
-plot_vax_count(chd) # cronic heart disease
+plot_vax_count(crd) # chronic respiratory disease
+plot_vax_count(chd) # chronic heart disease
 plot_vax_count(ckd) # chronic kidney disease
-plot_vax_count(cld) # cronic liver disease
-plot_vax_count(cns) # chronic neurologicalS
+plot_vax_count(cld) # chronic liver disease
+plot_vax_count(cns) # chronic neurological
 plot_vax_count(learndis) # learning disability
 plot_vax_count(diabetes) # diabetes
 plot_vax_count(immunosuppressed) # immunosuppressed
@@ -392,20 +390,20 @@ create_summary_table <- function(subgroup) {
     group_by({{ subgroup }}) |>
     summarise(
       # Dose counts
-      total = ceiling_any(n(), 100),
-      `0` = ceiling_any(sum(vax_count == 0, na.rm = TRUE), 100),
-      `1` = ceiling_any(sum(vax_count == 1, na.rm = TRUE), 100),
-      `2` = ceiling_any(sum(vax_count == 2, na.rm = TRUE), 100),
-      `3` = ceiling_any(sum(vax_count == 3, na.rm = TRUE), 100),
-      `4` = ceiling_any(sum(vax_count == 4, na.rm = TRUE), 100),
-      `5+` = ceiling_any(sum(vax_count >= 5, na.rm = TRUE), 100),
+      total = ceiling_any(n(), sdc_threshold),
+      `0` = ceiling_any(sum(vax_count == 0, na.rm = TRUE), sdc_threshold),
+      `1` = ceiling_any(sum(vax_count == 1, na.rm = TRUE), sdc_threshold),
+      `2` = ceiling_any(sum(vax_count == 2, na.rm = TRUE), sdc_threshold),
+      `3` = ceiling_any(sum(vax_count == 3, na.rm = TRUE), sdc_threshold),
+      `4` = ceiling_any(sum(vax_count == 4, na.rm = TRUE), sdc_threshold),
+      `5+` = ceiling_any(sum(vax_count >= 5, na.rm = TRUE), sdc_threshold),
       # Dose summary
       Dose_median = quantile(vax_count, probs = 0.5, na.rm = TRUE),
       Dose_25 = quantile(vax_count, probs = 0.25, na.rm = TRUE),
       Dose_75 = quantile(vax_count, probs = 0.75, na.rm = TRUE),
       # Vaccination in past 12 and 24 months
-      Vacc_12m_n = ceiling_any(sum(days_since_vax <= 365, na.rm = TRUE), 100),
-      Vacc_24m_n = ceiling_any(sum(days_since_vax <= 365*2, na.rm = TRUE), 100),
+      Vacc_12m_n = ceiling_any(sum(days_since_vax <= 365, na.rm = TRUE), sdc_threshold),
+      Vacc_24m_n = ceiling_any(sum(days_since_vax <= 365*2, na.rm = TRUE), sdc_threshold),
       # Time since last dose
       Time_last_dose_median = quantile(days_since_vax, probs = 0.5, na.rm = TRUE),
       Time_last_dose_10 = quantile(days_since_vax, probs = 0.10, na.rm = TRUE),
@@ -423,8 +421,8 @@ create_summary_table <- function(subgroup) {
       `4_per` = round(`4`*100 / total, 1),
       `5+_per` = round(`5+`*100 / total, 1),
       # Vaccination % in past 12 and 24 months
-      Vacc_12m_per = round(Vacc_12m_n / total * 100, 1),
-      Vacc_24m_per = round(Vacc_24m_n / total * 100, 1),
+      Vacc_12m_per = round(Vacc_12m_n * 100 / total, 1),
+      Vacc_24m_per = round(Vacc_24m_n * 100 / total, 1),
     ) |>
     as_tibble()
   subgroup_name <- deparse(substitute(subgroup))
