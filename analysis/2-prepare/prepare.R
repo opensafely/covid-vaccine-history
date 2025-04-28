@@ -25,11 +25,6 @@ options(width=200) # set output width for capture.output
 # Import and process fixed dataset ----
 
 # Import fixed dataset
-#data_extract_fixed <-
-#  import_extract(
-#    here("lib", "dummydata", "dummyinput_fixed.arrow"),
-#    here("output", "extracts", "extract_fixed.arrow")
-#  )
 data_extract_fixed <- read_feather(here("output", "1-extract", "extract_fixed.arrow"))
 
 stopifnot(
