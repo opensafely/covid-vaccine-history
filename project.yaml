@@ -8,7 +8,7 @@ actions:
   extract_fixed:
     run: ehrql:v1 generate-dataset analysis/1-extract/dataset_definition_fixed.py
       --output output/1-extract/extract_fixed.arrow
-      --dummy-data-file analysis/1-extract/dummy_fixed.arrow
+      --dummy-data-file analysis/1-extract/dummy-data/dummy_fixed.arrow
     outputs:
       highly_sensitive:
         cohort: output/1-extract/extract_fixed.arrow
@@ -16,7 +16,7 @@ actions:
   extract_varying:
     run: ehrql:v1 generate-dataset analysis/1-extract/dataset_definition_varying.py
       --output output/1-extract/extract_varying.arrow
-      #--dummy-data-file analysis/1-extract/dummy_varying.arrow
+      #--dummy-data-file analysis/1-extract/dummy-data/dummy_varying.arrow
     outputs:
       highly_sensitive:
         cohort: output/1-extract/extract_varying.arrow
@@ -46,7 +46,7 @@ actions:
   extract_snapshot_20201208:
     run: ehrql:v1 generate-dataset analysis/1-extract/dataset_definition_snapshot.py
       --output output/1-extract/extract_snapshot_20201208.arrow
-      --dummy-data-file analysis/1-extract/dummy_snapshot_20201208.arrow
+      --dummy-data-file analysis/1-extract/dummy-data/dummy_snapshot_20201208.arrow
       -- 20201208
     outputs:
       highly_sensitive:
@@ -65,7 +65,7 @@ actions:
   extract_snapshot_20210906:
     run: ehrql:v1 generate-dataset analysis/1-extract/dataset_definition_snapshot.py
       --output output/1-extract/extract_snapshot_20210906.arrow
-      --dummy-data-file analysis/1-extract/dummy_snapshot_20210906.arrow
+      --dummy-data-file analysis/1-extract/dummy-data/dummy_snapshot_20210906.arrow
       -- 20210906
     outputs:
       highly_sensitive:

@@ -280,4 +280,4 @@ dummydata_processed <- dummydata %>%
   mutate(across(starts_with("covid_vax_product_"), ~ factor(., levels = names(vax_product_lookup), labels = unname(vax_product_lookup))))
 
 # save the datasetin arrow format
-write_feather(dummydata_processed, sink = here("analysis", "1-extract", "dummy_varying.arrow"))
+write_feather(dummydata_processed, sink = here("analysis", "1-extract", "dummy-data", "dummy_varying.arrow"))

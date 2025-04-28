@@ -112,4 +112,4 @@ dummydata_processed <- dummydata %>%
 
 
 # save the datasetin arrow format
-write_feather(dummydata_processed, sink = here("analysis", "1-extract", "dummy_fixed.arrow"))
+write_feather(dummydata_processed, sink = here("analysis", "1-extract", "dummy-data", "dummy_fixed.arrow"))
