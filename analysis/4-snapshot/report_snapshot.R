@@ -153,7 +153,7 @@ data_combined <-
     last_vax_product = fct_na_value_to_level(last_vax_product, "Unvaccinated"),
     last_vax_date = if_else(vax_count == 0, default_date + as.integer(runif(n(), 0, 10)), last_vax_date),
     last_vax_week = floor_date(last_vax_date, unit = "week", week_start = 1), # starting on a monday
-    last_vax_period = floor_dates[findInterval(last_vax_date, floor_dates)], # use floor_date(last_vax_date, unit = floor_dates) when lubridate package is updated
+    last_vax_period = floor_date(last_vax_date, unit = floor_dates), # use floor_dates[findInterval(last_vax_date, floor_dates)] if lubridate isn't working
 
     # info on first vaccine(s) received after snapshot date
     next_vax_date = covid_vax_1_date,
