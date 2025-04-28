@@ -139,18 +139,18 @@ data_combined <-
     by = "patient_id"
   ) |>
   mutate(
-    all = "",
+    all = "All",
     !!!standardise_characteristics,
 
     # previous vaccine summary
     # add more variables here based on covid_vax_prior_1_date, covid_vax_prior_2_date,... etc if needed
     vax_count = covid_vax_prior_count,
-    vax_count_group = ,
+    vax_count_group = cut(vax_count, c(-Inf,0,2,4,Inf), labels=c("0", "1-2", "3-4", "5+")),
     last_vax_date = covid_vax_prior_1_date,
     last_vax_product = covid_vax_prior_1_product,
     days_since_vax = snapshot_date - last_vax_date,
 
-    last_vax_product = fct_explicit_na(last_vax_product, "unvaccinated"),
+    last_vax_product = fct_na_value_to_level(last_vax_product, "Unvaccinated"),
     last_vax_date = if_else(vax_count == 0, default_date + as.integer(runif(n(), 0, 10)), last_vax_date),
     last_vax_week = floor_date(last_vax_date, unit = "week", week_start = 1), # starting on a monday
     last_vax_period = floor_dates[findInterval(last_vax_date, floor_dates)], # use floor_date(last_vax_date, unit = floor_dates) when lubridate package is updated
@@ -173,7 +173,7 @@ data_combined <-
    ) |>
   as_tibble() |>
   mutate(
-   across(where(is.factor) | where(is.character), ~fct_na_value_to_level(.x, level ="Unknown"))
+   across(where(is.factor) | where(is.character), ~fct_drop(fct_na_value_to_level(.x, level ="(Missing)")))
   )
 
 
@@ -291,29 +291,29 @@ plot_vax_count <- function(subgroup) {
   summary_by <-
     data_combined |>
     lazy_dt() |>
-    group_by({{ subgroup }}, vax_count) |>
+    group_by({{ subgroup }}, vax_count_group) |>
     summarise(
       n = ceiling_any(n(), sdc_threshold),
     ) |>
     ungroup() |>
     as_tibble() |>
     complete(
-      {{ subgroup }}, vax_count,
+      {{ subgroup }}, vax_count_group,
       fill = list(n = 0)
     ) |>
-    ungroup() |>
     group_by({{ subgroup }}) |>
     mutate(
       row_total = sum(n),
       prop = n / row_total,
-    )
+    ) |>
+    ungroup()
 
   temp_plot <-
     ggplot(summary_by) +
     geom_bar(
-      aes(x = prop, y = {{ subgroup }}, width = row_total, fill = as.character(vax_count)),
-      stat = "identity", position = "fill"
-      # position = position_stack(reverse = TRUE),
+      aes(x = prop, y = {{ subgroup }}, width = row_total, fill = vax_count_group),
+      stat = "identity", #position = "fill",
+      position = position_stack(reverse = TRUE),
     ) +
     facet_grid(
       rows = vars({{ subgroup }}),
@@ -329,10 +329,10 @@ plot_vax_count <- function(subgroup) {
       palette = "Set2",
       na.value = "grey50",
       labels = function(breaks) {
-        breaks[is.na(breaks)] <- "Other"
+        breaks[is.na(breaks)] <- "(Missing)"
         breaks
       }
-    ) +
+    )+
     theme_minimal() +
     theme(
       axis.text.x.top = element_text(hjust = 0),
@@ -344,7 +344,7 @@ plot_vax_count <- function(subgroup) {
     ) +
     NULL
 
-  print(temp_plot)
+  #print(temp_plot)
 
   subgroup_name <- deparse(substitute(subgroup))
   # col_name = deparse(substitute(cols))
@@ -354,6 +354,8 @@ plot_vax_count <- function(subgroup) {
   # write tables that capture underlying plotting data
   write_csv(summary_by, fs::path(output_dir, glue("vax_count_{subgroup_name}.csv")))
 }
+
+#all, ageband, region,
 
 ## --VARIABLES--
 plot_vax_count(all)
