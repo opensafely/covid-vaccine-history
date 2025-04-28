@@ -15,7 +15,7 @@ library("glue")
 library("dd4d")
 
 # Import custom functions
-source(here("analysis", "utility.R"))
+source(here("analysis", "0-lib", "design.R"))
 
 # Define and simulate the dataset ----
 
@@ -111,8 +111,5 @@ dummydata_processed <- dummydata %>%
   rename_with(~ str_replace(., "_day", "_date"), ends_with("_day"))
 
 
-# create the directory where the dataset will be saved
-fs::dir_create(here("lib", "dummydata"))
-
 # save the datasetin arrow format
-write_feather(dummydata_processed, sink = here("lib", "dummydata", "dummyinput_fixed.arrow"))
+write_feather(dummydata_processed, sink = here("analysis", "1-extract", "dummy-data", "dummy_fixed.arrow"))

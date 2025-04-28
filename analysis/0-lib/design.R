@@ -1,44 +1,12 @@
 # _________________________________________________
 # Purpose:
-# define key design features for the study
 # define useful functions used in the codebase
+# define key design features for the study
 # define some look up tables to use in the codebase
 # this script should be sourced (using `source(here("analysis", "utility.R"))`) at the start of each R script
 # _________________________________________________
 
-
-
-# key study dates
-# The dates are defined in json format so they can be read in by R and python scripts
-# json has no easy way to comment, so explanation for dates is here:
-# - firstpossibleax_date is the date from which we want to identify covid vaccines. the mass vax programme was 8 Dec 2020 but other people were vaccinated earlier in trials, so want to pick these people up too (and possibly exclude them)
-# - start_date is when we start the observational period proper, at the start of the mass vax programme
-# - end_date is when we stopthe observation period. This may be extended as the study progresses
-study_dates <-
-  jsonlite::read_json(path = here("lib", "dates.json")) %>%
-  map(as.Date)
-
-# make these available in the global environment
-# so we don't have to use `study_dates$start_date` or `start_date <- study_dates$start_date` in each script
-list2env(study_dates, globalenv())
-
-# covid-19 vacacine campaign dates
-campaign_dates <-
-  tribble(
-    ~campaign,        ~start,       ~start_rounded,
-    "Pre-roll-out",   as.character(firstpossiblevax_date), as.character(firstpossiblevax_date),
-    "Primary series", "2020-12-08", "2020-12-01",
-    "Autumn 2021",    "2021-09-06", "2021-09-01",
-    "Spring 2022",    "2022-04-01", "2022-04-01",
-    "Autumn 2022",    "2022-09-12", "2022-09-01",
-    "Spring 2023",    "2023-04-03", "2023-04-01",
-    "Autumn 2023",    "2023-09-11", "2023-09-01",
-    "Spring 2024",    "2024-04-01", "2023-04-01",
-    "Autumn 2024",    "2024-10-03", "2024-09-01"
-  ) %>%
-  mutate(
-    across(c(start, start_rounded), as.Date)
-  )
+# utility functions ----
 
 roundmid_any <- function(x, to = 1) {
   # like ceiling_any, but centers on (integer) midpoint of the rounding points
@@ -75,12 +43,45 @@ fct_case_when <- function(...) {
   factor(dplyr::case_when(...), levels=levels)
 }
 
-# function to convert ethnicity 16 group into 5 group
-ethnicity_16_to_5 <- function(x) {
-  x1 <- fct_relabel(x, ~ str_extract(.x, ".*(?= - )")) # pick up everything before " - "
-  x2 <- fct_recode(x1, `Chinese or Other Ethnic Groups` = "Other Ethnic Groups")
-  return(x2)
-}
+
+# Design elements ----
+
+# key study dates
+# The dates are defined in json format so they can be read in by R and python scripts
+# json has no easy way to comment, so explanation for dates is here:
+# - firstpossiblevax_date is the date from which we want to identify covid vaccines. the mass vax programme was 8 Dec 2020 but other people were vaccinated earlier in trials, so want to pick these people up too (and possibly exclude them)
+# - start_date is when we start the observational period proper, at the start of the mass vax programme
+# - end_date is when we stopthe observation period. This may be extended as the study progresses
+study_dates <-
+  jsonlite::read_json(path = here("analysis", "0-lib", "dates.json")) %>%
+  map(as.Date)
+
+# make these available in the global environment
+# so we don't have to use `study_dates$start_date` or `start_date <- study_dates$start_date` in each script
+list2env(study_dates, globalenv())
+
+# statistical disclosure control rounding precision
+sdc_threshold <- 100
+
+# covid-19 vaccine campaign dates
+campaign_dates <-
+  tribble(
+    ~campaign,        ~start,       ~start_rounded,
+    "Pre-roll-out",   as.character(firstpossiblevax_date), as.character(firstpossiblevax_date),
+    "Primary series", "2020-12-08", "2020-12-01",
+    "Autumn 2021",    "2021-09-06", "2021-09-01",
+    "Spring 2022",    "2022-04-01", "2022-04-01",
+    "Autumn 2022",    "2022-09-12", "2022-09-01",
+    "Spring 2023",    "2023-04-03", "2023-04-01",
+    "Autumn 2023",    "2023-09-11", "2023-09-01",
+    "Spring 2024",    "2024-04-01", "2023-04-01",
+    "Autumn 2024",    "2024-10-03", "2024-09-01",
+    #"Spring 2025",    "", "",
+  ) %>%
+  mutate(
+    across(c(start, start_rounded), as.Date)
+  )
+
 
 # output from https://jobs.opensafely.org/opensafely-internal/tpp-vaccination-names/ workspace
 # shows all possible covid vaccination names in TPP
@@ -193,65 +194,12 @@ factor_levels <-
     ),
   )
 
-
-
-# Import dummy data if running locally, or real data if running on the server
-import_extract <- function(custom_file_path, ehrql_file_path) {
-  if (Sys.getenv("OPENSAFELY_BACKEND") %in% c("", "expectations")) {
-    # ideally in future this will check column existence and types from metadata,
-    # rather than from a ehrql-generated dummy data
-
-    data_ehrql_dummy <- read_feather(ehrql_file_path) %>%
-      # because date types are not returned consistently by ehrql
-      mutate(across(ends_with("_date"), ~ as.Date(.))) %>%
-      mutate(patient_id = as.integer(patient_id))
-
-    data_custom_dummy <- read_feather(custom_file_path)
-
-    not_in_ehrql <- names(data_custom_dummy)[!(names(data_custom_dummy) %in% names(data_ehrql_dummy))]
-    not_in_custom <- names(data_ehrql_dummy)[!(names(data_ehrql_dummy) %in% names(data_custom_dummy))]
-
-
-    if (length(not_in_custom) != 0) {
-      stop(
-        paste(
-          "These variables are in ehrql but not in custom: ",
-          paste(not_in_custom, collapse = ", ")
-        )
-      )
-    }
-
-    if (length(not_in_ehrql) != 0) {
-      stop(
-        paste(
-          "These variables are in custom but not in ehrql: ",
-          paste(not_in_ehrql, collapse = ", ")
-        )
-      )
-    }
-
-    # reorder columns
-    data_ehrql_dummy <- data_ehrql_dummy[, names(data_custom_dummy)]
-
-    unmatched_types <- cbind(
-      map_chr(data_ehrql_dummy, ~ paste(class(.), collapse = ", ")),
-      map_chr(data_custom_dummy, ~ paste(class(.), collapse = ", "))
-    )[(map_chr(data_ehrql_dummy, ~ paste(class(.), collapse = ", ")) != map_chr(data_custom_dummy, ~ paste(class(.), collapse = ", "))), ] %>%
-      as.data.frame() %>%
-      rownames_to_column()
-
-
-    # if(nrow(unmatched_types)>0) stop(
-    #   #unmatched_types
-    #   "inconsistent typing in ehrql : dummy dataset\n",
-    #   apply(unmatched_types, 1, function(row) paste(paste(row, collapse=" : "), "\n"))
-    # )
-
-    data_extract <- data_custom_dummy
-  } else {
-    data_extract <- read_feather(ehrql_file_path) %>%
-      # because date types are not returned consistently by ehrql
-      mutate(across(ends_with("_date"), as.Date))
-  }
-  data_extract
+# function to convert ethnicity 16 group into 5 group
+ethnicity_16_to_5 <- function(x) {
+  x1 <- fct_relabel(x, ~ str_extract(.x, ".*(?= - )")) # pick up everything before " - "
+  x2 <- fct_recode(x1, `Chinese or Other Ethnic Groups` = "Other Ethnic Groups")
+  return(x2)
 }
+
+
+

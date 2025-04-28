@@ -18,7 +18,7 @@ library("glue")
 library("dd4d")
 
 # Import custom functions
-source(here("analysis", "utility.R"))
+source(here("analysis", "0-lib", "design.R"))
 
 # Define and simulate the dataset ----
 
@@ -139,22 +139,22 @@ sim_list_vax_info <- lst(
     missing_rate = ~0.99,
     needs = "covid_vax_15_day"
   ),
-  covid_vax_type_1 = bn_node(~ rcat(n = ..n, c("pfizer", "az"), c(0.5, 0.5)), needs = "covid_vax_1_day"),
-  covid_vax_type_2 = bn_node(~ if_else(runif(..n) < 0.98, covid_vax_type_1, "az"), needs = "covid_vax_2_day"),
-  covid_vax_type_3 = bn_node(~ rcat(n = ..n, c("pfizer", "moderna"), c(0.5, 0.5)), needs = "covid_vax_3_day"),
-  covid_vax_type_4 = bn_node(~ rcat(n = ..n, c("pfizer", "moderna"), c(0.5, 0.5)), needs = "covid_vax_4_day"),
-  covid_vax_type_5 = bn_node(~ rcat(n = ..n, c("pfizer", "moderna"), c(0.5, 0.5)), needs = "covid_vax_5_day"),
-  covid_vax_type_6 = bn_node(~ rcat(n = ..n, c("pfizer", "moderna"), c(0.5, 0.5)), needs = "covid_vax_6_day"),
-  covid_vax_type_7 = bn_node(~ rcat(n = ..n, c("pfizer", "moderna"), c(0.5, 0.5)), needs = "covid_vax_7_day"),
-  covid_vax_type_8 = bn_node(~ rcat(n = ..n, c("pfizer", "moderna"), c(0.5, 0.5)), needs = "covid_vax_8_day"),
-  covid_vax_type_9 = bn_node(~ rcat(n = ..n, c("pfizer", "moderna"), c(0.5, 0.5)), needs = "covid_vax_9_day"),
-  covid_vax_type_10 = bn_node(~ rcat(n = ..n, c("pfizer", "moderna"), c(0.5, 0.5)), needs = "covid_vax_10_day"),
-  covid_vax_type_11 = bn_node(~ rcat(n = ..n, c("pfizer", "moderna"), c(0.5, 0.5)), needs = "covid_vax_11_day"),
-  covid_vax_type_12 = bn_node(~ rcat(n = ..n, c("pfizer", "moderna"), c(0.5, 0.5)), needs = "covid_vax_12_day"),
-  covid_vax_type_13 = bn_node(~ rcat(n = ..n, c("pfizer", "moderna"), c(0.5, 0.5)), needs = "covid_vax_13_day"),
-  covid_vax_type_14 = bn_node(~ rcat(n = ..n, c("pfizer", "moderna"), c(0.5, 0.5)), needs = "covid_vax_14_day"),
-  covid_vax_type_15 = bn_node(~ rcat(n = ..n, c("pfizer", "moderna"), c(0.5, 0.5)), needs = "covid_vax_15_day"),
-  covid_vax_type_16 = bn_node(~ rcat(n = ..n, c("pfizer", "moderna"), c(0.5, 0.5)), needs = "covid_vax_16_day"),
+  covid_vax_product_1 = bn_node(~ rcat(n = ..n, c("pfizer", "az"), c(0.5, 0.5)), needs = "covid_vax_1_day"),
+  covid_vax_product_2 = bn_node(~ if_else(runif(..n) < 0.98, covid_vax_product_1, "az"), needs = "covid_vax_2_day"),
+  covid_vax_product_3 = bn_node(~ rcat(n = ..n, c("pfizer", "moderna"), c(0.5, 0.5)), needs = "covid_vax_3_day"),
+  covid_vax_product_4 = bn_node(~ rcat(n = ..n, c("pfizer", "moderna"), c(0.5, 0.5)), needs = "covid_vax_4_day"),
+  covid_vax_product_5 = bn_node(~ rcat(n = ..n, c("pfizer", "moderna"), c(0.5, 0.5)), needs = "covid_vax_5_day"),
+  covid_vax_product_6 = bn_node(~ rcat(n = ..n, c("pfizer", "moderna"), c(0.5, 0.5)), needs = "covid_vax_6_day"),
+  covid_vax_product_7 = bn_node(~ rcat(n = ..n, c("pfizer", "moderna"), c(0.5, 0.5)), needs = "covid_vax_7_day"),
+  covid_vax_product_8 = bn_node(~ rcat(n = ..n, c("pfizer", "moderna"), c(0.5, 0.5)), needs = "covid_vax_8_day"),
+  covid_vax_product_9 = bn_node(~ rcat(n = ..n, c("pfizer", "moderna"), c(0.5, 0.5)), needs = "covid_vax_9_day"),
+  covid_vax_product_10 = bn_node(~ rcat(n = ..n, c("pfizer", "moderna"), c(0.5, 0.5)), needs = "covid_vax_10_day"),
+  covid_vax_product_11 = bn_node(~ rcat(n = ..n, c("pfizer", "moderna"), c(0.5, 0.5)), needs = "covid_vax_11_day"),
+  covid_vax_product_12 = bn_node(~ rcat(n = ..n, c("pfizer", "moderna"), c(0.5, 0.5)), needs = "covid_vax_12_day"),
+  covid_vax_product_13 = bn_node(~ rcat(n = ..n, c("pfizer", "moderna"), c(0.5, 0.5)), needs = "covid_vax_13_day"),
+  covid_vax_product_14 = bn_node(~ rcat(n = ..n, c("pfizer", "moderna"), c(0.5, 0.5)), needs = "covid_vax_14_day"),
+  covid_vax_product_15 = bn_node(~ rcat(n = ..n, c("pfizer", "moderna"), c(0.5, 0.5)), needs = "covid_vax_15_day"),
+  covid_vax_product_16 = bn_node(~ rcat(n = ..n, c("pfizer", "moderna"), c(0.5, 0.5)), needs = "covid_vax_16_day"),
 )
 
 
@@ -277,10 +277,7 @@ dummydata_processed <- dummydata %>%
   mutate(across(ends_with("_day"), ~ as.Date(as.character(index_date + .)))) %>%
   rename_with(~ str_replace(., "_day", "_date"), ends_with("_day")) %>%
   # convert vaccine product short names to full product names
-  mutate(across(starts_with("covid_vax_type_"), ~ factor(., levels = names(vax_product_lookup), labels = unname(vax_product_lookup))))
-
-# create the directory where the dataset will be saved
-fs::dir_create(here("lib", "dummydata"))
+  mutate(across(starts_with("covid_vax_product_"), ~ factor(., levels = names(vax_product_lookup), labels = unname(vax_product_lookup))))
 
 # save the datasetin arrow format
-write_feather(dummydata_processed, sink = here("lib", "dummydata", "dummyinput_varying.arrow"))
+write_feather(dummydata_processed, sink = here("analysis", "1-extract", "dummy-data", "dummy_varying.arrow"))

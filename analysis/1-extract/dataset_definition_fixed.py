@@ -27,10 +27,10 @@ from ehrql.tables.tpp import (
   ons_deaths
 )
 # import codelists
-from codelists import *
+import codelists
 
 study_dates = loads(
-    Path("lib/dates.json").read_text(),
+    Path("analysis/0-lib/dates.json").read_text(),
 )
 
 # Change these in ./lib/dates.json if necessary
@@ -79,17 +79,17 @@ dataset.sex = patients.sex
 # rather than as known/recorded on the vaccination date, even though this looks into the future.
 
 ethnicity = (clinical_events
-  .where(clinical_events.snomedct_code.is_in(ethnicity_codelist16))
+  .where(clinical_events.snomedct_code.is_in(codelists.ethnicity16))
   .sort_by(clinical_events.date)
   .where(clinical_events.date.is_on_or_before(end_date))
   .last_for_patient()
 )
 # 
 # # ethnicity using 5 groups + unknown
-dataset.ethnicity5 = ethnicity.snomedct_code.to_category(ethnicity_codelist5)
+dataset.ethnicity5 = ethnicity.snomedct_code.to_category(codelists.ethnicity5)
 # 
 # # ethnicity using 16 groups + unknown
-dataset.ethnicity16 = ethnicity.snomedct_code.to_category(ethnicity_codelist16)
+dataset.ethnicity16 = ethnicity.snomedct_code.to_category(codelists.ethnicity16)
 
 # patient death date
 dataset.death_date = ons_deaths.date
