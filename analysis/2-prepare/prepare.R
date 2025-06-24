@@ -90,8 +90,7 @@ rm(data_extract_fixed)
 #    here("output", "extracts", "extract_varying.arrow")
 #  )
 
-data_extract_varying <- read_feather(here("output", "1-extract", "extract_varying.arrow"))
-
+data_extract_varying <- read_feather(here("output", "1-extract", "extract_varying", "dataset.arrow"))
 
 # Reshape vaccination data
 data_vax <-
@@ -205,3 +204,47 @@ capture.output(
 # save dataset with <14-day vaccines removed
 write_feather(data_vax_clean, fs::path(output_dir, "data_vax_clean.arrow"))
 
+
+# Test equivalence of ELD extract ----
+
+data_vax_ELD0 <- read_feather(here("output", "1-extract", "extract_varying", "vaccinations.arrow"))
+
+data_vax_ELD <-
+  data_vax_ELD0 |>
+  filter(!is.na(vax_date)) |>
+  group_by(patient_id) |>
+  filter((vax_date!=lag(vax_date)) | row_number()==1) |>
+  mutate(vax_index = row_number()) |>
+  filter(row_number()<=16) |>
+  ungroup()
+
+data_vax_PLD <-
+  data_vax |>
+  select(patient_id, vax_date, vax_product = vax_product_raw, age, vax_index)
+
+
+# check equality of datasets
+cat(
+  "are datasets from ELD versus PLD identical after some standardisation? \n",
+  all.equal(data_vax_ELD, data_vax_PLD)
+)
+
+
+# report multiple vaccinations on the same day
+cat(
+  "number of occassions where a person is vaccinated more than once in a day:\n",
+  data_vax_ELD0 |>
+  group_by(patient_id, vax_date) |>
+  summarise(n=n()) |>
+  filter(n>1) |>
+  nrow()
+)
+
+# report no vax date
+cat(
+  "number of occassions where a person is vaccinated with a null date:\n",
+  data_vax_ELD0 |>
+  filter(is.na(vax_date)) |>
+  summarise(n=n()) |>
+  pull(n)
+)

@@ -92,3 +92,16 @@ for i in range(1, 16+1):
 
     previous_vax_date = current_vax.date
     
+
+
+### Add event-level data extract to test equivalence of ELD extract versus patient-level extract 
+
+# all covid-19 vaccination events
+# i don't think it's possible to restrict to first 16 events (as above for patient level data)
+# so I'll do this post-extract
+dataset.add_event_table(
+    "vaccinations",
+    vax_date = covid_vaccinations.date,
+    vax_product = covid_vaccinations.product_name,
+    age = patients.age_on(covid_vaccinations.date),
+)
