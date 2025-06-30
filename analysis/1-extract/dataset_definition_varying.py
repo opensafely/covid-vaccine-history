@@ -101,7 +101,7 @@ for i in range(1, 16+1):
 # so I'll do this post-extract
 dataset.add_event_table(
     "vaccinations",
-    vax_date = covid_vaccinations.date,
+    vax_date = covid_vaccinations.where(covid_vaccinations.date>"1899-01-01").date,
     vax_product = covid_vaccinations.product_name,
     age = patients.age_on(covid_vaccinations.date),
 )
