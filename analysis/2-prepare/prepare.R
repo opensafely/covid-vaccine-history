@@ -213,9 +213,9 @@ data_vax_ELD <-
   data_vax_ELD0 |>
   filter(!is.na(vax_date)) |>
   group_by(patient_id) |>
-  filter((vax_date!=lag(vax_date)) | row_number()==1) |>
+  filter((vax_date != lag(vax_date)) | row_number() == 1) |>
   mutate(vax_index = row_number()) |>
-  filter(row_number()<=16) |>
+  filter(vax_index <= 16) |>
   ungroup()
 
 data_vax_PLD <-
@@ -225,13 +225,15 @@ data_vax_PLD <-
 
 # check equality of datasets
 cat(
+  "\n",
   "are datasets from ELD versus PLD identical after some standardisation? \n",
-  all.equal(data_vax_ELD, data_vax_PLD)
 )
 
+all.equal(data_vax_ELD, data_vax_PLD)
 
 # report multiple vaccinations on the same day
 cat(
+  "\n",
   "number of occassions where a person is vaccinated more than once in a day:\n",
   data_vax_ELD0 |>
   group_by(patient_id, vax_date) |>
@@ -242,6 +244,7 @@ cat(
 
 # report no vax date
 cat(
+  "\n",
   "number of occassions where a person is vaccinated with a null date:\n",
   data_vax_ELD0 |>
   filter(is.na(vax_date)) |>
