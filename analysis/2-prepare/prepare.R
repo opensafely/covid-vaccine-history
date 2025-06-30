@@ -222,6 +222,11 @@ data_vax_PLD <-
   data_vax |>
   select(patient_id, vax_date, vax_product = vax_product_raw, age, vax_index)
 
+capture.output(
+  skimr::skim_without_charts(data_vax_ELD),
+  file = fs::path(output_dir, "data_vax_ELD_skim.txt"),
+  split = FALSE
+)
 
 # check equality of datasets
 cat(
