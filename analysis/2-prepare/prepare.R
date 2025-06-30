@@ -211,6 +211,7 @@ data_vax_ELD0 <- read_feather(here("output", "1-extract", "extract_varying", "va
 
 data_vax_ELD <-
   data_vax_ELD0 |>
+  arrange(patient_id, vax_date) |>
   filter(!is.na(vax_date)) |>
   filter(vax_date > as.Date("1899-01-01")) |>
   group_by(patient_id) |>
