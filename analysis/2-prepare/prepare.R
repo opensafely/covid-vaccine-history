@@ -212,26 +212,36 @@ data_vax_ELD0 <- read_feather(here("output", "1-extract", "extract_varying", "va
 data_vax_ELD <-
   data_vax_ELD0 |>
   filter(!is.na(vax_date)) |>
+  filter(vax_date > as.Date("1899-01-01")) |>
   group_by(patient_id) |>
   filter((vax_date != lag(vax_date)) | row_number() == 1) |>
   mutate(vax_index = row_number()) |>
   filter(vax_index <= 16) |>
   ungroup()
 
-data_vax_PLD <-
-  data_vax |>
-  select(patient_id, vax_date, vax_product = vax_product_raw, age, vax_index)
-
 capture.output(
   skimr::skim_without_charts(data_vax_ELD),
   file = fs::path(output_dir, "data_vax_ELD_skim.txt"),
   split = FALSE
 )
+write_feather(data_vax_ELD, fs::path(output_dir, "data_vax_ELD.arrow"))
+
+data_vax_PLD <-
+  data_vax |>
+  select(patient_id, vax_date, vax_product = vax_product_raw, age, vax_index)
+
+capture.output(
+  skimr::skim_without_charts(data_vax_PLD),
+  file = fs::path(output_dir, "data_vax_PLD_skim.txt"),
+  split = FALSE
+)
+write_feather(data_vax_PLD, fs::path(output_dir, "data_vax_PLD.arrow"))
+
 
 # check equality of datasets
 cat(
   "\n",
-  "are datasets from ELD versus PLD identical after some standardisation? \n",
+  "are datasets from ELD versus PLD identical after some standardisation? \n"
 )
 
 all.equal(data_vax_ELD, data_vax_PLD)
@@ -241,6 +251,7 @@ cat(
   "\n",
   "number of occassions where a person is vaccinated more than once in a day:\n",
   data_vax_ELD0 |>
+  filter(is.na(vax_date)) |>
   group_by(patient_id, vax_date) |>
   summarise(n=n()) |>
   filter(n>1) |>
@@ -255,4 +266,15 @@ cat(
   filter(is.na(vax_date)) |>
   summarise(n=n()) |>
   pull(n)
+)
+
+
+# report no vax date
+cat(
+  "\n",
+  "number of occassions where a person is vaccinated on or before 1899:\n",
+  data_vax_ELD0 |>
+    filter(vax_date <= as.Date("1899-01-01")) |>
+    summarise(n=n()) |>
+    pull(n)
 )

@@ -99,9 +99,12 @@ for i in range(1, 16+1):
 # all covid-19 vaccination events
 # i don't think it's possible to restrict to first 16 events (as above for patient level data)
 # so I'll do this post-extract
+
+# covid_vaccinations_ELD = covid_vaccinations.where(covid_vaccinations.date>"1899-01-01")
+covid_vaccinations_ELD = covid_vaccinations 
 dataset.add_event_table(
     "vaccinations",
-    vax_date = covid_vaccinations.where(covid_vaccinations.date>"1899-01-01").date,
-    vax_product = covid_vaccinations.product_name,
-    age = patients.age_on(covid_vaccinations.date),
+    vax_date = covid_vaccinations_ELD.date,
+    vax_product = covid_vaccinations_ELD.product_name,
+    age = patients.age_on(covid_vaccinations_ELD.date),
 )
