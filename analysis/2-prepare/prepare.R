@@ -252,7 +252,7 @@ cat(
   "\n",
   "number of occassions where a person is vaccinated more than once in a day:\n",
   data_vax_ELD0 |>
-  filter(is.na(vax_date)) |>
+  filter(!is.na(vax_date)) |>
   group_by(patient_id, vax_date) |>
   summarise(n=n()) |>
   filter(n>1) |>
