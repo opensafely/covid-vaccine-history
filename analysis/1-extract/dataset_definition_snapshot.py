@@ -8,7 +8,6 @@
 
 from json import loads
 from pathlib import Path
-from sys import argv
 from datetime import datetime
 
 from ehrql import (
@@ -36,7 +35,7 @@ study_dates = loads(
 )
 
 # get arguments supplied in the yaml file, stored in argv[1], argv[2], etc
-snapshot_date = datetime.strptime(argv[1], '%Y%m%d').strftime('%Y-%m-%d') 
+snapshot_date = datetime.strptime(get_parameter(name="snapshot_date"), '%Y%m%d').strftime('%Y-%m-%d') 
 
 # Change these in ./lib/dates.json if necessary
 start_date = study_dates["start_date"]
