@@ -12,6 +12,7 @@ from datetime import datetime
 
 from ehrql import (
     show,
+    get_parameter,
     case,
     create_dataset,
     days,
