@@ -45,7 +45,7 @@ actions:
       --output output/1-extract/extract_snapshot_20201208.arrow
       --dummy-data-file analysis/1-extract/dummy-data/dummy_snapshot_20201208.arrow
       --
-      -- snapshot_date 20201208
+      --snapshot_date 20201208
     outputs:
       highly_sensitive:
         cohort: output/1-extract/extract_snapshot_20201208.arrow
@@ -65,7 +65,7 @@ actions:
       --output output/1-extract/extract_snapshot_20210906.arrow
       --dummy-data-file analysis/1-extract/dummy-data/dummy_snapshot_20210906.arrow
       --
-      -- snapshot_date 20210906
+      --snapshot_date 20210906
     outputs:
       highly_sensitive:
         cohort: output/1-extract/extract_snapshot_20210906.arrow
@@ -84,7 +84,7 @@ actions:
     run: ehrql:v1 generate-dataset analysis/1-extract/dataset_definition_snapshot.py
       --output output/1-extract/extract_snapshot_20220401.arrow
       --
-      -- snapshot_date 20220401
+      --snapshot_date 20220401
     outputs:
       highly_sensitive:
         cohort: output/1-extract/extract_snapshot_20220401.arrow
@@ -103,7 +103,7 @@ actions:
     run: ehrql:v1 generate-dataset analysis/1-extract/dataset_definition_snapshot.py
       --output output/1-extract/extract_snapshot_20220912.arrow
       --
-      -- snapshot_date 20220912
+      --snapshot_date 20220912
     outputs:
       highly_sensitive:
         cohort: output/1-extract/extract_snapshot_20220912.arrow
@@ -122,7 +122,7 @@ actions:
     run: ehrql:v1 generate-dataset analysis/1-extract/dataset_definition_snapshot.py
       --output output/1-extract/extract_snapshot_20230403.arrow
       --
-      -- snapshot_date 20230403
+      --snapshot_date 20230403
     outputs:
       highly_sensitive:
         cohort: output/1-extract/extract_snapshot_20230403.arrow
@@ -141,7 +141,7 @@ actions:
     run: ehrql:v1 generate-dataset analysis/1-extract/dataset_definition_snapshot.py
       --output output/1-extract/extract_snapshot_20230911.arrow
       --
-      -- snapshot_date 20230911
+      --snapshot_date 20230911
     outputs:
       highly_sensitive:
         cohort: output/1-extract/extract_snapshot_20230911.arrow
@@ -160,7 +160,7 @@ actions:
     run: ehrql:v1 generate-dataset analysis/1-extract/dataset_definition_snapshot.py
       --output output/1-extract/extract_snapshot_20240401.arrow
       --
-      -- snapshot_date 20240401
+      --snapshot_date 20240401
     outputs:
       highly_sensitive:
         cohort: output/1-extract/extract_snapshot_20240401.arrow
@@ -179,7 +179,7 @@ actions:
     run: ehrql:v1 generate-dataset analysis/1-extract/dataset_definition_snapshot.py
       --output output/1-extract/extract_snapshot_20241003.arrow
       --
-      -- snapshot_date 20241003
+      --snapshot_date 20241003
     outputs:
       highly_sensitive:
         cohort: output/1-extract/extract_snapshot_20241003.arrow
