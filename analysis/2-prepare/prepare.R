@@ -205,27 +205,128 @@ capture.output(
 write_feather(data_vax_clean, fs::path(output_dir, "data_vax_clean.arrow"))
 
 
-# Test equivalence of ELD extract ----
+# extract event level data for vaccines ----
 
 data_vax_ELD0 <- read_feather(here("output", "1-extract", "extract_varying", "vaccinations.arrow"))
 
 data_vax_ELD <-
   data_vax_ELD0 |>
+  lazy_dt() |>
   arrange(patient_id, vax_date) |>
   filter(!is.na(vax_date)) |>
+  as_tibble() |>
+  mutate(
+    campaign = cut(
+      vax_date,
+      breaks = c(campaign_dates$start, as.Date(Inf)),
+      labels = campaign_dates$campaign
+    ),
+    campaign_start = cut(
+      vax_date,
+      breaks = c(campaign_dates$start, as.Date(Inf)),
+      labels = campaign_dates$start
+    ),
+  ) |>
+  lazy_dt()
+
+
+## count products ----
+
+# overall
+count_product <-
+  data_vax_ELD |>
+  mutate(
+    adult = age >= 16
+  ) |>
+  group_by(adult, vax_product) |>
+  summarise(
+    count_total = round(n(), 100),
+    count_before20200101 = round(sum(vax_date < as.Date("2020-01-01")), 100),
+    count_onorafter20200101 = round(sum(vax_date >= as.Date("2020-01-01")), 100),
+    count_onorafter20201201 = round(sum(vax_date >= as.Date("2020-12-01")), 100),
+    first_date_onorafter20201201 = min(if_else(vax_date>=as.Date("2020-12-01"), vax_date, as.Date(NA)))
+  ) |>
+  as_tibble()
+
+write_csv(count_product, fs::path(output_dir, "count_product.csv"))
+
+# by campaign
+
+count_product_campaign <-
+  data_vax_ELD |>
+  mutate(
+    adult = age >= 16
+  ) |>
+  group_by(adult, campaign, vax_product) |>
+  summarise(
+    count_total = round(n(), 100),
+    first_date_during_campaign = min(vax_date)
+  ) |>
+  as_tibble()
+
+write_csv(count_product_campaign, fs::path(output_dir, "count_product_campaign.csv"))
+
+## count product same-day co-occurrence ----
+
+products_cooccurrence <-
+  data_vax_ELD |>
+  filter(age >=16) |>
+  group_by(patient_id, vax_date, campaign) |>
+  summarise(
+    vax_product = paste0(vax_product, collapse= "  -- AND -- "),
+  )
+
+# count overall
+
+count_products_cooccurrence <-
+  products_cooccurrence |>
+  group_by(vax_product) |>
+  summarise(
+    count_total = round(n(), 100),
+    count_before20200101 = round(sum(vax_date < as.Date("2020-01-01")), 100),
+    count_onorafter20200101 = round(sum(vax_date >= as.Date("2020-01-01")), 100),
+    count_onorafter20201201 = round(sum(vax_date >= as.Date("2020-12-01")), 100),
+    first_date_onorafter20201201 = min(if_else(vax_date>=as.Date("2020-12-01"), vax_date, as.Date(NA)))
+  ) |>
+  as_tibble()
+
+write_csv(count_products_cooccurrence, fs::path(output_dir, "count_product_cooccurrence.csv"))
+
+# count by campaign
+
+count_products_cooccurrence_campaign <-
+  products_cooccurrence |>
+  group_by(vax_product, campaign) |>
+  summarise(
+    count_total = round(n(), 100),
+    count_before20200101 = round(sum(vax_date < as.Date("2020-01-01")), 100),
+    count_onorafter20200101 = round(sum(vax_date >= as.Date("2020-01-01")), 100),
+    count_onorafter20201201 = round(sum(vax_date >= as.Date("2020-12-01")), 100),
+    first_date_during_campaign = min(vax_date)
+  ) |>
+  as_tibble()
+
+write_csv(count_products_cooccurrence_campaign, fs::path(output_dir, "count_product_cooccurrence_campaign.csv"))
+
+
+# Test equivalence of ELD extract ----
+
+data_vax_ELD_filtered <-
+  data_vax_ELD |>
   filter(vax_date > as.Date("1899-01-01")) |>
   group_by(patient_id) |>
   filter((vax_date != lag(vax_date)) | row_number() == 1) |>
   mutate(vax_index = row_number()) |>
   filter(vax_index <= 16) |>
-  ungroup()
+  ungroup() |>
+  as_tibble()
 
 capture.output(
-  skimr::skim_without_charts(data_vax_ELD),
+  skimr::skim_without_charts(data_vax_ELD_filtered),
   file = fs::path(output_dir, "data_vax_ELD_skim.txt"),
   split = FALSE
 )
-write_feather(data_vax_ELD, fs::path(output_dir, "data_vax_ELD.arrow"))
+write_feather(data_vax_ELD_filtered, fs::path(output_dir, "data_vax_ELD.arrow"))
 
 data_vax_PLD <-
   data_vax |>
@@ -245,14 +346,13 @@ cat(
   "are datasets from ELD versus PLD identical after some standardisation? \n"
 )
 
-all.equal(data_vax_ELD, data_vax_PLD)
+all.equal(data_vax_ELD_filtered, data_vax_PLD)
 
 # report multiple vaccinations on the same day
 cat(
   "\n",
   "number of occassions where a person is vaccinated more than once in a day:\n",
-  data_vax_ELD0 |>
-  filter(!is.na(vax_date)) |>
+  data_vax_ELD |>
   group_by(patient_id, vax_date) |>
   summarise(n=n()) |>
   filter(n>1) |>
@@ -263,8 +363,7 @@ cat(
 cat(
   "\n",
   "number of occassions where a person is vaccinated with a null date:\n",
-  data_vax_ELD0 |>
-  filter(is.na(vax_date)) |>
+  data_vax_ELD |>
   summarise(n=n()) |>
   pull(n)
 )
@@ -274,7 +373,7 @@ cat(
 cat(
   "\n",
   "number of occassions where a person is vaccinated on or before 1899:\n",
-  data_vax_ELD0 |>
+  data_vax_ELD |>
     filter(vax_date <= as.Date("1899-01-01")) |>
     summarise(n=n()) |>
     pull(n)
