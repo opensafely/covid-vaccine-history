@@ -220,7 +220,12 @@ data_vax_ELD <-
       vax_date,
       breaks = c(campaign_dates$start, as.Date(Inf)),
       labels = campaign_dates$campaign
-    )
+    ),
+    campaign_start = cut(
+      vax_date,
+      breaks = c(campaign_dates$start, as.Date(Inf)),
+      labels = campaign_dates$start
+    ),
   ) |>
   lazy_dt()
 
@@ -239,10 +244,11 @@ count_product <-
     count_before20200101 = round(sum(vax_date < as.Date("2020-01-01")), 100),
     count_onorafter20200101 = round(sum(vax_date >= as.Date("2020-01-01")), 100),
     count_onorafter20201201 = round(sum(vax_date >= as.Date("2020-12-01")), 100),
+    first_date_onorafter20201201 = min(if_else(vax_date>=as.Date("2020-12-01"), vax_date, as.Date(NA)))
   ) |>
   as_tibble()
 
-write_csv(count_product, fs::path(output_dir, "count_product.arrow"))
+write_csv(count_product, fs::path(output_dir, "count_product.csv"))
 
 # by campaign
 
@@ -253,11 +259,12 @@ count_product_campaign <-
   ) |>
   group_by(adult, campaign, vax_product) |>
   summarise(
-    count_total = round(n(), 100)
+    count_total = round(n(), 100),
+    first_date_during_campaign = min(vax_date)
   ) |>
   as_tibble()
 
-write_csv(count_product_campaign, fs::path(output_dir, "count_product_campaign.arrow"))
+write_csv(count_product_campaign, fs::path(output_dir, "count_product_campaign.csv"))
 
 ## count product same-day co-occurrence ----
 
@@ -266,7 +273,7 @@ products_cooccurrence <-
   filter(age >=16) |>
   group_by(patient_id, vax_date, campaign) |>
   summarise(
-    vax_product = paste0(vax_product, collapse= "  -- AND -- ")
+    vax_product = paste0(vax_product, collapse= "  -- AND -- "),
   )
 
 # count overall
@@ -279,10 +286,11 @@ count_products_cooccurrence <-
     count_before20200101 = round(sum(vax_date < as.Date("2020-01-01")), 100),
     count_onorafter20200101 = round(sum(vax_date >= as.Date("2020-01-01")), 100),
     count_onorafter20201201 = round(sum(vax_date >= as.Date("2020-12-01")), 100),
+    first_date_onorafter20201201 = min(if_else(vax_date>=as.Date("2020-12-01"), vax_date, as.Date(NA)))
   ) |>
   as_tibble()
 
-write_csv(count_products_cooccurrence, fs::path(output_dir, "count_product_cooccurrence.arrow"))
+write_csv(count_products_cooccurrence, fs::path(output_dir, "count_product_cooccurrence.csv"))
 
 # count by campaign
 
@@ -294,10 +302,11 @@ count_products_cooccurrence_campaign <-
     count_before20200101 = round(sum(vax_date < as.Date("2020-01-01")), 100),
     count_onorafter20200101 = round(sum(vax_date >= as.Date("2020-01-01")), 100),
     count_onorafter20201201 = round(sum(vax_date >= as.Date("2020-12-01")), 100),
+    first_date_during_campaign = min(vax_date)
   ) |>
   as_tibble()
 
-write_csv(count_products_cooccurrence_campaign, fs::path(output_dir, "count_product_cooccurrence_campaign.arrow"))
+write_csv(count_products_cooccurrence_campaign, fs::path(output_dir, "count_product_cooccurrence_campaign.csv"))
 
 
 # Test equivalence of ELD extract ----
