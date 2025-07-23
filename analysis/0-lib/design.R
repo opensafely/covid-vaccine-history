@@ -53,7 +53,7 @@ fct_case_when <- function(...) {
 # - start_date is when we start the observational period proper, at the start of the mass vax programme
 # - end_date is when we stopthe observation period. This may be extended as the study progresses
 study_dates <-
-  jsonlite::read_json(path = here("analysis", "0-lib", "dates.json")) %>%
+  jsonlite::read_json(path = here("analysis", "0-lib", "dates.json")) |>
   map(as.Date)
 
 # make these available in the global environment
@@ -67,17 +67,19 @@ sdc_threshold <- 100
 campaign_dates <-
   tribble(
     ~campaign,        ~start,       ~start_rounded,
+    "Pre-2020-06-01",      "1900-01-01", "1900-01-01",
     "Pre-roll-out",   as.character(firstpossiblevax_date), as.character(firstpossiblevax_date),
     "Primary series", "2020-12-08", "2020-12-01",
-    "Autumn 2021",    "2021-09-06", "2021-09-01",
-    "Spring 2022",    "2022-04-01", "2022-04-01",
-    "Autumn 2022",    "2022-09-12", "2022-09-01",
+    "Autumn 2021",    "2021-09-01", "2021-09-01",
+    "Spring 2022",    "2022-03-21", "2022-03-21",
+    "Autumn 2022",    "2022-09-01", "2022-09-01",
     "Spring 2023",    "2023-04-03", "2023-04-01",
-    "Autumn 2023",    "2023-09-11", "2023-09-01",
-    "Spring 2024",    "2024-04-01", "2023-04-01",
-    "Autumn 2024",    "2024-10-03", "2024-09-01",
-    #"Spring 2025",    "", "",
-  ) %>%
+    "Autumn 2023",    "2023-09-01", "2023-09-01",
+    "Spring 2024",    "2024-04-15", "2023-04-01",
+    "Autumn 2024",    "2024-10-01", "2024-10-01",
+    "Spring 2025",    "2025-04-01", "2025-04-01",
+    "End",            "2030-01-01", "2030-01-01"
+  ) |>
   mutate(
     across(c(start, start_rounded), as.Date)
   )
