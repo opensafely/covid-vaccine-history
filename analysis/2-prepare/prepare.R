@@ -235,10 +235,10 @@ count_product <-
   ) |>
   group_by(adult, vax_product) |>
   summarise(
-    count_total = n(),
-    count_before20200101 = sum(vax_date < as.Date("2020-01-01")),
-    count_onorafter20200101 = sum(vax_date >= as.Date("2020-01-01")),
-    count_onorafter20201201 = sum(vax_date >= as.Date("2020-12-01")),
+    count_total = round(n(), 100),
+    count_before20200101 = round(sum(vax_date < as.Date("2020-01-01")), 100),
+    count_onorafter20200101 = round(sum(vax_date >= as.Date("2020-01-01")), 100),
+    count_onorafter20201201 = round(sum(vax_date >= as.Date("2020-12-01")), 100),
   ) |>
   as_tibble()
 
@@ -253,7 +253,7 @@ count_product_campaign <-
   ) |>
   group_by(adult, campaign, vax_product) |>
   summarise(
-    count_total = n()
+    count_total = round(n(), 100)
   ) |>
   as_tibble()
 
@@ -275,10 +275,10 @@ count_products_cooccurrence <-
   products_cooccurrence |>
   group_by(vax_product) |>
   summarise(
-    count_total = n(),
-    count_before20200101 = sum(vax_date < as.Date("2020-01-01")),
-    count_onorafter20200101 = sum(vax_date >= as.Date("2020-01-01")),
-    count_onorafter20201201 = sum(vax_date >= as.Date("2020-12-01")),
+    count_total = round(n(), 100),
+    count_before20200101 = round(sum(vax_date < as.Date("2020-01-01")), 100),
+    count_onorafter20200101 = round(sum(vax_date >= as.Date("2020-01-01")), 100),
+    count_onorafter20201201 = round(sum(vax_date >= as.Date("2020-12-01")), 100),
   ) |>
   as_tibble()
 
@@ -290,10 +290,10 @@ count_products_cooccurrence_campaign <-
   products_cooccurrence |>
   group_by(vax_product, campaign) |>
   summarise(
-    count_total = n(),
-    count_before20200101 = sum(vax_date < as.Date("2020-01-01")),
-    count_onorafter20200101 = sum(vax_date >= as.Date("2020-01-01")),
-    count_onorafter20201201 = sum(vax_date >= as.Date("2020-12-01")),
+    count_total = round(n(), 100),
+    count_before20200101 = round(sum(vax_date < as.Date("2020-01-01")), 100),
+    count_onorafter20200101 = round(sum(vax_date >= as.Date("2020-01-01")), 100),
+    count_onorafter20201201 = round(sum(vax_date >= as.Date("2020-12-01")), 100),
   ) |>
   as_tibble()
 
