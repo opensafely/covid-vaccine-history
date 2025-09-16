@@ -144,6 +144,15 @@ sim_list <- lst(
 
   covid_vax_prior_count = bn_node(~ as.integer(runif(n = ..n, 0, 15))), # in  dummy data, this will not match total vax count in "time-varying" dataset, but that's ok
 
+  covid_admitted_day = bn_node(
+    ~ as.integer(runif(n = ..n, snapshot_day, snapshot_day + 300)),
+    missing_rate = ~0.7
+  ),
+  covid_critcare_day = bn_node(
+    ~covid_admitted_day,
+    needs = "covid_admitted_day",
+    missing_rate = ~0.7
+  ),
 )
 
 # check and create the simulation object, including all dependencies, topological orders, etc

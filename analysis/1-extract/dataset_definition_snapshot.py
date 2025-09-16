@@ -24,6 +24,7 @@ from ehrql import (
 from ehrql.tables.tpp import (
   patients,
   practice_registrations, 
+  apcs,
   ons_deaths,
 )
 
@@ -59,10 +60,10 @@ age = patients.age_on(snapshot_date)
 # define dataset poppulation
 dataset.define_population(
   registered 
-  & registered_start_date <= (snapshot_date - weeks(12))
+  & (registered_start_date <= (snapshot_date - weeks(12)))
   & alive
   & (age >= 16) & (age <= 99)
-  & patients.sex.is_in(["male", "female"])
+  & (patients.sex.is_in(["male", "female"]))
 )
 
 # --VARIABLES--
@@ -146,10 +147,10 @@ dataset.covid_critcare_date = (
 )
 
 # covid-related death
-dataset.covid_death_date = (
-    ons_deaths
-        .where(ons_deaths.cause_of_death_is_in(codelists.covid_icd10))
-        .date
-)
+#dataset.covid_death_date = (
+#    ons_deaths
+#        .cause_of_death_is_in(codelists.covid_icd10)
+#        .date
+#)
 
 

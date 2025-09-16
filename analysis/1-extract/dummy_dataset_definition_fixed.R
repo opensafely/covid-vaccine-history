@@ -86,6 +86,12 @@ sim_list <- lst(
     ~ as.integer(runif(n = ..n, index_day, index_day + 2000)),
     missing_rate = ~0.99
   ),
+
+ # covid_death_day = bn_node(
+ #   ~death_day,
+ #   missing_rate = ~0.7,
+ #   needs = "death_day"
+ # ),
   covid_vax_count = bn_node(~ as.integer(runif(n = ..n, 0, 15))) # in  dummy data, this will not match total vax count in "time-varying" dataset, but that's ok
 )
 
