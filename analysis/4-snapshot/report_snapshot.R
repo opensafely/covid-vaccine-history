@@ -116,15 +116,7 @@ data_combined <-
     event_date = pmin(next_vax_date, death_date, censor_date, na.rm = TRUE),
     event_time = as.integer(event_date - snapshot_date) + 1L, # +1 because vaccination on snapshot date is allowed, but events at time zero are not
     event_indicator = (next_vax_date <= pmin(censor_date, death_date, na.rm = TRUE)) & !is.na(next_vax_date),
-    event_status = case_when(
-      event_date == next_vax_date ~ "vaccinated",
-      event_date == death_date ~ "died",
-      event_date == censor_date ~ "censored",
-      .default = NA_character_
-    ) |> factor(levels = c("censored", "vaccinated", "death")),
-    event_status_product = if_else(event_indicator, next_vax_product, event_status),
-    next_vax_product_uncensored = if_else(event_indicator, next_vax_product, NA_character_),
-
+    
     # time from snapshot date until next vaccination
     # covid_admitted =  (covid_admitted_date <= pmin(censor_date, death_date, na.rm = TRUE)) & !is.na(covid_admitted_date),
     # covid_admitted_persontime =  as.integer(pmin(covid_admitted_date, censor_date, death_date, na.rm = TRUE) - snapshot_date) + 1L,
@@ -137,10 +129,18 @@ data_combined <-
   ) |>
   as_tibble() |>
   mutate(
+    event_status = case_when(
+      event_date == next_vax_date ~ "vaccinated",
+      event_date == death_date ~ "died",
+      event_date == censor_date ~ "censored",
+      .default = NA_character_
+    ) |> factor(levels = c("censored", "vaccinated", "death")),
+    event_status_product = if_else(event_indicator, next_vax_product, event_status),
+    next_vax_product_uncensored = if_else(event_indicator, next_vax_product, NA_character_),
+
     # setting missing values to explicit missing
     across(where(is.factor) | where(is.character), ~ fct_drop(fct_na_value_to_level(.x, level = "(Missing)")))
   )
-
 
 # ________________________________________________________________________________________
 # Pre-snapshot date vaccine history, stratified by characteristic recorded on the snapshot_date ----
@@ -553,16 +553,14 @@ km_estimates(region)
 km_estimates(imd_quintile)
 km_estimates(primis_atrisk)
 
-
-
 # ________________________________________________________________________________________
 # Post-snapshot Covid-19 disease burden, stratified by characteristics recorded on the snapshot_date ----
 # ________________________________________________________________________________________
 
 
 irr_estimates <- function(outcome_date, subgroup) {
-
-  formula <- as.formula(glue("outcome ~ {subgroup}*(sex + ns(age, 3))"))
+  subgroup_name <- deparse(substitute(subgroup))
+  formula <- as.formula(glue("outcome ~ {subgroup_name}*(sex + ns(age, 3))"))
 
   data_burden <-
     data_combined |>
@@ -578,7 +576,7 @@ irr_estimates <- function(outcome_date, subgroup) {
     ) |>
     broom::tidy()
 
-  subgroup_name <- deparse(substitute(subgroup))
+
 
   # write tables that capture underlying plotting data
   # data_burden |>
