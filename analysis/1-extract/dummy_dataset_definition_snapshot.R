@@ -52,8 +52,8 @@ sim_list <- lst(
     ~ as.integer(rnorm(n = ..n, mean = 60, sd = 14))
   ),
   imd = bn_node(
-    ~ as.integer(plyr::round_any(runif(n=..n, 100, 32000), 100)),
-    missing = ~ 0.05
+    ~ as.integer(plyr::round_any(runif(n = ..n, 100, 32000), 100)),
+    missing = ~0.05
   ),
   stp = bn_node(
     ~ factor(as.integer(runif(n = ..n, 1, 36)), levels = 1:36)
@@ -71,76 +71,76 @@ sim_list <- lst(
       "South West"
     ), p = c(0.2, 0.2, 0.3, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05))
   ),
-  #PRIMIS
+  # PRIMIS
   crd = bn_node(
-    ~rbernoulli(n=..n, p = 0.02),
+    ~ rbernoulli(n = ..n, p = 0.02),
   ),
   chd = bn_node(
-    ~rbernoulli(n=..n, p = 0.02),
+    ~ rbernoulli(n = ..n, p = 0.02),
   ),
   ckd = bn_node(
-    ~rbernoulli(n=..n, p = 0.02),
+    ~ rbernoulli(n = ..n, p = 0.02),
   ),
   cld = bn_node(
-    ~rbernoulli(n=..n, p = 0.02),
+    ~ rbernoulli(n = ..n, p = 0.02),
   ),
   cns = bn_node(
-    ~rbernoulli(n=..n, p = 0.02),
+    ~ rbernoulli(n = ..n, p = 0.02),
   ),
   learndis = bn_node(
-    ~rbernoulli(n=..n, p = 0.02),
+    ~ rbernoulli(n = ..n, p = 0.02),
   ),
   diabetes = bn_node(
-    ~rbernoulli(n=..n, p = 0.02),
+    ~ rbernoulli(n = ..n, p = 0.02),
   ),
   immunosuppressed = bn_node(
-    ~rbernoulli(n=..n, p = 0.02),
+    ~ rbernoulli(n = ..n, p = 0.02),
   ),
   asplenia = bn_node(
-    ~rbernoulli(n=..n, p = 0.02),
+    ~ rbernoulli(n = ..n, p = 0.02),
   ),
   severe_obesity = bn_node(
-    ~rbernoulli(n=..n, p = 0.02),
+    ~ rbernoulli(n = ..n, p = 0.02),
   ),
   smi = bn_node(
-    ~rbernoulli(n=..n, p = 0.02),
+    ~ rbernoulli(n = ..n, p = 0.02),
   ),
   primis_atrisk = bn_node(
-    ~rbernoulli(n=..n, p = 0.02),
+    ~ rbernoulli(n = ..n, p = 0.02),
   ),
 
   # covid vaccines
   covid_vax_1_day = bn_node(
-    ~runif(n=..n, snapshot_day, snapshot_day+200),
+    ~ runif(n = ..n, snapshot_day, snapshot_day + 200),
     missing_rate = ~0.2,
   ),
   covid_vax_2_day = bn_node(
-    ~runif(n=..n, covid_vax_1_day+14, covid_vax_1_day+400),
+    ~ runif(n = ..n, covid_vax_1_day + 14, covid_vax_1_day + 400),
     missing_rate = ~0.95,
     needs = "covid_vax_1_day"
   ),
-  covid_vax_1_product = bn_node(~rcat(n=..n, c("pfizer", "az", "moderna"), c(0.5, 0.3, 0.2)), needs = "covid_vax_1_day"),
-  covid_vax_2_product = bn_node(~if_else(runif(..n)<0.98, covid_vax_1_product, "pfizer"), needs = "covid_vax_2_day"),
+  covid_vax_1_product = bn_node(~ rcat(n = ..n, c("pfizer", "az", "moderna"), c(0.5, 0.3, 0.2)), needs = "covid_vax_1_day"),
+  covid_vax_2_product = bn_node(~ if_else(runif(..n) < 0.98, covid_vax_1_product, "pfizer"), needs = "covid_vax_2_day"),
 
   covid_vax_prior_1_day = bn_node(
-    ~runif(n=..n, snapshot_day-400, snapshot_day-200),
+    ~ runif(n = ..n, snapshot_day - 400, snapshot_day - 200),
     missing_rate = ~0.1,
     needs = "covid_vax_1_day"
   ),
   covid_vax_prior_2_day = bn_node(
-    ~runif(n=..n, covid_vax_prior_1_day-400, covid_vax_prior_1_day-200),
+    ~ runif(n = ..n, covid_vax_prior_1_day - 400, covid_vax_prior_1_day - 200),
     missing_rate = ~0.1,
     needs = "covid_vax_prior_1_day"
   ),
   covid_vax_prior_3_day = bn_node(
-    ~runif(n=..n, covid_vax_prior_2_day-400, covid_vax_prior_2_day-200),
+    ~ runif(n = ..n, covid_vax_prior_2_day - 400, covid_vax_prior_2_day - 200),
     missing_rate = ~0.1,
     needs = "covid_vax_prior_2_day"
   ),
 
-  covid_vax_prior_1_product = bn_node(~rcat(n=..n, c("pfizer", "az", "moderna"), c(0.5, 0.3, 0.2)), needs = "covid_vax_prior_1_day"),
-  covid_vax_prior_2_product = bn_node(~rcat(n=..n, c("pfizer", "az", "moderna"), c(0.5, 0.3, 0.2)), needs = "covid_vax_prior_2_day"),
-  covid_vax_prior_3_product = bn_node(~rcat(n=..n, c("pfizer", "az", "moderna"), c(0.5, 0.3, 0.2)), needs = "covid_vax_prior_3_day"),
+  covid_vax_prior_1_product = bn_node(~ rcat(n = ..n, c("pfizer", "az", "moderna"), c(0.5, 0.3, 0.2)), needs = "covid_vax_prior_1_day"),
+  covid_vax_prior_2_product = bn_node(~ rcat(n = ..n, c("pfizer", "az", "moderna"), c(0.5, 0.3, 0.2)), needs = "covid_vax_prior_2_day"),
+  covid_vax_prior_3_product = bn_node(~ rcat(n = ..n, c("pfizer", "az", "moderna"), c(0.5, 0.3, 0.2)), needs = "covid_vax_prior_3_day"),
 
   covid_vax_prior_count = bn_node(~ as.integer(runif(n = ..n, 0, 15))), # in  dummy data, this will not match total vax count in "time-varying" dataset, but that's ok
 

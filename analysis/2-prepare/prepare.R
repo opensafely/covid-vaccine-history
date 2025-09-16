@@ -20,7 +20,7 @@ source(here("analysis", "0-lib", "design.R"))
 # create output directory
 output_dir <- here("output", "2-prepare", "prepare")
 fs::dir_create(output_dir)
-options(width=200) # set output width for capture.output
+options(width = 200) # set output width for capture.output
 
 # Import and process fixed dataset ----
 
@@ -84,7 +84,7 @@ rm(data_extract_fixed)
 # Import and process fixed dataset ----
 
 # import
-#data_extract_varying <-
+# data_extract_varying <-
 #  import_extract(
 #    here("lib", "dummydata", "dummyinput_varying.arrow"),
 #    here("output", "extracts", "extract_varying.arrow")
@@ -95,7 +95,7 @@ data_extract_varying <- read_feather(here("output", "1-extract", "extract_varyin
 # Reshape vaccination data
 data_vax <-
   data_extract_varying |>
-  #lazy_dt() |>
+  # lazy_dt() |>
   select(
     patient_id,
     matches("covid_vax\\_\\d+\\_date"),
@@ -110,18 +110,18 @@ data_vax <-
     matches("imd_quintile_\\d+"),
 
     # PRIMIS variables
-#    matches("primis_atrisk_\\d+") #, # Clinically vulnerable
-#    matches("crd_\\d+"), # chronic respiratory disease
-#    matches("chd_\\d+"), # chronic heart disease
-#    matches("ckd_\\d+"), # chronic kidney disease
-#    matches("cld_\\d+"), # chronic liver disease
-#    matches("cns_\\d+"), # chronic neurological disease
-#    matches("learndis_\\d+"), # learning Disability
-#    matches("diabetes_\\d+"), # diabetes
-#    matches("immunosuppressed_\\d+"), # immunosuppressed
-#    matches("asplenia_\\d+"), # asplenia or dysfunction of the spleen
-#    matches("severe_obesity_\\d+"), # obesity
-#    matches("smi_\\d+"), #severe mental illness
+    #    matches("primis_atrisk_\\d+") #, # Clinically vulnerable
+    #    matches("crd_\\d+"), # chronic respiratory disease
+    #    matches("chd_\\d+"), # chronic heart disease
+    #    matches("ckd_\\d+"), # chronic kidney disease
+    #    matches("cld_\\d+"), # chronic liver disease
+    #    matches("cns_\\d+"), # chronic neurological disease
+    #    matches("learndis_\\d+"), # learning Disability
+    #    matches("diabetes_\\d+"), # diabetes
+    #    matches("immunosuppressed_\\d+"), # immunosuppressed
+    #    matches("asplenia_\\d+"), # asplenia or dysfunction of the spleen
+    #    matches("severe_obesity_\\d+"), # obesity
+    #    matches("smi_\\d+"), #severe mental illness
   ) |>
   pivot_longer(
     cols = -patient_id,
@@ -138,7 +138,7 @@ data_vax <-
     vax_date = covid_vax,
     vax_product = covid_vax_product,
   ) |>
-  #as_tibble() |> # insert this here to revert to standard dplyr as `cut` function doesn't work with dtplyr
+  # as_tibble() |> # insert this here to revert to standard dplyr as `cut` function doesn't work with dtplyr
   mutate(
     !!!standardise_characteristics,
     vax_campaign = cut(
@@ -244,7 +244,7 @@ count_product <-
     count_before20200101 = round(sum(vax_date < as.Date("2020-01-01")), 100),
     count_onorafter20200101 = round(sum(vax_date >= as.Date("2020-01-01")), 100),
     count_onorafter20201201 = round(sum(vax_date >= as.Date("2020-12-01")), 100),
-    first_date_onorafter20201201 = min(if_else(vax_date>=as.Date("2020-12-01"), vax_date, as.Date(NA)))
+    first_date_onorafter20201201 = min(if_else(vax_date >= as.Date("2020-12-01"), vax_date, as.Date(NA)))
   ) |>
   as_tibble()
 
@@ -270,10 +270,10 @@ write_csv(count_product_campaign, fs::path(output_dir, "count_product_campaign.c
 
 products_cooccurrence <-
   data_vax_ELD |>
-  filter(age >=16) |>
+  filter(age >= 16) |>
   group_by(patient_id, vax_date, campaign) |>
   summarise(
-    vax_product = paste0(vax_product, collapse= "  -- AND -- "),
+    vax_product = paste0(vax_product, collapse = "  -- AND -- "),
   )
 
 # count overall
@@ -286,7 +286,7 @@ count_products_cooccurrence <-
     count_before20200101 = round(sum(vax_date < as.Date("2020-01-01")), 100),
     count_onorafter20200101 = round(sum(vax_date >= as.Date("2020-01-01")), 100),
     count_onorafter20201201 = round(sum(vax_date >= as.Date("2020-12-01")), 100),
-    first_date_onorafter20201201 = min(if_else(vax_date>=as.Date("2020-12-01"), vax_date, as.Date(NA)))
+    first_date_onorafter20201201 = min(if_else(vax_date >= as.Date("2020-12-01"), vax_date, as.Date(NA)))
   ) |>
   as_tibble()
 
@@ -353,10 +353,10 @@ cat(
   "\n",
   "number of occassions where a person is vaccinated more than once in a day:\n",
   data_vax_ELD |>
-  group_by(patient_id, vax_date) |>
-  summarise(n=n()) |>
-  filter(n>1) |>
-  nrow()
+    group_by(patient_id, vax_date) |>
+    summarise(n = n()) |>
+    filter(n > 1) |>
+    nrow()
 )
 
 # report no vax date
@@ -364,8 +364,8 @@ cat(
   "\n",
   "number of occassions where a person is vaccinated with a null date:\n",
   data_vax_ELD |>
-  summarise(n=n()) |>
-  pull(n)
+    summarise(n = n()) |>
+    pull(n)
 )
 
 
@@ -375,6 +375,6 @@ cat(
   "number of occassions where a person is vaccinated on or before 1899:\n",
   data_vax_ELD |>
     filter(vax_date <= as.Date("1899-01-01")) |>
-    summarise(n=n()) |>
+    summarise(n = n()) |>
     pull(n)
 )

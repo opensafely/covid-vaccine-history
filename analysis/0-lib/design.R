@@ -40,7 +40,7 @@ fct_case_when <- function(...) {
   args <- as.list(match.call())
   levels <- sapply(args[-1], function(f) f[[3]])  # extract RHS of formula
   levels <- levels[!is.na(levels)]
-  factor(dplyr::case_when(...), levels=levels)
+  factor(dplyr::case_when(...), levels = levels)
 }
 
 
@@ -157,13 +157,11 @@ standardise_characteristics <-
       labels = c("1 (most deprived)", "2", "3", "4", "5 (least deprived)"),
       include.lowest = TRUE,
       right = FALSE
-    ) #,
+    ) # ,
     ## PRIMIS clinical variables
-   # cv = crd | ast | chd | ckd | cld | cns | learndis | diab | immuno | asplen | obes | sev_ment
- #FIXME add additional vulnerability variables when defined and extracted
+    # cv = crd | ast | chd | ckd | cld | cns | learndis | diab | immuno | asplen | obes | sev_ment
+    # TODO add additional vulnerability variables when defined and extracted
   )
-
-
 
 ## factor levels provided in a sensible order, as this won't happen directly from opensafely ----
 
@@ -202,6 +200,3 @@ ethnicity_16_to_5 <- function(x) {
   x2 <- fct_recode(x1, `Chinese or Other Ethnic Groups` = "Other Ethnic Groups")
   return(x2)
 }
-
-
-

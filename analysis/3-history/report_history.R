@@ -44,7 +44,7 @@ data_vax <-
   mutate(
     vax_dosenumber = factor(vax_index, levels = sort(unique(vax_index)), labels = paste("Dose", sort(unique(vax_index)))),
     vax_week = floor_date(vax_date, unit = "week", week_start = 1),
-    vax_product8 = fct_collapse(vax_product, !!!vax_shortname_8, other_level="Other"),
+    vax_product8 = fct_collapse(vax_product, !!!vax_shortname_8, other_level = "Other"),
     all = ""
   ) |>
   as_tibble()
@@ -58,13 +58,13 @@ data_vax_clean <-
   mutate(
     vax_dosenumber = factor(vax_index, levels = sort(unique(vax_index)), labels = paste("Dose", sort(unique(vax_index)))),
     vax_week = floor_date(vax_date, unit = "week", week_start = 1),
-    vax_product8 = fct_collapse(vax_product, !!!vax_shortname_8, other_level="Other"),
+    vax_product8 = fct_collapse(vax_product, !!!vax_shortname_8, other_level = "Other"),
     all = "",
     all2 = ""
   ) |>
   as_tibble() |>
   mutate(
-    across(where(is.factor) | where(is.character), ~fct_explicit_na(.x, na_level ="Unknown"))
+    across(where(is.factor) | where(is.character), ~ fct_explicit_na(.x, na_level = "Unknown"))
   )
 
 
@@ -76,7 +76,7 @@ data_vax_clean <-
 
 summary_validation <-
   data_vax |>
-  #group_by(vax_campaign) |>
+  # group_by(vax_campaign) |>
   summarise(
     n = ceiling_any(n(), sdc_threshold),
     n_missing_date = ceiling_any(sum(is.na(vax_date)), sdc_threshold),
@@ -121,9 +121,9 @@ write_csv(summary_validation_stratified, fs::path(output_dir, "validation_strati
 summary_vax_count <-
   data_vax |>
   group_by(patient_id) |>
-  summarise(vax_count=n()) |>
+  summarise(vax_count = n()) |>
   group_by(vax_count) |>
-  summarise(frequency=ceiling_any(n(), sdc_threshold))
+  summarise(frequency = ceiling_any(n(), sdc_threshold))
 
 write_csv(summary_vax_count, fs::path(output_dir, "validation_vax_count.csv"))
 
@@ -177,8 +177,8 @@ summary_stratified <-
     vax_dosenumber, vax_product8, vax_campaign,
     sex, ageband, ethnicity5, region, imd_quintile,
     # PRIMIS
- #   crd, chd, ckd, cld, cns, learndis, diabetes, immunosuppressed, asplenia, severe_obesity, smi,
- #   primis_atrisk
+    #   crd, chd, ckd, cld, cns, learndis, diabetes, immunosuppressed, asplenia, severe_obesity, smi,
+    #   primis_atrisk
   ) |>
   summarise(
     n = ceiling_any(n(), sdc_threshold)
@@ -250,7 +250,7 @@ plot_vax_dates <- function(rows, cols) {
       legend.position = "bottom"
     )
 
-  #print(temp_plot)
+  # print(temp_plot)
 
   row_name <- deparse(substitute(rows))
   col_name <- deparse(substitute(cols))
@@ -270,19 +270,19 @@ plot_vax_dates(imd_quintile, all)
 plot_vax_dates(vax_campaign, all)
 plot_vax_dates(vax_dosenumber, all)
 
-#PRIMIS
-#plot_vax_dates(crd, all) # chronic respiratory disease
-#plot_vax_dates(chd, all) # chronic heart disease
-#plot_vax_dates(ckd, all) # chronic kidney disease
-#plot_vax_dates(cld, all) # chronic liver disease
-#plot_vax_dates(cns, all) #chronic neurological
-#plot_vax_dates(learndis, all) # learning disability
-#plot_vax_dates(diabetes, all) # diabetes
-#plot_vax_dates(immunosuppressed, all) # immunosuppressed
-#plot_vax_dates(asplenia, all) # asplenia or dysfunction of the spleen
-#plot_vax_dates(severe_obesity, all) # obesity
-#plot_vax_dates(smi, all) # severe mental illness
-#plot_vax_dates(primis_atrisk, all) # clinically vulnerable
+# PRIMIS
+# plot_vax_dates(crd, all) # chronic respiratory disease
+# plot_vax_dates(chd, all) # chronic heart disease
+# plot_vax_dates(ckd, all) # chronic kidney disease
+# plot_vax_dates(cld, all) # chronic liver disease
+# plot_vax_dates(cns, all) #chronic neurological
+# plot_vax_dates(learndis, all) # learning disability
+# plot_vax_dates(diabetes, all) # diabetes
+# plot_vax_dates(immunosuppressed, all) # immunosuppressed
+# plot_vax_dates(asplenia, all) # asplenia or dysfunction of the spleen
+# plot_vax_dates(severe_obesity, all) # obesity
+# plot_vax_dates(smi, all) # severe mental illness
+# plot_vax_dates(primis_atrisk, all) # clinically vulnerable
 
 
 plot_vax_dates(sex, vax_dosenumber)
@@ -291,19 +291,19 @@ plot_vax_dates(ethnicity5, vax_dosenumber)
 plot_vax_dates(region, vax_dosenumber)
 plot_vax_dates(imd_quintile, vax_dosenumber)
 plot_vax_dates(vax_campaign, vax_dosenumber)
-#PRIMIS
-#plot_vax_dates(crd, vax_dosenumber) # chronic respiratory disease
-#plot_vax_dates(chd, vax_dosenumber) # chronic heart disease
-#plot_vax_dates(ckd, vax_dosenumber) # chronic kidney disease
-#plot_vax_dates(cld, vax_dosenumber) # chronic liver disease
-#plot_vax_dates(cns, vax_dosenumber) # chronic neurological disease
-#plot_vax_dates(learndis, vax_dosenumber) # learning Disability
-#plot_vax_dates(diabetes, vax_dosenumber) # diabetes
-#plot_vax_dates(immunosuppressed, vax_dosenumber) # immunosuppressed
-#plot_vax_dates(asplenia, vax_dosenumber) # asplenia or dysfunction of the spleen
-#plot_vax_dates(severe_obesity, vax_dosenumber) # obesity
-#plot_vax_dates(smi, vax_dosenumber) # severe mental illness
-#plot_vax_dates(primis_atrisk, vax_dosenumber) # Clinically vulnerable
+# PRIMIS
+# plot_vax_dates(crd, vax_dosenumber) # chronic respiratory disease
+# plot_vax_dates(chd, vax_dosenumber) # chronic heart disease
+# plot_vax_dates(ckd, vax_dosenumber) # chronic kidney disease
+# plot_vax_dates(cld, vax_dosenumber) # chronic liver disease
+# plot_vax_dates(cns, vax_dosenumber) # chronic neurological disease
+# plot_vax_dates(learndis, vax_dosenumber) # learning Disability
+# plot_vax_dates(diabetes, vax_dosenumber) # diabetes
+# plot_vax_dates(immunosuppressed, vax_dosenumber) # immunosuppressed
+# plot_vax_dates(asplenia, vax_dosenumber) # asplenia or dysfunction of the spleen
+# plot_vax_dates(severe_obesity, vax_dosenumber) # obesity
+# plot_vax_dates(smi, vax_dosenumber) # severe mental illness
+# plot_vax_dates(primis_atrisk, vax_dosenumber) # Clinically vulnerable
 
 ## output plots of time since previous vaccination by product, dose number, and other characteristics ----
 
@@ -312,7 +312,7 @@ plot_vax_intervals <- function(rows, cols) {
     filter(vax_index != 1) |>
     mutate(
       vax_interval = roundmid_any(vax_interval + 1, 7), # to split into 0-6, 7-13, 14-20, 21-28, ....
-      vax_dosenumber = factor(vax_index, levels = sort(unique(vax_index)), labels = paste("Dose ", sort(unique(vax_index))-1, "-", sort(unique(vax_index)))),
+      vax_dosenumber = factor(vax_index, levels = sort(unique(vax_index)), labels = paste("Dose ", sort(unique(vax_index)) - 1, "-", sort(unique(vax_index)))),
     ) |>
     group_by(vax_dosenumber, vax_product8, vax_interval) |>
     group_by({{ rows }}, {{ cols }}, .add = TRUE) |>
@@ -383,7 +383,7 @@ plot_vax_intervals(vax_campaign, vax_dosenumber)
 plot_vax_intervals(vax_campaign, all)
 plot_vax_intervals(vax_dosenumber, all)
 
-#PRIMIS
+# PRIMIS
 
 # plot_vax_intervals(crd, vax_dosenumber) # chronic respiratory disease
 # plot_vax_intervals(chd, vax_dosenumber) # chronic heart disease

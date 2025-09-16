@@ -173,11 +173,11 @@ sim_list_varying_i <- function(i) {
       ~ as.integer(rnorm(n = ..n, mean = 60, sd = 14)),
       needs = vax_variable
     ),
-   "imd_{i}" := bn_node(
-     ~ as.integer(plyr::round_any(runif(n=..n, 100, 32000), 100)),
-     missing = ~ 0.05,
-     needs = vax_variable
-   ),
+    "imd_{i}" := bn_node(
+      ~ as.integer(plyr::round_any(runif(n = ..n, 100, 32000), 100)),
+      missing = ~0.05,
+      needs = vax_variable
+    ),
     "registered_{i}" := bn_node(
       ~ rbernoulli(n = ..n, p = 0.99),
       needs = vax_variable
@@ -200,30 +200,30 @@ sim_list_varying_i <- function(i) {
       ), p = c(0.2, 0.2, 0.3, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05)),
       needs = vax_variable
     ),
-    #PRIMIS
-    "crd_{i}" := bn_node( ~rbernoulli(n=..n, p = 0.02),
-      needs = vax_variable), #chronic respiratory disease
-    "chd_{i}" := bn_node( ~rbernoulli(n=..n, p = 0.02),
-      needs = vax_variable), #chronic heart disease
-    "ckd_{i}" := bn_node( ~rbernoulli(n=..n, p = 0.02),
-      needs = vax_variable), #chronic kidney disease
-    "cld_{i}" := bn_node( ~rbernoulli(n=..n, p = 0.02),
+    # PRIMIS
+    "crd_{i}" := bn_node(~ rbernoulli(n = ..n, p = 0.02),
+      needs = vax_variable), # chronic respiratory disease
+    "chd_{i}" := bn_node(~ rbernoulli(n = ..n, p = 0.02),
+      needs = vax_variable), # chronic heart disease
+    "ckd_{i}" := bn_node(~ rbernoulli(n = ..n, p = 0.02),
+      needs = vax_variable), # chronic kidney disease
+    "cld_{i}" := bn_node(~ rbernoulli(n = ..n, p = 0.02),
       needs = vax_variable), # chronic liver disease
-    "cns_{i}" := bn_node( ~rbernoulli(n=..n, p = 0.02),
+    "cns_{i}" := bn_node(~ rbernoulli(n = ..n, p = 0.02),
       needs = vax_variable), # chronic neurological disease
-    "learndis_{i}" := bn_node( ~rbernoulli(n=..n, p = 0.02),
+    "learndis_{i}" := bn_node(~ rbernoulli(n = ..n, p = 0.02),
       needs = vax_variable), # learning Disability
-    "diabetes_{i}" := bn_node( ~rbernoulli(n=..n, p = 0.02),
-      needs = vax_variable), #diabetes
-    "immunosuppressed_{i}" := bn_node( ~rbernoulli(n=..n, p = 0.02),
-      needs = vax_variable), #immunosuppress grouped
-    "asplenia_{i}" := bn_node( ~rbernoulli(n=..n, p = 0.02),
+    "diabetes_{i}" := bn_node(~ rbernoulli(n = ..n, p = 0.02),
+      needs = vax_variable), # diabetes
+    "immunosuppressed_{i}" := bn_node(~ rbernoulli(n = ..n, p = 0.02),
+      needs = vax_variable), # immunosuppress grouped
+    "asplenia_{i}" := bn_node(~ rbernoulli(n = ..n, p = 0.02),
       needs = vax_variable), # asplenia or Dysfunction of the Spleen
-    "severe_obesity_{i}" := bn_node( ~rbernoulli(n=..n, p = 0.02),
-      needs = vax_variable), #immunosuppress grouped
-    "smi_{i}" := bn_node( ~rbernoulli(n=..n, p = 0.02),
-      needs = vax_variable), #severe mental illness
-    "primis_atrisk_{i}" := bn_node( ~rbernoulli(n=..n, p = 0.02),
+    "severe_obesity_{i}" := bn_node(~ rbernoulli(n = ..n, p = 0.02),
+      needs = vax_variable), # immunosuppress grouped
+    "smi_{i}" := bn_node(~ rbernoulli(n = ..n, p = 0.02),
+      needs = vax_variable), # severe mental illness
+    "primis_atrisk_{i}" := bn_node(~ rbernoulli(n = ..n, p = 0.02),
       needs = vax_variable) # clinically vulnerable
   )
 }
