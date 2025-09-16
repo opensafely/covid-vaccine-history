@@ -137,8 +137,8 @@ standardise_characteristics <-
     ## demographics
     ageband = cut(
       age,
-      breaks = c(-Inf, 18, 40, 55, 65, 75, Inf),
-      labels = c("under 18", "18-39", "40-54", "55-64", "65-74", "75+"),
+      breaks = c(-Inf, 16, 50, 65, 75, Inf),
+      labels = c("under 16", "16-49", "50-64", "65-74", "75+"),
       right = FALSE
     ),
     region = fct_collapse(

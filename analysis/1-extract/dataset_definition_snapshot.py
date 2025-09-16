@@ -16,6 +16,7 @@ from ehrql import (
     case,
     create_dataset,
     days,
+    weeks,
     when,
     minimum_of,
     maximum_of
@@ -51,14 +52,17 @@ dataset.configure_dummy_data(population_size=1000)
 registered_patients = practice_registrations.for_patient_on(snapshot_date)
 
 registered = registered_patients.exists_for_patient()
+registered_start_date = registered_patients.start_date
 alive = (ons_deaths.date>snapshot_date) | ons_deaths.date.is_null()
 age = patients.age_on(snapshot_date)
 
 # define dataset poppulation
 dataset.define_population(
   registered 
+  & registered_start_date <= (snapshot_date - weeks(12))
   & alive
-  & (age >= 16)
+  & (age >= 16) & (age <= 99)
+  & patients.sex.is_in(["male", "female"])
 )
 
 # --VARIABLES--
@@ -114,3 +118,38 @@ dataset.covid_vax_prior_count = (
 
 # Deregistration dates after the snapshot date
 dataset.deregistered_date = registered_patients.end_date
+
+# Covid-19 outcomes
+
+# covid-related admission 
+dataset.covid_admitted_date = (
+    apcs
+        .where(apcs.all_diagnoses.contains_any_of(codelists.covid_icd10))
+        .where(apcs.admission_method.is_in(["21", "22", "23", "24", "25", "2A", "2B", "2C", "2D", "28"]))
+        .where(apcs.patient_classification == "1")  # Ordinary admissions only
+        .where(apcs.admission_date.is_on_or_after(snapshot_date))
+        .sort_by(apcs.admission_date)
+        .first_for_patient()
+        .admission_date
+)
+# covid-related critical care admission 
+dataset.covid_critcare_date = (
+    apcs
+        .where(apcs.all_diagnoses.contains_any_of(codelists.covid_icd10))
+        .where(apcs.admission_method.is_in(["21", "22", "23", "24", "25", "2A", "2B", "2C", "2D", "28"]))
+        .where(apcs.patient_classification == "1")  # Ordinary admissions only
+        .where(apcs.days_in_critical_care>0)
+        .where(apcs.admission_date.is_on_or_after(snapshot_date))
+        .sort_by(apcs.admission_date)
+        .first_for_patient()
+        .admission_date
+)
+
+# covid-related death
+dataset.covid_death_date = (
+    ons_deaths
+        .where(ons_deaths.cause_of_death_is_in(codelists.covid_icd10))
+        .date
+)
+
+
