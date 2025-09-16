@@ -14,6 +14,7 @@ library("glue")
 library("here")
 library("arrow")
 library("survival")
+library("splines")
 
 # Import custom functions
 source(here("analysis", "0-lib", "design.R"))
@@ -105,18 +106,38 @@ data_combined <-
     next2_vax_date = covid_vax_2_date,
 
     censor_date = pmin(
-      death_date,
       deregistered_date,
       next_campaign_date - 1,
       snapshot_date + max_fup,
       na.rm = TRUE
     ),
+
     # time from snapshot date until next vaccination
-    event_time = as.integer(pmin(next_vax_date, censor_date, na.rm = TRUE) - snapshot_date) + 1L, # +1 because vaccination on snapshot date is allowed, but events at time zero are not
-    event_indicator = (!is.na(next_vax_date)) & (next_vax_date <= censor_date)
+    event_date = pmin(next_vax_date, death_date, censor_date, na.rm = TRUE),
+    event_time = as.integer(event_date - snapshot_date) + 1L, # +1 because vaccination on snapshot date is allowed, but events at time zero are not
+    event_indicator = (next_vax_date <= pmin(censor_date, death_date, na.rm = TRUE)) & !is.na(next_vax_date),
+    event_status = case_when(
+      event_date == next_vax_date ~ "vaccinated",
+      event_date == death_date ~ "died",
+      event_date == censor_date ~ "censored",
+      .default = NA_character_
+    ) |> factor(levels = c("censored", "vaccinated", "death")),
+    event_status_product = if_else(event_indicator, next_vax_product, event_status),
+    next_vax_product_uncensored = if_else(event_indicator, next_vax_product, NA_character_),
+
+    # time from snapshot date until next vaccination
+    # covid_admitted =  (covid_admitted_date <= pmin(censor_date, death_date, na.rm = TRUE)) & !is.na(covid_admitted_date),
+    # covid_admitted_persontime =  as.integer(pmin(covid_admitted_date, censor_date, death_date, na.rm = TRUE) - snapshot_date) + 1L,
+    #
+    # covid_critcare =  (covid_critcare_date <= pmin(censor_date, death_date, na.rm = TRUE)) & !is.na(covid_critcare_date),
+    # covid_critcare_persontime =  as.integer(pmin(covid_critcare_date, censor_date, death_date, na.rm = TRUE) - snapshot_date) + 1L,
+    #
+    # covid_death =  (covid_death_date <= pmin(censor_date, death_date, na.rm = TRUE)) & !is.na(covid_death_date),
+    # covid_death_persontime =  as.integer(pmin(covid_death_date, censor_date, death_date, na.rm = TRUE) - snapshot_date) + 1L,
   ) |>
   as_tibble() |>
   mutate(
+    # setting missing values to explicit missing
     across(where(is.factor) | where(is.character), ~ fct_drop(fct_na_value_to_level(.x, level = "(Missing)")))
   )
 
@@ -403,7 +424,7 @@ create_summary_table(primis_atrisk) # clinically vulnerable
 
 
 # ________________________________________________________________________________________
-# Post-snapshot vaccine uptake, stratified by characteristic recorded on the snapshot_date ----
+# Post-snapshot vaccine coverage, stratified by characteristic recorded on the snapshot_date ----
 # ________________________________________________________________________________________
 
 # This code borrows heavily from the KM reusable action https://github.com/opensafely-actions/kaplan-meier-function/blob/main/analysis/km.R
@@ -531,3 +552,46 @@ km_estimates(ethnicity5)
 km_estimates(region)
 km_estimates(imd_quintile)
 km_estimates(primis_atrisk)
+
+
+
+# ________________________________________________________________________________________
+# Post-snapshot Covid-19 disease burden, stratified by characteristics recorded on the snapshot_date ----
+# ________________________________________________________________________________________
+
+
+irr_estimates <- function(outcome_date, subgroup) {
+
+  formula <- as.formula(glue("outcome ~ {subgroup}*(sex + ns(age, 3))"))
+
+  data_burden <-
+    data_combined |>
+    mutate(
+      outcome =  ({{ outcome_date }} <= pmin(censor_date, death_date, na.rm = TRUE)) & !is.na({{ outcome_date }}),
+      persontime =  as.integer(pmin({{ outcome_date }}, censor_date, death_date, na.rm = TRUE) - snapshot_date) + 1L,
+    ) |>
+    glm(
+      data = _,
+      formula = formula,
+      offset = log(persontime),
+      family = binomial()
+    ) |>
+    broom::tidy()
+
+  subgroup_name <- deparse(substitute(subgroup))
+
+  # write tables that capture underlying plotting data
+  # data_burden |>
+  #   select(
+  #     {{ subgroup }},
+  #     time,
+  #     irr,
+  #     irr.low,
+  #     irr.high,
+  #   ) |>
+  #   write_csv(fs::path(output_dir, glue("irr_{outcome}_{subgroup_name}.csv")))
+
+  data_burden
+}
+
+irr_sex <- irr_estimates(covid_admitted_date, sex)
