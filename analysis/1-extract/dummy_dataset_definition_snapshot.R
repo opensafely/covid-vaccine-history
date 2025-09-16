@@ -26,7 +26,7 @@ population_size <- 1000
 # all variables will be defined as the number of days before or after this day
 # and then at the end of the script they are transformed into dates
 # we do this because some dplyr operations to not preserve date attributes, so dates will be converted to numerics
-snapshot_date <- as.Date("2020-12-08")
+snapshot_date <- as.Date("2021-09-06")
 
 snapshot_day <- 0L
 
