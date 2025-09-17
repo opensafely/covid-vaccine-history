@@ -116,7 +116,7 @@ data_combined <-
     event_date = pmin(next_vax_date, death_date, censor_date, na.rm = TRUE),
     event_time = as.integer(event_date - snapshot_date) + 1L, # +1 because vaccination on snapshot date is allowed, but events at time zero are not
     event_indicator = (next_vax_date <= pmin(censor_date, death_date, na.rm = TRUE)) & !is.na(next_vax_date),
-    
+
     # time from snapshot date until next vaccination
     # covid_admitted =  (covid_admitted_date <= pmin(censor_date, death_date, na.rm = TRUE)) & !is.na(covid_admitted_date),
     # covid_admitted_persontime =  as.integer(pmin(covid_admitted_date, censor_date, death_date, na.rm = TRUE) - snapshot_date) + 1L,
@@ -559,37 +559,47 @@ km_estimates(primis_atrisk)
 
 
 irr_estimates <- function(outcome_date, subgroup) {
-  subgroup_name <- deparse(substitute(subgroup))
-  formula <- as.formula(glue("outcome ~ {subgroup_name}*(sex + ns(age, 3))"))
 
-  data_burden <-
+  subgroup_name <- deparse(substitute(subgroup))
+
+  if(subgroup_name == "age_band"){
+    formula <- as.formula(glue("outcome ~ {subgroup_name} + sex"))
+  } else {
+    formula <- as.formula(glue("outcome ~ {subgroup_name} + sex + ns(age, 3)"))
+  }
+
+
+  data_outcome <-
     data_combined |>
-    mutate(
+    transmute(
+      {{subgroup}},
+      sex, age,
       outcome =  ({{ outcome_date }} <= pmin(censor_date, death_date, na.rm = TRUE)) & !is.na({{ outcome_date }}),
       persontime =  as.integer(pmin({{ outcome_date }}, censor_date, death_date, na.rm = TRUE) - snapshot_date) + 1L,
-    ) |>
+    )
+
+  data_burden <-
+    data_outcome |>
     glm(
       data = _,
       formula = formula,
       offset = log(persontime),
       family = binomial()
     ) |>
-    broom::tidy()
+    broom.helpers::tidy_plus_plus() |>
+    filter(variable=="sex") |>
+    select(
+      term, variable, var_label, reference_row, label, n_obs, n_event, estimate, std.error, statistic, conf.low, conf.high
+    ) |>
+    transmute(
+      variable, label, reference_row,
+      irr = estimate,
+      irr.low = conf.low,
+      irr.high = conf.high,
+      std.error,
+    )
 
-
-
-  # write tables that capture underlying plotting data
-  # data_burden |>
-  #   select(
-  #     {{ subgroup }},
-  #     time,
-  #     irr,
-  #     irr.low,
-  #     irr.high,
-  #   ) |>
-  #   write_csv(fs::path(output_dir, glue("irr_{outcome}_{subgroup_name}.csv")))
+  write_csv(data_burden, fs::path(output_dir, glue("irr_{outcome}_{subgroup_name}.csv")))
 
   data_burden
 }
-
-irr_sex <- irr_estimates(covid_admitted_date, sex)
