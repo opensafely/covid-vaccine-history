@@ -117,30 +117,31 @@ data_combined <-
     ),
 
     # time from snapshot date until next vaccination
-    event_date = pmin(next_vax_date, death_date, censor_date, na.rm = TRUE),
-    event_time = as.integer(event_date - snapshot_date) + 1L, # +1 because vaccination on snapshot date is allowed, but events at time zero are not
-    event_indicator = (next_vax_date <= pmin(censor_date, death_date, na.rm = TRUE)) & !is.na(next_vax_date),
+    vax_time = as.integer(pmin(next_vax_date, death_date, censor_date, na.rm = TRUE) - snapshot_date) + 1L, # +1 because vaccination on snapshot date is allowed, but events at time zero are not
+    vax_indicator = (next_vax_date <= pmin(censor_date, death_date, na.rm = TRUE)) & !is.na(next_vax_date),
 
-    # time from snapshot date until next vaccination
-    # covid_admitted =  (covid_admitted_date <= pmin(censor_date, death_date, na.rm = TRUE)) & !is.na(covid_admitted_date),
-    # covid_admitted_persontime =  as.integer(pmin(covid_admitted_date, censor_date, death_date, na.rm = TRUE) - snapshot_date) + 1L,
-    #
-    # covid_critcare =  (covid_critcare_date <= pmin(censor_date, death_date, na.rm = TRUE)) & !is.na(covid_critcare_date),
-    # covid_critcare_persontime =  as.integer(pmin(covid_critcare_date, censor_date, death_date, na.rm = TRUE) - snapshot_date) + 1L,
-    #
-    # covid_death =  (covid_death_date <= pmin(censor_date, death_date, na.rm = TRUE)) & !is.na(covid_death_date),
-    # covid_death_persontime =  as.integer(pmin(covid_death_date, censor_date, death_date, na.rm = TRUE) - snapshot_date) + 1L,
+    # time from snapshot date until covid hospital admission
+    covid_admitted_time = as.integer(pmin(covid_admitted_date, death_date, censor_date, na.rm = TRUE) - snapshot_date) + 1L,
+    covid_admitted_indicator = (covid_admitted_date <= pmin(censor_date, death_date, na.rm = TRUE)) & !is.na(covid_admitted_date),
+
+    # time from snapshot date until covid critical care admission
+    covid_critcare_time = as.integer(pmin(covid_critcare_date, death_date, censor_date, na.rm = TRUE) - snapshot_date) + 1L,
+    covid_critcare_indicator = (covid_critcare_date <= pmin(censor_date, death_date, na.rm = TRUE)) & !is.na(covid_critcare_date),
+
+    # time from snapshot date until covid death
+    # covid_death_time = as.integer(pmin(covid_death_date, death_date, censor_date, na.rm = TRUE) - snapshot_date) + 1L,
+    # covid_death_indicator = (covid_death_date <= pmin(censor_date, death_date, na.rm = TRUE)) & !is.na(covid_death_date),
   ) |>
   as_tibble() |>
   mutate(
-    event_status = case_when(
-      event_date == next_vax_date ~ "vaccinated",
-      event_date == death_date ~ "died",
-      event_date == censor_date ~ "censored",
+    vax_status = case_when(
+      vax_indicator ~ "vaccinated",
+      (death_date <= censor_date) & !is.na(death_date) ~ "died",
+      (censor_date < death_date) | is.na(death_date) ~ "censored",
       .default = NA_character_
     ) |> factor(levels = c("censored", "vaccinated", "death")),
-    event_status_product = if_else(event_indicator, next_vax_product, event_status),
-    next_vax_product_uncensored = if_else(event_indicator, next_vax_product, NA_character_),
+    vax_status_product = if_else(vax_indicator, next_vax_product, vax_status),
+    next_vax_product_uncensored = if_else(vax_indicator, next_vax_product, NA_character_),
 
     # setting missing values to explicit missing
     across(where(is.factor) | where(is.character), ~ fct_drop(fct_na_value_to_level(.x, level = "(Missing)")))
@@ -443,7 +444,7 @@ create_summary_table(primis_atrisk) # clinically vulnerable
 
 ## tests ----
 
-times_count <- table(cut(data_combined$event_time, c(-Inf, 0, 1, Inf), right = FALSE, labels = c("<0", "0", ">0")), useNA = "ifany")
+times_count <- table(cut(data_combined$vax_time, c(-Inf, 0, 1, Inf), right = FALSE, labels = c("<0", "0", ">0")), useNA = "ifany")
 
 if (!identical(as.integer(times_count), c(0L, 0L, nrow(data_combined)))) {
   print(times_count)
@@ -452,33 +453,54 @@ if (!identical(as.integer(times_count), c(0L, 0L, nrow(data_combined)))) {
 
 ## Function to calculate KM estimates for a given stratification variable ----
 
-km_estimates <- function(subgroup) {
+km_estimates <- function(subgroup, event_name, event_time, event_indicator) {
 
-  data_surv <-
+  data_outcome <-
     data_combined |>
+    select(
+      patient_id,
+      {{ subgroup }},
+      event_time = {{ event_time }},
+      event_indicator = {{ event_indicator }}
+    )
+
+  data_km <-
+    data_outcome |>
     group_by({{ subgroup }}) |>
     nest() |>
     mutate(
-      surv_obj_tidy = map(data, ~ {
-        survfit(
-          Surv(event_time, event_indicator) ~ 1,
-          data = .x,
-          conf.type = "log-log"
-        ) |>
-          broom::tidy() |>
-          complete(
-            time = seq_len(max_fup), # fill in 1 row for each day of follow up
-            fill = list(n.event = 0L, n.censor = 0L) # fill in zero events on those days
+      surv_obj_tidy = map(
+        data, ~ {
+          survfit(
+            Surv(event_time, event_indicator) ~ 1,
+            data = .x,
+            conf.type = "log-log"
           ) |>
-          fill(
-            n.risk,
-            .direction = "up"
-          ) |>
-          fill(
-            estimate, conf.low, conf.high,
-            .direction = "down"
-          )
-      }),
+            broom::tidy() |>
+            add_row(
+              time = 0, # assumes time origin is zero
+              n.risk = 0,
+              n.event = 0,
+              n.censor = 0,
+              estimate = 1,
+              conf.low = 1,
+              conf.high = 1,
+              .before = 1L
+            ) |>
+            complete(
+              time = c(0, seq_len(max_fup)), # fill in 1 row for each day of follow up
+              fill = list(n.event = 0L, n.censor = 0L) # fill in zero events on those days
+            ) |>
+            fill(
+              n.risk,
+              .direction = "up"
+            ) |>
+            fill(
+              estimate, conf.low, conf.high,
+              .direction = "down"
+            )
+        }
+      ),
     ) |>
     select(-data) |>
     unnest(surv_obj_tidy) |>
@@ -495,27 +517,14 @@ km_estimates <- function(subgroup) {
       cmlinc.high = 1 - conf.low,
     )
 
-  data_with_time0 <-
-    data_surv |>
+  coverage_plot <-
+    data_km |>
     mutate(
       lagtime = lag(time, 1, 0), # assumes the time-origin is zero
     ) |>
-    group_modify(
-      ~ add_row(
-        .x,
-        time = 0, # assumes time origin is zero
-        lagtime = 0,
-        cmlinc = 0,
-        cmlinc.low = 0,
-        cmlinc.high = 0,
-        .before = 0
-      )
-    )
-
-  coverage_plot <-
-    ggplot(data_with_time0) +
+    ggplot() +
     geom_step(aes(x = time, y = cmlinc, group = {{ subgroup }}, colour = {{ subgroup }}), direction = "vh") +
-    geom_step(aes(x = time, y = cmlinc, group = {{ subgroup }}, colour = {{ subgroup }}), direction = "vh", linetype = "dashed", alpha = 0.5) +
+    # geom_step(aes(x = time, y = cmlinc, group = {{ subgroup }}, colour = {{ subgroup }}), direction = "vh", linetype = "dashed", alpha = 0.5) +
     geom_rect(aes(xmin = lagtime, xmax = time, ymin = cmlinc.low, ymax = cmlinc.high, group = {{ subgroup }}, colour = {{ subgroup }}, fill = {{ subgroup }}), alpha = 0.1, colour = "transparent") +
     # facet_grid(rows = vars(!!!subgroup_syms)) +
     scale_color_brewer(type = "qual", palette = "Set1", na.value = "grey") +
@@ -539,10 +548,11 @@ km_estimates <- function(subgroup) {
 
   subgroup_name <- deparse(substitute(subgroup))
 
-  ggsave(fs::path(output_dir, glue("km_{subgroup_name}.png")), plot = coverage_plot)
+  ggsave(fs::path(output_dir, glue("km_{event_name}_{subgroup_name}.png")), plot = coverage_plot)
 
   # write tables that capture underlying plotting data
-  data_surv |>
+  data_km |>
+    filter(time != 0) |>
     select(
       {{ subgroup }},
       time,
@@ -550,16 +560,17 @@ km_estimates <- function(subgroup) {
       cmlinc.low,
       cmlinc.high,
     ) |>
-    write_csv(fs::path(output_dir, glue("km_{subgroup_name}.csv")))
+    write_csv(fs::path(output_dir, glue("km_{event_name}_{subgroup_name}.csv")))
+
 }
 
-km_estimates(all)
-km_estimates(sex)
-km_estimates(ageband)
-km_estimates(ethnicity5)
-km_estimates(region)
-km_estimates(imd_quintile)
-km_estimates(primis_atrisk)
+km_estimates(all, "vax", vax_time, vax_indicator)
+km_estimates(sex, "vax", vax_time, vax_indicator)
+km_estimates(ageband, "vax", vax_time, vax_indicator)
+km_estimates(ethnicity5, "vax", vax_time, vax_indicator)
+km_estimates(region, "vax", vax_time, vax_indicator)
+km_estimates(imd_quintile, "vax", vax_time, vax_indicator)
+km_estimates(primis_atrisk, "vax", vax_time, vax_indicator)
 
 # ________________________________________________________________________________________
 # Post-snapshot Covid-19 disease burden, stratified by characteristics recorded on the snapshot_date ----
