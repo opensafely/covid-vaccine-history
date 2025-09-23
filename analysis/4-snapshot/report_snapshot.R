@@ -34,11 +34,16 @@ if (length(args) == 0) {
 # use fix width, rather than months or bi-months or quarters, so that temporal denominator is even and ratio of weekends to weekdays is fixed
 temporal_resolution <- 28
 
-# maximum follow-up after snapshot date
-max_fup <- 24 * 7 # 24 weeks
-
 # Create next campaign start date
 next_campaign_date <- min(campaign_dates$start[campaign_dates$start > snapshot_date], as.Date(Inf), na.rm = TRUE)
+
+# check that campaign dates are consistent
+stopifnot(campaign_dates$final_milestone[campaign_dates$start == snapshot_date] == next_campaign_date - 1)
+
+# maximum follow-up after snapshot date
+max_fup <- next_campaign_date - snapshot_date + 1L
+# max_fup <- 24 * 7 # 24 weeks
+
 
 # dates to round down to
 # use this with `findInterval` until lubridate package is updated in the opensafely R image
@@ -108,7 +113,6 @@ data_combined <-
     censor_date = pmin(
       deregistered_date,
       next_campaign_date - 1,
-      snapshot_date + max_fup,
       na.rm = TRUE
     ),
 

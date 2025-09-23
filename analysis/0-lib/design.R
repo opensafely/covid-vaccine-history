@@ -66,23 +66,26 @@ sdc_threshold <- 100
 # covid-19 vaccine campaign dates
 campaign_dates <-
   tribble(
-    ~campaign,        ~start,       ~start_rounded,
-    "Pre-2020-06-01",      "1900-01-01", "1900-01-01",
+    ~campaign,        ~start,      ~primary_milestone,
+    "Pre-2020-07-01", "1900-01-01", "1900-01-01",
     "Pre-roll-out",   as.character(firstpossiblevax_date), as.character(firstpossiblevax_date),
-    "Primary series", "2020-12-08", "2020-12-01",
-    "Autumn 2021",    "2021-09-01", "2021-09-01",
-    "Spring 2022",    "2022-03-21", "2022-03-21",
-    "Autumn 2022",    "2022-09-01", "2022-09-01",
-    "Spring 2023",    "2023-04-03", "2023-04-01",
-    "Autumn 2023",    "2023-09-01", "2023-09-01",
-    "Spring 2024",    "2024-04-15", "2023-04-01",
-    "Autumn 2024",    "2024-10-01", "2024-10-01",
-    "Spring 2025",    "2025-04-01", "2025-04-01",
-    "End",            "2030-01-01", "2030-01-01"
+    "Primary series", "2020-12-08", "2021-06-30",
+    "Autumn 2021",    "2021-09-06", "2022-02-28",
+    "Spring 2022",    "2022-03-21", "2022-06-30",
+    "Autumn 2022",    "2022-08-29", "2023-02-28",
+    "Spring 2023",    "2023-04-03", "2023-06-30",
+    "Autumn 2023",    "2023-08-28", "2024-02-28",
+    "Spring 2024",    "2024-04-15", "2024-06-30",
+    "Autumn 2024",    "2024-09-30", "2025-02-28",
+    "Spring 2025",    "2025-03-31", "2025-06-30",
+    "End",            "2030-01-01", ""
   ) |>
   mutate(
-    across(c(start, start_rounded), as.Date)
+    across(c(start, primary_milestone), as.Date),
+    early_milestone = start + (7 * 8) - 1,
+    final_milestone = lead(start, 1, NA) - 1
   )
+
 
 
 # output from https://jobs.opensafely.org/opensafely-internal/tpp-vaccination-names/ workspace
