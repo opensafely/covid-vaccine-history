@@ -156,6 +156,8 @@ data_combined <-
 ## Report info on date of last vaccination
 ## _______________________________________________________________________________________
 
+# This produces data and a plot showing the distribution of most recent prior vaccination date (to the nearest 4 weeks)
+# if no documented prior vaccination, then values are stacked on the LHS of the chart
 
 plot_date_of_last_dose <- function(subgroup) {
   summary_by <-
@@ -507,9 +509,9 @@ km_estimates <- function(subgroup, event_name, event_time, event_indicator) {
     mutate(
 
       # disclosure control
-      estimate = plyr::round_any(estimate, sdc_threshold / first(n.risk)),
-      conf.high = plyr::round_any(conf.high, sdc_threshold / first(n.risk)),
-      conf.low = plyr::round_any(conf.low, sdc_threshold / first(n.risk)),
+      # estimate = plyr::round_any(estimate, sdc_threshold / first(n.risk)),
+      # conf.high = plyr::round_any(conf.high, sdc_threshold / first(n.risk)),
+      # conf.low = plyr::round_any(conf.low, sdc_threshold / first(n.risk)),
 
       # cumulative incidence
       cmlinc = 1 - estimate,
@@ -529,7 +531,7 @@ km_estimates <- function(subgroup, event_name, event_time, event_indicator) {
     # facet_grid(rows = vars(!!!subgroup_syms)) +
     scale_color_brewer(type = "qual", palette = "Set1", na.value = "grey") +
     scale_fill_brewer(type = "qual", palette = "Set1", guide = "none", na.value = "grey") +
-    scale_y_continuous(expand = expansion(mult = c(0, 0.01))) +
+    # scale_y_continuous(expand = expansion(mult = c(0, 0.01))) +
     coord_cartesian(xlim = c(0, NA)) +
     labs(
       x = "Time",
@@ -572,17 +574,22 @@ km_estimates(region, "vax", vax_time, vax_indicator)
 km_estimates(imd_quintile, "vax", vax_time, vax_indicator)
 km_estimates(primis_atrisk, "vax", vax_time, vax_indicator)
 
+# consider raw KM plots for diseae burden too
+# km_estimates(all, covid_admitted_time, covid_admitted_indicator)
 # ________________________________________________________________________________________
 # Post-snapshot Covid-19 disease burden, stratified by characteristics recorded on the snapshot_date ----
 # ________________________________________________________________________________________
 
 
-cox_estimates <- function(subgroup, event_name, event_time, event_indicator) {
+adjusted_estimates <- function(subgroup, event_name, event_time, event_indicator) {
 
   subgroup_name <- deparse(substitute(subgroup))
 
-  formula <- as.formula(glue("Surv(event_time, event_indicator) ~ {subgroup_name} + sex + ns(age, 3)"))
-  if (subgroup_name == "ageband") formula <- as.formula(glue("Surv(event_time, event_indicator) ~ ageband + sex"))
+  cox_formula <- as.formula(glue("Surv(event_time, event_indicator) ~ {subgroup_name} + sex + ns(age, 3)"))
+  if (subgroup_name == "ageband") cox_formula <- as.formula(glue("Surv(event_time, event_indicator) ~ ageband + sex"))
+
+  poisson_formula <- as.formula(glue("event_indicator ~ {subgroup_name} + sex + ns(age, 3)"))
+  if (subgroup_name == "ageband") poisson_formula <- as.formula(glue("event_indicator ~ ageband + sex"))
 
 
   data_outcome <-
@@ -598,60 +605,79 @@ cox_estimates <- function(subgroup, event_name, event_time, event_indicator) {
     data_outcome |>
     coxph(
       data = _,
-      formula = formula,
+      formula = cox_formula,
       ties = "breslow"
     ) |>
     broom.helpers::tidy_plus_plus() |>
     filter(variable == subgroup_name) |>
     transmute(
       variable, label, reference_row,
-      n_obs, n_ind, n_event, exposure,
+      n_obs, n_event, exposure,
       hr = exp(estimate),
       hr.low = exp(conf.low),
       hr.high = exp(conf.high),
-      std.error,
+      hr.ln.std.error = std.error,
     )
 
+  data_poisson <-
+    data_outcome |>
+    glm(
+      data = _,
+      formula = poisson_formula,
+      family = poisson,
+      offset = log(event_time)
+    ) |>
+    broom.helpers::tidy_plus_plus() |>
+    filter(variable == subgroup_name) |>
+    transmute(
+      variable, label, reference_row,
+      irr = exp(estimate),
+      irr.low = exp(conf.low),
+      irr.high = exp(conf.high),
+      irr.ln.std.error = std.error
+    )
+
+  data_estimates <-
+    data_cox |>
+    left_join(data_poisson, by = c("variable", "label", "reference_row"))
+
   # write_csv(data_cox, fs::path(output_dir, glue("cox_{event_name}_{subgroup_name}.csv")))
-  return(data_cox)
+  return(data_estimates)
 }
 
-get_all_cox_estimates <- function(event_name, event_time, event_indicator) {
-  # cox function does  not work when the contrast is a single valued vector
+get_all_estimates <- function(event_name, event_time, event_indicator) {
+  # cox / glm function does not work when the contrast is a single valued vector
   # so creating the summary info manually here
-  cox_event_all <-
+  estimates_event_all <-
     data_combined |>
     summarise(
       variable = "all",
       label = NA_character_,
       reference_row = TRUE,
       n_obs = n(),
-      n_ind = n(),
       n_event = sum({{ event_indicator }}),
       exposure = sum({{ event_time }}),
     )
 
-  cox_event_sex <- cox_estimates(sex, event_name, {{ event_time }}, {{ event_indicator }})
-  cox_event_ageband <- cox_estimates(ageband, event_name, {{ event_time }}, {{ event_indicator }})
-  cox_event_ethnicity5 <- cox_estimates(ethnicity5, event_name, {{ event_time }}, {{ event_indicator }})
-  cox_event_region <- cox_estimates(region, event_name, {{ event_time }}, {{ event_indicator }})
-  cox_event_imd_quintile <- cox_estimates(imd_quintile, event_name, {{ event_time }}, {{ event_indicator }})
-  cox_event_primis_atrisk <- cox_estimates(primis_atrisk, event_name, {{ event_time }}, {{ event_indicator }})
+  estimates_event_sex <- adjusted_estimates(sex, event_name, {{ event_time }}, {{ event_indicator }})
+  estimates_event_ageband <- adjusted_estimates(ageband, event_name, {{ event_time }}, {{ event_indicator }})
+  estimates_event_ethnicity5 <- adjusted_estimates(ethnicity5, event_name, {{ event_time }}, {{ event_indicator }})
+  estimates_event_region <- adjusted_estimates(region, event_name, {{ event_time }}, {{ event_indicator }})
+  estimates_event_imd_quintile <- adjusted_estimates(imd_quintile, event_name, {{ event_time }}, {{ event_indicator }})
+  estimates_event_primis_atrisk <- adjusted_estimates(primis_atrisk, event_name, {{ event_time }}, {{ event_indicator }})
 
   bind_rows(
-    cox_event_all,
-    cox_event_sex,
-    cox_event_ageband,
-    cox_event_ethnicity5,
-    cox_event_imd_quintile,
-    cox_event_primis_atrisk
+    estimates_event_all,
+    estimates_event_sex,
+    estimates_event_ageband,
+    estimates_event_ethnicity5,
+    estimates_event_imd_quintile,
+    estimates_event_primis_atrisk
   ) |>
-    write_csv(fs::path(output_dir, glue("cox_{event_name}.csv")))
+    write_csv(fs::path(output_dir, glue("contrasts_{event_name}.csv")))
 
 }
 
-get_all_cox_estimates("covid_admitted", covid_admitted_time, covid_admitted_indicator)
-get_all_cox_estimates("covid_critcare", covid_critcare_time, covid_critcare_indicator)
-get_all_cox_estimates("covid_death", covid_death_time, covid_death_indicator)
-
-
+get_all_estimates("covid_admitted", covid_admitted_time, covid_admitted_indicator)
+get_all_estimates("covid_critcare", covid_critcare_time, covid_critcare_indicator)
+get_all_estimates("covid_death", covid_death_time, covid_death_indicator)
