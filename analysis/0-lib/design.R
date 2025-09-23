@@ -61,7 +61,7 @@ study_dates <-
 list2env(study_dates, globalenv())
 
 # statistical disclosure control rounding precision
-sdc_threshold <- 100
+sdc_threshold <- 10
 
 # covid-19 vaccine campaign dates
 campaign_dates <-
