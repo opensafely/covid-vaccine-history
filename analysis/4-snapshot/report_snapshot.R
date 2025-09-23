@@ -171,9 +171,14 @@ plot_date_of_last_dose <- function(subgroup) {
       fill = list(n = 0)
     )
 
+  breaks <- seq(as.Date("2021-01-01"),  as.Date("2028-06-01"), by = "6 month")
 
   temp_plot <-
-    ggplot(summary_by) +
+    summary_by |>
+    mutate(
+      last_vax_period = replace_na(last_vax_period, default_date - 42)
+    ) |>
+    ggplot() +
     geom_col(
       aes(x = last_vax_period, y = n, fill = last_vax_product, group = last_vax_product),
       alpha = 0.5,
@@ -183,7 +188,6 @@ plot_date_of_last_dose <- function(subgroup) {
     ) +
     facet_grid(
       rows = vars({{ subgroup }}),
-      # cols=vars({{cols}}),
       switch = "y",
       space = "free_x",
       scales = "free_x"
@@ -202,10 +206,10 @@ plot_date_of_last_dose <- function(subgroup) {
       }
     ) +
     scale_x_date(
-      breaks = c(default_date - 30, as.Date(c("2021-01-01", "2022-01-01", "2023-01-01", "2024-01-01"))),
+      breaks = c(default_date - 42, breaks),
       date_minor_breaks = "month",
       # labels = ~{c("Unvaccinated", scales::label_date("%Y")(.x[-1]))},
-      labels = c("Unvaccinated", scales::label_date("%Y")(as.Date(c("2021-01-01", "2022-01-01", "2023-01-01", "2024-01-01")))),
+      labels = c("Unvaccinated", scales::label_date("%Y-%b")(breaks)),
     ) +
     theme_minimal() +
     theme(
