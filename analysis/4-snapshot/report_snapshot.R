@@ -577,48 +577,81 @@ km_estimates(primis_atrisk, "vax", vax_time, vax_indicator)
 # ________________________________________________________________________________________
 
 
-irr_estimates <- function(outcome_date, subgroup) {
+cox_estimates <- function(subgroup, event_name, event_time, event_indicator) {
 
   subgroup_name <- deparse(substitute(subgroup))
 
-  if(subgroup_name == "age_band"){
-    formula <- as.formula(glue("outcome ~ {subgroup_name} + sex"))
-  } else {
-    formula <- as.formula(glue("outcome ~ {subgroup_name} + sex + ns(age, 3)"))
-  }
+  formula <- as.formula(glue("Surv(event_time, event_indicator) ~ {subgroup_name} + sex + ns(age, 3)"))
+  if (subgroup_name == "ageband") formula <- as.formula(glue("Surv(event_time, event_indicator) ~ ageband + sex"))
 
 
   data_outcome <-
     data_combined |>
     transmute(
-      {{subgroup}},
+      {{ subgroup }},
       sex, age,
-      outcome =  ({{ outcome_date }} <= pmin(censor_date, death_date, na.rm = TRUE)) & !is.na({{ outcome_date }}),
-      persontime =  as.integer(pmin({{ outcome_date }}, censor_date, death_date, na.rm = TRUE) - snapshot_date) + 1L,
+      event_time = {{ event_time }},
+      event_indicator =  {{ event_indicator }}
     )
 
-  data_burden <-
+  data_cox <-
     data_outcome |>
-    glm(
+    coxph(
       data = _,
       formula = formula,
-      offset = log(persontime),
-      family = binomial()
+      ties = "breslow"
     ) |>
     broom.helpers::tidy_plus_plus() |>
-    filter(variable=="sex") |>
-    select(
-      term, variable, var_label, reference_row, label, n_obs, n_event, estimate, std.error, statistic, conf.low, conf.high
-    ) |>
+    filter(variable == subgroup_name) |>
     transmute(
       variable, label, reference_row,
-      irr = estimate,
-      irr.low = conf.low,
-      irr.high = conf.high,
+      n_obs, n_ind, n_event, exposure,
+      hr = exp(estimate),
+      hr.low = exp(conf.low),
+      hr.high = exp(conf.high),
       std.error,
     )
 
-  write_csv(data_burden, fs::path(output_dir, glue("irr_{outcome}_{subgroup_name}.csv")))
-
-  data_burden
+  # write_csv(data_cox, fs::path(output_dir, glue("cox_{event_name}_{subgroup_name}.csv")))
+  return(data_cox)
 }
+
+get_all_cox_estimates <- function(event_name, event_time, event_indicator) {
+  # cox function does  not work when the contrast is a single valued vector
+  # so creating the summary info manually here
+  cox_event_all <-
+    data_combined |>
+    summarise(
+      variable = "all",
+      label = NA_character_,
+      reference_row = TRUE,
+      n_obs = n(),
+      n_ind = n(),
+      n_event = sum({{ event_indicator }}),
+      exposure = sum({{ event_time }}),
+    )
+
+  cox_event_sex <- cox_estimates(sex, event_name, {{ event_time }}, {{ event_indicator }})
+  cox_event_ageband <- cox_estimates(ageband, event_name, {{ event_time }}, {{ event_indicator }})
+  cox_event_ethnicity5 <- cox_estimates(ethnicity5, event_name, {{ event_time }}, {{ event_indicator }})
+  cox_event_region <- cox_estimates(region, event_name, {{ event_time }}, {{ event_indicator }})
+  cox_event_imd_quintile <- cox_estimates(imd_quintile, event_name, {{ event_time }}, {{ event_indicator }})
+  cox_event_primis_atrisk <- cox_estimates(primis_atrisk, event_name, {{ event_time }}, {{ event_indicator }})
+
+  bind_rows(
+    cox_event_all,
+    cox_event_sex,
+    cox_event_ageband,
+    cox_event_ethnicity5,
+    cox_event_imd_quintile,
+    cox_event_primis_atrisk
+  ) |>
+    write_csv(fs::path(output_dir, glue("cox_{event_name}.csv")))
+
+}
+
+get_all_cox_estimates("covid_admitted", covid_admitted_time, covid_admitted_indicator)
+get_all_cox_estimates("covid_critcare", covid_critcare_time, covid_critcare_indicator)
+get_all_cox_estimates("covid_death", covid_death_time, covid_death_indicator)
+
+
