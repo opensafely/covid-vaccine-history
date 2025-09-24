@@ -85,7 +85,7 @@ data_combined <-
   data_snapshot |>
   lazy_dt() |>
   left_join(
-    lazy_dt(data_fixed) |> select(patient_id, sex, ethnicity5, ethnicity16, death_date),
+    lazy_dt(data_fixed) |> select(patient_id, sex, ethnicity5, ethnicity16, death_date, covid_death_date),
     by = "patient_id"
   ) |>
   mutate(

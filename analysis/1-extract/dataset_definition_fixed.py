@@ -93,9 +93,9 @@ dataset.ethnicity16 = ethnicity.snomedct_code.to_category(codelists.ethnicity16)
 
 # patient death date
 dataset.death_date = ons_deaths.date
-#dataset.covid_death_date = case(
-#    when(ons_deaths.cause_of_death_is_in(codelists.covid_icd10)).then(ons_deaths.date),
-#    otherwise=None
-#)
+dataset.covid_death_date = case(
+   when(ons_deaths.cause_of_death_is_in(codelists.covid_icd10)).then(ons_deaths.date),
+   otherwise=None
+)
 # number of covid vaccines as at end of observation period
 dataset.covid_vax_count = covid_vaccinations.count_for_patient()

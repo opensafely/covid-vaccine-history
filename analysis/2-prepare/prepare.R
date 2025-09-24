@@ -70,7 +70,8 @@ data_processed_fixed |>
     sex,
     ethnicity5,
     ethnicity16,
-    death_date
+    death_date,
+    covid_death_date
   ) |>
   write_feather(fs::path(output_dir, "data_fixed.arrow"))
 
@@ -364,8 +365,8 @@ cat(
   "\n",
   "number of occassions where a person is vaccinated with a null date:\n",
   data_vax_ELD |>
-    summarise(n = n()) |>
-    pull(n)
+    as_tibble() |>
+    nrow()
 )
 
 
@@ -375,6 +376,6 @@ cat(
   "number of occassions where a person is vaccinated on or before 1899:\n",
   data_vax_ELD |>
     filter(vax_date <= as.Date("1899-01-01")) |>
-    summarise(n = n()) |>
-    pull(n)
+    as_tibble() |>
+    nrow()
 )
