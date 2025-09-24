@@ -69,7 +69,7 @@ campaign_dates <-
     ~campaign,        ~start,      ~primary_milestone,
     "Pre-2020-07-01", "1900-01-01", "1900-01-01",
     "Pre-roll-out",   as.character(firstpossiblevax_date), as.character(firstpossiblevax_date),
-    "Primary series", "2020-12-08", "2021-06-30",
+    "Primary series", "2020-12-07", "2021-06-30",
     "Autumn 2021",    "2021-09-06", "2022-02-28",
     "Spring 2022",    "2022-03-21", "2022-06-30",
     "Autumn 2022",    "2022-08-29", "2023-02-28",
