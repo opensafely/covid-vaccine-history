@@ -666,15 +666,23 @@ get_all_estimates <- function(event_name, event_time, event_indicator) {
   estimates_event_imd_quintile <- adjusted_estimates(imd_quintile, event_name, {{ event_time }}, {{ event_indicator }})
   estimates_event_primis_atrisk <- adjusted_estimates(primis_atrisk, event_name, {{ event_time }}, {{ event_indicator }})
 
-  bind_rows(
-    estimates_event_all,
-    estimates_event_sex,
-    estimates_event_ageband,
-    estimates_event_ethnicity5,
-    estimates_event_imd_quintile,
-    estimates_event_primis_atrisk
-  ) |>
-    write_csv(fs::path(output_dir, glue("contrasts_{event_name}.csv")))
+  estimates <-
+    bind_rows(
+      estimates_event_all,
+      estimates_event_sex,
+      estimates_event_ageband,
+      estimates_event_ethnicity5,
+      estimates_event_imd_quintile,
+      estimates_event_primis_atrisk
+    ) |>
+    mutate(
+      ir = n_event / exposure,
+      ir.ln.std.error = 1 / sqrt(n_event),
+      ir.low = exp(log(ir) + qnorm(0.025) * ir.ln.std.error),
+      ir.high = exp(log(ir) + qnorm(0.975) * ir.ln.std.error)
+    )
+
+  write_csv(estimates, fs::path(output_dir, glue("contrasts_{event_name}.csv")))
 
 }
 
