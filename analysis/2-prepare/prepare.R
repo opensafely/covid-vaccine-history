@@ -50,8 +50,8 @@ data_processed_fixed <-
       # sex == "unknown" ~ "Unknown",
       TRUE ~ NA_character_
     ),
-    ethnicity5 = factor(ethnicity5, levels = factor_levels$ethnicity5),
-    ethnicity16 = factor(ethnicity16, levels = factor_levels$ethnicity16) |>
+    ethnicity5 = factor(ethnicity5, levels = factor_levels$ethnicity5, ordered = FALSE),
+    ethnicity16 = factor(ethnicity16, levels = factor_levels$ethnicity16, ordered = FALSE) |>
       fct_relabel(~ str_extract(.x, "(?<= - )(.*)")), # pick up everything after " - "
   ) |>
   as_tibble()

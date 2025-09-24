@@ -145,7 +145,7 @@ standardise_characteristics <-
       right = FALSE
     ),
     region = fct_collapse(
-      region,
+      factor(region, ordered = FALSE),
       `East of England` = "East",
       `London` = "London",
       `Midlands` = c("West Midlands", "East Midlands"),
