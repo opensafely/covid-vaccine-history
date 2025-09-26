@@ -41,13 +41,14 @@ This repository contains code to describe patterns of COVID-19 vaccine receipt i
 The analysis scripts in the [`analysis/`](./analysis) directory are organised into sub-directories as follows:
 
 - [`0-lib/`](./analysis/0-lib/):
-  - [`dates.json`](./analysis/0-lib/dates.json) a json file defining the key study dates (start date, end date, vaccine roll-out dates, etc) that are used throughout the study. 
   - [`design.R`](./analysis/0-lib/design.R) defines the design configurations used throughout the study - start and end dates, eligibility, products, look-up dictionaries, etc.
   It also defines R functions used throughout the codebase.
-  This script is run at the start of all relevant R scripts.
+  This script is run at the start of all relevant R scripts. 
+  It must also be run manually if values in either of the [`study_dates.json`](./analysis/0-lib/study_dates.json) or [`campaign_dates.json`](./analysis/0-lib/campaign_dates.json) files need to be updated, 
+  so that the ehrQL scripts use the most up-to-date values too. 
 - [`1-extract/`](./analysis/1-extract/):
   - [`dataset_definition_fixed.py`](./analysis/1-extract/dataset_definition_fixed.py) is the ehrQL script for selecting all variables that are fixed (e.g., date of death), or assumed to be fixed (e.g., ethnicity), as at the study end date.
-  This information is extracted once and then joined onto other datasets where needed. 
+  This information is extracted once and then joined onto other datasets where needed, to save computation time.
   - [`dataset_definition_varying.py`](./analysis/1-extract/dataset_definition_varying.py) is the ehrQL script to extract information as at the time of each COVID-19 vaccine event.
   The outputted dataset includes a set of columns for each vaccination event, with one column for each variable of interest (e.g., vaccination date, product, GP practice, deprivation level, other clinical characteristics).
   For instance, region_i (region_1, region_2, region_3, ...) represents the region of the person's registered address at the time of the i-th COVID-19 vaccine. 
