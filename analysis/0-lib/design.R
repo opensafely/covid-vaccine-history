@@ -160,10 +160,7 @@ standardise_characteristics <-
       labels = c("1 (most deprived)", "2", "3", "4", "5 (least deprived)"),
       include.lowest = TRUE,
       right = FALSE
-    ) # ,
-    ## PRIMIS clinical variables
-    # cv = crd | ast | chd | ckd | cld | cns | learndis | diab | immuno | asplen | obes | sev_ment
-    # TODO add additional vulnerability variables when defined and extracted
+    ),
   )
 
 ## factor levels provided in a sensible order, as this won't happen directly from opensafely ----

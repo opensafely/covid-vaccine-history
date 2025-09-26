@@ -307,6 +307,20 @@ def primis_variables(dataset, index_date, var_name_suffix=""):
     dataset.add_column(f"primis_atrisk{var_name_suffix}", primis_atrisk(index_date)) # at risk 
 
 
+def carehome_status(index_date):
+  
+  # TPP care home flag, using ddress linkage with CQC data
+  carehome_tpp = addresses.for_patient_on(index_date).care_home_is_potential_match.when_null_then(False)
+
+  # Patients in long-stay nursing and residential care
+  # as per diagnostic and/or consultation code events directly related to care home residency
+  carehome_primis = has_prior_event(codelists.carehome_primis, index_date)
+  carehome_nhs_refset = has_prior_event(codelists.carehome_nhs_refset, index_date)
+  
+  return(
+      carehome_tpp | carehome_primis | carehome_nhs_refset
+  )
+
 ###########################################################
 # Other clinical variables
 ##################################################################
@@ -332,6 +346,7 @@ def demographic_variables(dataset, index_date, var_name_suffix=""):
     dataset.add_column(f"region{var_name_suffix}", registration.practice_nuts1_region_name)
     dataset.add_column(f"stp{var_name_suffix}", registration.practice_stp)
     dataset.add_column(f"imd{var_name_suffix}", addresses.for_patient_on(index_date).imd_rounded)
+    dataset.add_column(f"carehome_status{var_name_suffix}", carehome_status(index_date))
 
 # See https://github.com/opensafely/reusable-variables/blob/main/analysis/vaccine-history/vaccine_variables.py
 # this is an adpated version that only selects vaccines _near_ the index date 
