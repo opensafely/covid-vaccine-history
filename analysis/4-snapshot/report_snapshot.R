@@ -44,6 +44,7 @@ stopifnot(campaign_dates$final_milestone[campaign_dates$campaign_start == snapsh
 max_fup <- next_campaign_date - snapshot_date + 1L
 # max_fup <- 24 * 7 # 24 weeks
 
+minimum_age <- campaign_dates$age_threshold[campaign_dates$campaign_start == snapshot_date]
 
 # dates to round down to
 # use this with `findInterval` until lubridate package is updated in the opensafely R image
@@ -98,6 +99,12 @@ data_combined <-
     # hould be the same as primis_atrisk
     # cv = (crd | chd |  ckd | cld | cns_learndis | diabetes | immunosuppressed_asplenia | severe_obesity | smi),
 
+    eligible_age = age >= minimum_age,
+    eligible_atrisk = primis_atrisk,
+    eligible_atrisk_only = primis_atrisk & !eligible_age,
+    eligible_carehome = carehome_status,
+
+    eligible_any = eligible_age | eligible_atrisk | eligible_carehome,
 
     # previous vaccine summary
     # add more variables here based on covid_vax_prior_1_date, covid_vax_prior_2_date,... etc if needed
@@ -152,6 +159,10 @@ data_combined <-
 
     # setting missing values to explicit missing
     across(where(is.factor) | where(is.character), ~ fct_drop(fct_na_value_to_level(.x, level = "(Missing)")))
+  ) |>
+  filter(
+    # only consider people with documented eligibility
+    eligible_any
   )
 
 # ________________________________________________________________________________________
