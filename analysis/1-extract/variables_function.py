@@ -356,19 +356,20 @@ from ehrql.tables.tpp import (
   vaccinations
 )
 
-def add_n_vaccines(dataset, index_date, target_disease, name, direction = None, number_of_vaccines = 3):
+def add_n_vaccines(dataset, index_date, target_disease, name, direction = None, number_of_vaccines = 3, minimum_gap = 1):
 
     assert direction in ["after", "on_or_after", "before", "on_or_before"], "direction value must be after, on_or_after, before, on_or_before"
+    
+    assert minimum_gap > 0, "minimum_gap must be at least 1 to ensure that same-day vaccinations are not stuck in a loop"
 
-    # Date guaranteed to be before any vaccination events of interest
     if direction == "after":
-        current_date = index_date
+        current_date = index_date - days(minimum_gap-1)
     elif direction == "on_or_after":
-        current_date = index_date - days(1)
+        current_date = index_date - days(1) - days(minimum_gap-1)
     elif direction == "before":
-        current_date = index_date
+        current_date = index_date + days(minimum_gap-1)
     elif direction == "on_or_before":
-        current_date = index_date + days(1)
+        current_date = index_date + days(1) + days(minimum_gap-1)
     else:
         raise ValueError("direction must be 'before' or 'after'") 
     
@@ -385,9 +386,9 @@ def add_n_vaccines(dataset, index_date, target_disease, name, direction = None, 
 
         # vaccine variables
         if direction in ["after", "on_or_after"]:
-            current_vax = covid_vaccinations.where(covid_vaccinations.date > current_date).first_for_patient()
+            current_vax = covid_vaccinations.where(covid_vaccinations.date > (current_date + days(minimum_gap-1))).first_for_patient()
         if direction in ["before", "on_or_before"]:
-            current_vax = covid_vaccinations.where(covid_vaccinations.date < current_date).last_for_patient()
+            current_vax = covid_vaccinations.where(covid_vaccinations.date < (current_date - days(minimum_gap-1))).last_for_patient()
         
         dataset.add_column(f"{name}_{i}_date", current_vax.date)
         dataset.add_column(f"{name}_{i}_product", current_vax.product_name)

@@ -103,7 +103,8 @@ add_n_vaccines(
     target_disease = "SARS-2 CORONAVIRUS", 
     name = "covid_vax", 
     direction = "on_or_after",
-    number_of_vaccines = 2
+    number_of_vaccines = 2,
+    minimum_gap = 13
 )
 
 # add most recent 3 vaccines prior to snapshot date
@@ -113,7 +114,8 @@ add_n_vaccines(
     target_disease = "SARS-2 CORONAVIRUS", 
     name = "covid_vax_prior", 
     direction = "before",
-    number_of_vaccines = 3
+    number_of_vaccines = 3,
+    minimum_gap = 13
 )
 
 # count total number of vaccines prior to vaccine date
