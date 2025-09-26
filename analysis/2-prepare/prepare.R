@@ -141,7 +141,7 @@ data_vax <-
   ) |>
   # as_tibble() |> # insert this here to revert to standard dplyr as `cut` function doesn't work with dtplyr
   mutate(
-    !!!standardise_characteristics,
+    !!!standardise_demographic_characteristics,
     vax_campaign = cut(
       vax_date,
       breaks = c(campaign_dates$campaign_start, end_date),

@@ -293,16 +293,16 @@ def primis_atrisk(index_date):
 
 ## function to define primis variables across multiple dataset definitions
 def primis_variables(dataset, index_date, var_name_suffix=""):
-    dataset.add_column(f"immunosuppressed{var_name_suffix}", is_immunosuppressed(index_date)) #immunosuppress grouped
-    dataset.add_column(f"ckd{var_name_suffix}", has_ckd(index_date)) #chronic kidney disease
-    dataset.add_column(f"crd{var_name_suffix}", has_prior_event(codelists.resp_cov, index_date)) #chronic respiratory disease
-    dataset.add_column(f"diabetes{var_name_suffix}", has_diabetes(index_date)) #diabetes
+    dataset.add_column(f"immunosuppressed{var_name_suffix}", is_immunosuppressed(index_date)) # immunosuppress grouped
+    dataset.add_column(f"ckd{var_name_suffix}", has_ckd(index_date)) # chronic kidney disease
+    dataset.add_column(f"crd{var_name_suffix}", has_prior_event(codelists.resp_cov, index_date)) # chronic respiratory disease (inclduing asthma)
+    dataset.add_column(f"diabetes{var_name_suffix}", has_diabetes(index_date)) # diabetes
     dataset.add_column(f"cld{var_name_suffix}", has_prior_event(codelists.cld, index_date)) # chronic liver disease
-    dataset.add_column(f"chd{var_name_suffix}", has_prior_event(codelists.chd_cov, index_date)) #chronic heart disease
+    dataset.add_column(f"chd{var_name_suffix}", has_prior_event(codelists.chd_cov, index_date)) # chronic heart disease
     dataset.add_column(f"cns{var_name_suffix}", has_prior_event(codelists.cns_cov, index_date)) # chronic neurological disease
     dataset.add_column(f"asplenia{var_name_suffix}", has_prior_event(codelists.spln_cov, index_date)) # asplenia or dysfunction of the Spleen
     dataset.add_column(f"learndis{var_name_suffix}", has_prior_event(codelists.learndis, index_date)) # learning Disability
-    dataset.add_column(f"smi{var_name_suffix}", has_smi(index_date)) #severe mental illness
+    dataset.add_column(f"smi{var_name_suffix}", has_smi(index_date)) # severe mental illness
     dataset.add_column(f"severe_obesity{var_name_suffix}", has_severe_obesity(index_date)) # severe obesity
     dataset.add_column(f"primis_atrisk{var_name_suffix}", primis_atrisk(index_date)) # at risk 
 

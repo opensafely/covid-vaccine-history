@@ -93,24 +93,29 @@ campaign_dates <-
     final_milestone = lead(campaign_start, 1, as.Date("2030-01-01")) - 1
   )
 
-
-
 # output from https://jobs.opensafely.org/opensafely-internal/tpp-vaccination-names/ workspace
 # shows all possible covid vaccination names in TPP
 
 # lookup to rename TPP product names to coding-friendly porduct names
 vax_product_lookup <- c(
   "pfizer" = "COVID-19 mRNA Vaccine Comirnaty 30micrograms/0.3ml dose conc for susp for inj MDV (Pfizer)",
-  "az" = "COVID-19 Vaccine Vaxzevria 0.5ml inj multidose vials (AstraZeneca)",
-  "moderna" = "COVID-19 mRNA Vaccine Spikevax (nucleoside modified) 0.1mg/0.5mL dose disp for inj MDV (Moderna)",
   "pfizerBA1" = "Comirnaty Original/Omicron BA.1 COVID-19 Vacc md vials",
   "pfizerBA45" = "Comirnaty Original/Omicron BA.4-5 COVID-19 Vacc md vials",
   "pfizerXBB15" = "Comirnaty Omicron XBB.1.5 COVID-19 Vacc md vials",
-  "vidprevtyn" = "COVID-19 Vacc VidPrevtyn (B.1.351) 0.5ml inj multidose vials",
-  "modernaomicron" = "COVID-19 Vac Spikevax (Zero)/(Omicron) inj md vials",
+  "pfizerJN1" = "Comirnaty JN.1 COVID-19 mRNA Vaccine 0.3ml inj md vials (Pfizer Ltd)",
   "pfizerchildren" = "COVID-19 mRNA Vaccine Comirnaty Children 5-11yrs 10mcg/0.2ml dose conc for disp for inj MDV (Pfizer)",
+
+  "az" = "COVID-19 Vaccine Vaxzevria 0.5ml inj multidose vials (AstraZeneca)",
   "azhalf" = "COVID-19 Vac AZD2816 (ChAdOx1 nCOV-19) 3.5x10*9 viral part/0.5ml dose sol for inj MDV (AstraZeneca)",
+
+  "moderna" = "COVID-19 mRNA Vaccine Spikevax (nucleoside modified) 0.1mg/0.5mL dose disp for inj MDV (Moderna)",
+  "modernaomicron" = "COVID-19 Vac Spikevax (Zero)/(Omicron) inj md vials",
+  "modernaBA45" = "COVID-19 Vacc Spikevax Orig/Omicron BA.4/BA.5 inj md vials",
   "modernaXBB15" = "COVID-19 Vacc Spikevax (XBB.1.5) 0.1mg/1ml inj md vials",
+  "modernaJN1" = "Spikevax JN.1 COVID-19 Vacc 0.1mg/ml inj md vials (Moderna, Inc)",
+
+  "sanofigsk" = "COVID-19 Vacc VidPrevtyn (B.1.351) 0.5ml inj multidose vials",
+
   "novavax" = "COVID-19 Vac Nuvaxovid (recombinant, adj) 5micrograms/0.5ml dose susp for inj MDV (Novavax CZ a.s.)"
 )
 
@@ -118,17 +123,25 @@ vax_product_lookup <- c(
 # lookup to rename coding-friendly product names to publication-friendly product names
 vax_shortname_lookup <- c(
   "BNT162b2" = "pfizer",
-  "ChAdOx1" = "az",
-  "mRNA-1273" = "moderna",
   "BNT162b2/BA.1" = "pfizerBA1",
   "BNT162b2/BA.4-5" = "pfizerBA45",
   "BNT162b2/XBB.1.5" = "pfizerXBB15",
-  "VidPrevtyn" = "vidprevtyn",
-  "mRNA-1273/omicron" = "modernaomicron",
+  "BNT162b2/JN.1" = "pfizerJN1",
   "BNT162b2/children" = "pfizerchildren",
-  "ChAdOx1/2" = "azhalf",
+
+  "ChAdOx1" = "az",
+  "ChAdOx1/half" = "azhalf",
+
+  "mRNA-1273" = "moderna",
+  "mRNA-1273/omicron" = "modernaomicron",
+  "mRNA-1273/BA45" = "modernaBA45",
   "mRNA-1273/XBB.1.5" = "modernaXBB15",
+  "mRNA-1273/JN.1" = "modernaJN1",
+
+  "Vidprevtyn" = "sanofigsk",
+
   "Novavax" = "novavax",
+
   "Other" = "other"
 )
 
@@ -138,17 +151,17 @@ vax_shortname_lookup <- c(
 # }
 
 
-# template for standardising characteristics that are extracted multiple times
-# using this in mutate like this: `mutate(!!!standardise_characteristics)`
-standardise_characteristics <-
+# template for standardising demographic characteristics that are extracted multiple times
+# using this in mutate like this: `mutate(!!!standardise_demographic_characteristics)`
+standardise_demographic_characteristics <-
   rlang::quos(
 
     ## --VARIABLES--
     ## demographics
     ageband = cut(
       age,
-      breaks = c(-Inf, 16, 50, 65, 75, Inf),
-      labels = c("under 16", "16-49", "50-64", "65-74", "75+"),
+      breaks = c(-Inf, 16, 50, 65, 75, 105, Inf),
+      labels = c("under 16", "16-49", "50-64", "65-74", "75-104", "105+"), # under 16 and 105+ are excluded in analysis but include here to ensure nobody slipped through the net
       right = FALSE
     ),
     region = fct_collapse(

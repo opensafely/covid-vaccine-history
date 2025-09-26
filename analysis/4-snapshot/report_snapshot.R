@@ -90,7 +90,14 @@ data_combined <-
   ) |>
   mutate(
     all = "All",
-    !!!standardise_characteristics,
+    !!!standardise_demographic_characteristics,
+
+    cns_learndis = (cns | learndis),
+    immunosuppressed_asplenia = (immunosuppressed | asplenia),
+
+    # hould be the same as primis_atrisk
+    # cv = (crd | chd |  ckd | cld | cns_learndis | diabetes | immunosuppressed_asplenia | severe_obesity | smi),
+
 
     # previous vaccine summary
     # add more variables here based on covid_vax_prior_1_date, covid_vax_prior_2_date,... etc if needed
@@ -251,10 +258,9 @@ plot_date_of_last_dose(chd) # chronic heart disease
 plot_date_of_last_dose(ckd) # chronic kidney disease
 plot_date_of_last_dose(cld) # chronic liver disease
 plot_date_of_last_dose(cns) # chronic neurological
-plot_date_of_last_dose(learndis) # learning disability
+plot_date_of_last_dose(cns_learndis) # chronic neurological or learning disability
 plot_date_of_last_dose(diabetes) # diabetes
-plot_date_of_last_dose(immunosuppressed) # immunosuppressed
-plot_date_of_last_dose(asplenia) # asplenia or dysfunction of the spleen
+plot_date_of_last_dose(immunosuppressed_asplenia) # immunosuppressed or asplenia
 plot_date_of_last_dose(severe_obesity) # obesity
 plot_date_of_last_dose(smi) # severe mental illness
 plot_date_of_last_dose(primis_atrisk) # clinically vulnerable
@@ -347,11 +353,9 @@ plot_vax_count(crd) # chronic respiratory disease
 plot_vax_count(chd) # chronic heart disease
 plot_vax_count(ckd) # chronic kidney disease
 plot_vax_count(cld) # chronic liver disease
-plot_vax_count(cns) # chronic neurological
-plot_vax_count(learndis) # learning disability
+plot_vax_count(cns_learndis) # chronic neurological disease or learning disability
 plot_vax_count(diabetes) # diabetes
-plot_vax_count(immunosuppressed) # immunosuppressed
-plot_vax_count(asplenia) # asplenia or dysfunction of the spleen
+plot_vax_count(immunosuppressed_asplenia) # immunosuppressed or asplenia
 plot_vax_count(severe_obesity) # obesity
 plot_vax_count(smi) # severe mental illness
 plot_vax_count(primis_atrisk) # clinically vulnerable
@@ -369,7 +373,6 @@ create_summary_table <- function(subgroup) {
     group_by({{ subgroup }}) |>
     summarise(
       # Dose counts
-      total = ceiling_any(n(), sdc_threshold),
       total = round_any(n(), sdc_threshold),
       `0` = round_any(sum(vax_count == 0, na.rm = TRUE), sdc_threshold),
       `1` = round_any(sum(vax_count == 1, na.rm = TRUE), sdc_threshold),
@@ -424,11 +427,9 @@ create_summary_table(crd) # cronic respiratory disease
 create_summary_table(chd) # cronic heart disease
 create_summary_table(ckd) # chronic kidney disease
 create_summary_table(cld) # cronic liver disease
-create_summary_table(cns) # chronic neurological
-create_summary_table(learndis) # learning disability
+create_summary_table(cns_learndis) # chronic neurological or learning disability
 create_summary_table(diabetes) # diabetes
-create_summary_table(immunosuppressed) # immunosuppressed
-create_summary_table(asplenia) # asplenia or dysfunction of the spleen
+create_summary_table(immunosuppressed_asplenia) # immunosuppressed or asplenia
 create_summary_table(severe_obesity) # obesity
 create_summary_table(smi) # severe mental illness
 create_summary_table(primis_atrisk) # clinically vulnerable
