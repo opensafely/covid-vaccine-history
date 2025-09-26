@@ -19,6 +19,10 @@ ceiling_any <- function(x, to = 1) {
 }
 
 
+round_any <- function(x, to = 1) {
+  if_else(x != 5, plyr::round_any(x, accuracy = to), 0)
+}
+
 # get nth largest value from list
 nthmax <- function(x, n = 1) {
   dplyr::nth(sort(x, decreasing = TRUE), n)

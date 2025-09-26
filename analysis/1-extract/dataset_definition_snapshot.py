@@ -37,9 +37,6 @@ from variables_function import *
 snapshot_date_string = get_parameter(name="snapshot_date")
 snapshot_date = datetime.strptime(get_parameter(name="snapshot_date"), '%Y%m%d').strftime('%Y-%m-%d') 
 
-# Change these in ./lib/dates.json if necessary
-start_date = study_dates["start_date"]
-end_date = study_dates["end_date"]
 # extract campaign-specific dates
 all_campaign_dates = loads(
     Path("analysis/0-lib/campaign_dates.json").read_text(),

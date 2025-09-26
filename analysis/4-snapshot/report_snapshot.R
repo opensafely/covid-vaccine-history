@@ -165,7 +165,7 @@ plot_date_of_last_dose <- function(subgroup) {
     lazy_dt() |>
     group_by({{ subgroup }}, last_vax_product, last_vax_period) |>
     summarise(
-      n = ceiling_any(n(), sdc_threshold)
+      n = round_any(n(), sdc_threshold)
     ) |>
     ungroup() |>
     as_tibble() |>
@@ -270,7 +270,7 @@ plot_vax_count <- function(subgroup) {
     lazy_dt() |>
     group_by({{ subgroup }}, vax_count_group) |>
     summarise(
-      n = ceiling_any(n(), sdc_threshold),
+      n = round_any(n(), sdc_threshold),
     ) |>
     ungroup() |>
     as_tibble() |>
@@ -370,19 +370,20 @@ create_summary_table <- function(subgroup) {
     summarise(
       # Dose counts
       total = ceiling_any(n(), sdc_threshold),
-      `0` = ceiling_any(sum(vax_count == 0, na.rm = TRUE), sdc_threshold),
-      `1` = ceiling_any(sum(vax_count == 1, na.rm = TRUE), sdc_threshold),
-      `2` = ceiling_any(sum(vax_count == 2, na.rm = TRUE), sdc_threshold),
-      `3` = ceiling_any(sum(vax_count == 3, na.rm = TRUE), sdc_threshold),
-      `4` = ceiling_any(sum(vax_count == 4, na.rm = TRUE), sdc_threshold),
-      `5+` = ceiling_any(sum(vax_count >= 5, na.rm = TRUE), sdc_threshold),
+      total = round_any(n(), sdc_threshold),
+      `0` = round_any(sum(vax_count == 0, na.rm = TRUE), sdc_threshold),
+      `1` = round_any(sum(vax_count == 1, na.rm = TRUE), sdc_threshold),
+      `2` = round_any(sum(vax_count == 2, na.rm = TRUE), sdc_threshold),
+      `3` = round_any(sum(vax_count == 3, na.rm = TRUE), sdc_threshold),
+      `4` = round_any(sum(vax_count == 4, na.rm = TRUE), sdc_threshold),
+      `5+` = round_any(sum(vax_count >= 5, na.rm = TRUE), sdc_threshold),
       # Dose summary
       Dose_median = quantile(vax_count, probs = 0.5, na.rm = TRUE),
       Dose_25 = quantile(vax_count, probs = 0.25, na.rm = TRUE),
       Dose_75 = quantile(vax_count, probs = 0.75, na.rm = TRUE),
       # Vaccination in past 12 and 24 months
-      Vacc_12m_n = ceiling_any(sum(days_since_vax <= 365, na.rm = TRUE), sdc_threshold),
-      Vacc_24m_n = ceiling_any(sum(days_since_vax <= 365 * 2, na.rm = TRUE), sdc_threshold),
+      Vacc_12m_n = round_any(sum(days_since_vax <= 365, na.rm = TRUE), sdc_threshold),
+      Vacc_24m_n = round_any(sum(days_since_vax <= 365 * 2, na.rm = TRUE), sdc_threshold),
       # Time since last dose
       Time_last_dose_median = quantile(days_since_vax, probs = 0.5, na.rm = TRUE),
       Time_last_dose_10 = quantile(days_since_vax, probs = 0.10, na.rm = TRUE),
