@@ -35,10 +35,10 @@ if (length(args) == 0) {
 temporal_resolution <- 28
 
 # Create next campaign start date
-next_campaign_date <- min(campaign_dates$start[campaign_dates$start > snapshot_date], as.Date(Inf), na.rm = TRUE)
+next_campaign_date <- min(campaign_dates$campaign_start[campaign_dates$campaign_start > snapshot_date], as.Date(Inf), na.rm = TRUE)
 
 # check that campaign dates are consistent
-stopifnot(campaign_dates$final_milestone[campaign_dates$start == snapshot_date] == next_campaign_date - 1)
+stopifnot(campaign_dates$final_milestone[campaign_dates$campaign_start == snapshot_date] == next_campaign_date - 1)
 
 # maximum follow-up after snapshot date
 max_fup <- next_campaign_date - snapshot_date + 1L

@@ -47,13 +47,17 @@ fct_case_when <- function(...) {
 # Design elements ----
 
 # key study dates
-# The dates are defined in json format so they can be read in by R and python scripts
-# json has no easy way to comment, so explanation for dates is here:
+# The dates are saved in json format so they can be read in by R and python scripts
 # - firstpossiblevax_date is the date from which we want to identify covid vaccines. the mass vax programme was 8 Dec 2020 but other people were vaccinated earlier in trials, so want to pick these people up too (and possibly exclude them)
 # - start_date is when we start the observational period proper, at the start of the mass vax programme
-# - end_date is when we stopthe observation period. This may be extended as the study progresses
+# - end_date is when we stop the observation period. This may be extended as the study progresses
+
 study_dates <-
-  jsonlite::read_json(path = here("analysis", "0-lib", "dates.json")) |>
+  list(
+    firstpossiblevax_date = "2020-07-01",
+    start_date = "2020-12-07",
+    end_date = "2026-12-31"
+  ) |>
   map(as.Date)
 
 # make these available in the global environment
@@ -66,24 +70,23 @@ sdc_threshold <- 10
 # covid-19 vaccine campaign dates
 campaign_dates <-
   tribble(
-    ~campaign,        ~start,      ~primary_milestone,
-    "Pre-2020-07-01", "1900-01-01", "1900-01-01",
-    "Pre-roll-out",   as.character(firstpossiblevax_date), as.character(firstpossiblevax_date),
-    "Primary series", "2020-12-07", "2021-06-30",
-    "Autumn 2021",    "2021-09-06", "2022-02-28",
-    "Spring 2022",    "2022-03-21", "2022-06-30",
-    "Autumn 2022",    "2022-08-29", "2023-02-28",
-    "Spring 2023",    "2023-04-03", "2023-06-30",
-    "Autumn 2023",    "2023-08-28", "2024-02-28",
-    "Spring 2024",    "2024-04-15", "2024-06-30",
-    "Autumn 2024",    "2024-09-30", "2025-02-28",
-    "Spring 2025",    "2025-03-31", "2025-06-30",
-    "End",            "2030-01-01", ""
+    ~campaign,        ~campaign_start,      ~primary_milestone, ~age_date, ~age_threshold,
+    "Pre-2020-07-01", "1900-01-01", "1900-01-01", "1900-01-01", 16,
+    "Pre-roll-out",   as.character(firstpossiblevax_date), as.character(firstpossiblevax_date), as.character(firstpossiblevax_date), 16,
+    "Primary series", "2020-12-07", "2021-06-30", "2021-03-31", 16,
+    "Autumn 2021",    "2021-09-06", "2022-02-28", "2021-08-31", 16,
+    "Spring 2022",    "2022-03-21", "2022-06-30", "2022-06-30", 75,
+    "Autumn 2022",    "2022-08-29", "2023-02-28", "2023-03-31", 50,
+    "Spring 2023",    "2023-04-03", "2023-06-30", "2023-06-30", 75,
+    "Autumn 2023",    "2023-08-28", "2024-02-28", "2024-03-31", 65,
+    "Spring 2024",    "2024-04-15", "2024-06-30", "2024-06-30", 75,
+    "Autumn 2024",    "2024-09-30", "2025-02-28", "2025-03-31", 65,
+    "Spring 2025",    "2025-03-31", "2025-06-30", "2025-06-30", 75,
   ) |>
   mutate(
-    across(c(start, primary_milestone), as.Date),
-    early_milestone = start + (7 * 8) - 1,
-    final_milestone = lead(start, 1, NA) - 1
+    across(c(campaign_start, primary_milestone, age_date), as.Date),
+    early_milestone = campaign_start + (7 * 8) - 1,
+    final_milestone = lead(campaign_start, 1, as.Date("2030-01-01")) - 1
   )
 
 
@@ -199,4 +202,25 @@ ethnicity_16_to_5 <- function(x) {
   x1 <- fct_relabel(x, ~ str_extract(.x, ".*(?= - )")) # pick up everything before " - "
   x2 <- fct_recode(x1, `Chinese or Other Ethnic Groups` = "Other Ethnic Groups")
   return(x2)
+}
+
+
+# Local run flag ----
+# is this script being run locally, and if so do we need to output objects to be picked up by ehrQL scripts
+
+localrun <- Sys.getenv("OPENSAFELY_BACKEND") %in% c("")
+
+if (localrun) {
+
+  jsonlite::write_json(
+    study_dates,
+    path = here("analysis", "0-lib", "study_dates.json"),
+    pretty = TRUE, auto_unbox = TRUE
+  )
+
+  jsonlite::write_json(
+    split(campaign_dates, f = campaign_dates$campaign_start) |> map (as.list),
+    path = here("analysis", "0-lib", "campaign_dates.json"),
+    pretty = TRUE, auto_unbox = TRUE,
+  )
 }

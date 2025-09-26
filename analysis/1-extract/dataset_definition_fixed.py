@@ -30,10 +30,10 @@ from ehrql.tables.tpp import (
 import codelists
 
 study_dates = loads(
-    Path("analysis/0-lib/dates.json").read_text(),
+    Path("analysis/0-lib/study_dates.json").read_text(),
 )
 
-# Change these in ./lib/dates.json if necessary
+# Change these in ./0-lib/deisgn.R if necessary
 start_date = study_dates["start_date"]
 end_date = study_dates["end_date"]
 
@@ -84,7 +84,7 @@ ethnicity = (clinical_events
   .where(clinical_events.date.is_on_or_before(end_date))
   .last_for_patient()
 )
-# 
+
 # # ethnicity using 5 groups + unknown
 dataset.ethnicity5 = ethnicity.snomedct_code.to_category(codelists.ethnicity5)
 # 

@@ -144,9 +144,9 @@ data_vax <-
     !!!standardise_characteristics,
     vax_campaign = cut(
       vax_date,
-      breaks = c(campaign_dates$start, end_date),
+      breaks = c(campaign_dates$campaign_start, end_date),
       labels = campaign_dates$campaign,
-      include.lowest = TRUE, right = TRUE
+      include.lowest = TRUE, right = FALSE
     )
   ) |>
   arrange(patient_id, vax_date) |>
@@ -219,13 +219,13 @@ data_vax_ELD <-
   mutate(
     campaign = cut(
       vax_date,
-      breaks = c(campaign_dates$start, as.Date(Inf)),
+      breaks = c(campaign_dates$campaign_start, as.Date(Inf)),
       labels = campaign_dates$campaign
     ),
     campaign_start = cut(
       vax_date,
-      breaks = c(campaign_dates$start, as.Date(Inf)),
-      labels = campaign_dates$start
+      breaks = c(campaign_dates$campaign_start, as.Date(Inf)),
+      labels = campaign_dates$campaign_start
     ),
   ) |>
   lazy_dt()
