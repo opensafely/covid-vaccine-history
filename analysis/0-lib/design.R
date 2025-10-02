@@ -234,6 +234,58 @@ ethnicity_16_to_5 <- function(x) {
   return(x2)
 }
 
+# List of groups and subgroups for reporting summary statistics
+
+## --VARIABLES--
+
+level1_group <- c(
+  "all",
+  "any_eligibility",
+  "age_above_eligiblity_threshold",
+  "primis_atrisk",
+  "primis_atrisk_only",
+  "carehome_status",
+  "ageband",
+  "crd",
+  "chd",
+  "ckd",
+  "cld",
+  "cns_learndis",
+  "diabetes",
+  "immunosuppressed_asplenia",
+  "severe_obesity",
+  "smi"
+)
+
+level2_group <- c(
+  "all",
+  "sex",
+  "ageband",
+  "ethnicity5",
+  "region",
+  "imd_quintile",
+  "carehome_status",
+  "primis_atrisk",
+  "crd",
+  "chd",
+  "ckd",
+  "cld",
+  "cns_learndis",
+  "diabetes",
+  "immunosuppressed_asplenia",
+  "severe_obesity",
+  "smi"
+
+  # additional subgroups of interest go here!
+)
+
+level_combos <- expand_grid(group1 = level1_group, group2 = level2_group) |>
+  mutate(
+    group2 = na_if(group2, "all")
+  ) |>
+  filter(
+    (group1 == group2) %in% c(FALSE, NA)
+  )
 
 # Local run flag ----
 # is this script being run locally, and if so do we need to output objects to be picked up by ehrQL scripts
