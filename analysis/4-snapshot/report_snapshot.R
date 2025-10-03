@@ -36,13 +36,13 @@ temporal_resolution <- 28
 
 # Create next campaign start date
 next_campaign_date <- min(campaign_dates$campaign_start[campaign_dates$campaign_start > snapshot_date], as.Date(Inf), na.rm = TRUE)
+campaign_info <- campaign_dates |> filter(campaign_start == snapshot_date)
 
-# check that campaign dates are consistent
-stopifnot(campaign_dates$final_milestone[campaign_dates$campaign_start == snapshot_date] == next_campaign_date - 1)
+# Create next campaign start date
+final_milestone <- campaign_info$final_milestone
 
 # maximum follow-up after snapshot date
-max_fup <- next_campaign_date - snapshot_date + 1L
-# max_fup <- 24 * 7 # 24 weeks
+max_fup <- as.integer(final_milestone - snapshot_date + 1L)
 
 minimum_age <- campaign_dates$age_threshold[campaign_dates$campaign_start == snapshot_date]
 
@@ -126,7 +126,7 @@ data_combined <-
 
     censor_date = pmin(
       deregistered_date,
-      next_campaign_date - 1,
+      final_milestone,
       na.rm = TRUE
     ),
 
