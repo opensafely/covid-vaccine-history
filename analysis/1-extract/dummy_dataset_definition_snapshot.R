@@ -26,7 +26,7 @@ population_size <- 1000
 # all variables will be defined as the number of days before or after this day
 # and then at the end of the script they are transformed into dates
 # we do this because some dplyr operations to not preserve date attributes, so dates will be converted to numerics
-snapshot_date <- as.Date("2020-12-08")
+snapshot_date <- as.Date("2021-09-06")
 
 snapshot_day <- 0L
 
@@ -71,6 +71,9 @@ sim_list <- lst(
       "South West"
     ), p = c(0.2, 0.2, 0.3, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05))
   ),
+  carehome_status = bn_node(
+    ~ rbernoulli(n = ..n, p = if_else(age < 65, 0.01, 0.2)),
+  ),
   # PRIMIS
   crd = bn_node(
     ~ rbernoulli(n = ..n, p = 0.02),
@@ -106,7 +109,7 @@ sim_list <- lst(
     ~ rbernoulli(n = ..n, p = 0.02),
   ),
   primis_atrisk = bn_node(
-    ~ rbernoulli(n = ..n, p = 0.02),
+    ~ crd | chd | ckd | cld | cns | learndis | diabetes | immunosuppressed | asplenia | severe_obesity | smi,
   ),
 
   # covid vaccines
@@ -144,6 +147,15 @@ sim_list <- lst(
 
   covid_vax_prior_count = bn_node(~ as.integer(runif(n = ..n, 0, 15))), # in  dummy data, this will not match total vax count in "time-varying" dataset, but that's ok
 
+  covid_admitted_day = bn_node(
+    ~ as.integer(runif(n = ..n, snapshot_day, snapshot_day + 300)),
+    missing_rate = ~0.7
+  ),
+  covid_critcare_day = bn_node(
+    ~covid_admitted_day,
+    needs = "covid_admitted_day",
+    missing_rate = ~0.7
+  ),
 )
 
 # check and create the simulation object, including all dependencies, topological orders, etc

@@ -174,6 +174,30 @@
       "downloaded_at": "2024-11-27 14:47:21.876010Z",
       "sha": "dad8c8af1247ecdbe3b4cb6291ca9284edd27883"
     },
+    "primis-covid19-vacc-uptake-longres.csv": {
+      "id": "primis-covid19-vacc-uptake/longres/v2.5",
+      "url": "https://www.opencodelists.org/codelist/primis-covid19-vacc-uptake/longres/v2.5/",
+      "downloaded_at": "2025-09-26 20:14:16.691484Z",
+      "sha": "8b5a59338b209bc8dab506364879dead40f1de0c"
+    },
+    "primis-covid19-vacc-uptake-carehome.csv": {
+      "id": "primis-covid19-vacc-uptake/carehome/v2.5",
+      "url": "https://www.opencodelists.org/codelist/primis-covid19-vacc-uptake/carehome/v2.5/",
+      "downloaded_at": "2025-09-26 20:14:18.111717Z",
+      "sha": "0543cdba73cfc6b892a94aad94beb7b4fd0ce8bb"
+    },
+    "primis-covid19-vacc-uptake-nursehome.csv": {
+      "id": "primis-covid19-vacc-uptake/nursehome/v2.5",
+      "url": "https://www.opencodelists.org/codelist/primis-covid19-vacc-uptake/nursehome/v2.5/",
+      "downloaded_at": "2025-09-26 20:14:19.644932Z",
+      "sha": "91d03ec723ba5a6ab83b72d8307f68a5e4be2b4e"
+    },
+    "primis-covid19-vacc-uptake-domcare.csv": {
+      "id": "primis-covid19-vacc-uptake/domcare/v2.5",
+      "url": "https://www.opencodelists.org/codelist/primis-covid19-vacc-uptake/domcare/v2.5/",
+      "downloaded_at": "2025-09-26 20:14:20.928059Z",
+      "sha": "711f760dbd4869a8836a7bf6bfc062c1fc286095"
+    },
     "nhsd-hiv-aids-snomed.csv": {
       "id": "nhsd/hiv-aids-snomed/68ca529e",
       "url": "https://www.opencodelists.org/codelist/nhsd/hiv-aids-snomed/68ca529e/",
@@ -209,6 +233,12 @@
       "url": "https://www.opencodelists.org/codelist/opensafely/haematological-cancer-snomed/2020-04-15/",
       "downloaded_at": "2024-11-27 14:47:22.882635Z",
       "sha": "c87e49e8d2965bc489f9baba670783f15ce73896"
+    },
+    "nhsd-primary-care-domain-refsets-carehome_cod.csv": {
+      "id": "nhsd-primary-care-domain-refsets/carehome_cod/20250627",
+      "url": "https://www.opencodelists.org/codelist/nhsd-primary-care-domain-refsets/carehome_cod/20250627/",
+      "downloaded_at": "2025-09-26 20:14:30.885894Z",
+      "sha": "76ec7b04a909c50941c7ea16913560b4696d05a0"
     }
   }
 }

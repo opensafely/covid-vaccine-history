@@ -59,6 +59,14 @@ primis-covid19-vacc-uptake/sev_obesity/v2.5
 #Learning disability
 primis-covid19-vacc-uptake/learndis/v2.5
 
+# care home residency status
+primis-covid19-vacc-uptake/longres/v2.5
+
+#carehome employment status
+primis-covid19-vacc-uptake/carehome/v2.5
+primis-covid19-vacc-uptake/nursehome/v2.5
+primis-covid19-vacc-uptake/domcare/v2.5
+
 # HIV/SIDA
 nhsd/hiv-aids-snomed/68ca529e
 
@@ -83,4 +91,5 @@ opensafely/haematological-cancer-snomed/2020-04-15
 #nhsd/haematological-malignancies-snomed/31a49191
 #nhsd/sickle-spl-atriskv4-snomed-ct/7083ed37
 
-
+# care home residency, NHS refset
+nhsd-primary-care-domain-refsets/carehome_cod/20250627

@@ -47,8 +47,8 @@ known_variables <- c(
 
 sim_list <- lst(
   sex = bn_node(
-    ~ rfactor(n = ..n, levels = c("female", "male", "intersex", "unknown"), p = c(0.51, 0.49, 0, 0)),
-    missing_rate = ~0.001 # this is shorthand for ~(rbernoulli(n=..n, p = 0.2))
+    ~ rfactor(n = ..n, levels = c("female", "male", "intersex", "unknown"), p = c(0.51, 0.49, 0, 0))
+    # missing_rate = ~0.001 # this is shorthand for ~(rbernoulli(n=..n, p = 0.2))
   ),
   ethnicity5 = bn_node(variable_formula = ~ ethnicity_16_to_5(ethnicity16), needs = "ethnicity16"),
   ethnicity16 = bn_node(
@@ -85,6 +85,12 @@ sim_list <- lst(
   death_day = bn_node(
     ~ as.integer(runif(n = ..n, index_day, index_day + 2000)),
     missing_rate = ~0.99
+  ),
+
+  covid_death_day = bn_node(
+    ~death_day,
+    missing_rate = ~0.7,
+    needs = "death_day"
   ),
   covid_vax_count = bn_node(~ as.integer(runif(n = ..n, 0, 15))) # in  dummy data, this will not match total vax count in "time-varying" dataset, but that's ok
 )

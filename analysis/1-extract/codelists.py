@@ -244,3 +244,17 @@ hiv_aids=codelist_from_csv(
     "codelists/nhsd-hiv-aids-snomed.csv",
     column="code",
 )
+
+
+# Patients in long-stay nursing and residential care
+carehome_primis = codelist_from_csv(
+    "codelists/primis-covid19-vacc-uptake-longres.csv", 
+    column="code",
+)
+carehome_nhs_refset = codelist_from_csv(
+    "codelists/primis-covid19-vacc-uptake-longres.csv", 
+    column="code",
+)
+
+# COVID-19 
+covid_icd10 = ["U071", "U072", "U109"]

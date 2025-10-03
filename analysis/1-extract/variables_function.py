@@ -293,19 +293,33 @@ def primis_atrisk(index_date):
 
 ## function to define primis variables across multiple dataset definitions
 def primis_variables(dataset, index_date, var_name_suffix=""):
-    dataset.add_column(f"immunosuppressed{var_name_suffix}", is_immunosuppressed(index_date)) #immunosuppress grouped
-    dataset.add_column(f"ckd{var_name_suffix}", has_ckd(index_date)) #chronic kidney disease
-    dataset.add_column(f"crd{var_name_suffix}", has_prior_event(codelists.resp_cov, index_date)) #chronic respiratory disease
-    dataset.add_column(f"diabetes{var_name_suffix}", has_diabetes(index_date)) #diabetes
+    dataset.add_column(f"immunosuppressed{var_name_suffix}", is_immunosuppressed(index_date)) # immunosuppress grouped
+    dataset.add_column(f"ckd{var_name_suffix}", has_ckd(index_date)) # chronic kidney disease
+    dataset.add_column(f"crd{var_name_suffix}", has_prior_event(codelists.resp_cov, index_date)) # chronic respiratory disease (inclduing asthma)
+    dataset.add_column(f"diabetes{var_name_suffix}", has_diabetes(index_date)) # diabetes
     dataset.add_column(f"cld{var_name_suffix}", has_prior_event(codelists.cld, index_date)) # chronic liver disease
-    dataset.add_column(f"chd{var_name_suffix}", has_prior_event(codelists.chd_cov, index_date)) #chronic heart disease
+    dataset.add_column(f"chd{var_name_suffix}", has_prior_event(codelists.chd_cov, index_date)) # chronic heart disease
     dataset.add_column(f"cns{var_name_suffix}", has_prior_event(codelists.cns_cov, index_date)) # chronic neurological disease
     dataset.add_column(f"asplenia{var_name_suffix}", has_prior_event(codelists.spln_cov, index_date)) # asplenia or dysfunction of the Spleen
     dataset.add_column(f"learndis{var_name_suffix}", has_prior_event(codelists.learndis, index_date)) # learning Disability
-    dataset.add_column(f"smi{var_name_suffix}", has_smi(index_date)) #severe mental illness
+    dataset.add_column(f"smi{var_name_suffix}", has_smi(index_date)) # severe mental illness
     dataset.add_column(f"severe_obesity{var_name_suffix}", has_severe_obesity(index_date)) # severe obesity
     dataset.add_column(f"primis_atrisk{var_name_suffix}", primis_atrisk(index_date)) # at risk 
 
+
+def carehome_status(index_date):
+  
+  # TPP care home flag, using ddress linkage with CQC data
+  carehome_tpp = addresses.for_patient_on(index_date).care_home_is_potential_match.when_null_then(False)
+
+  # Patients in long-stay nursing and residential care
+  # as per diagnostic and/or consultation code events directly related to care home residency
+  carehome_primis = has_prior_event(codelists.carehome_primis, index_date)
+  carehome_nhs_refset = has_prior_event(codelists.carehome_nhs_refset, index_date)
+  
+  return(
+      carehome_tpp | carehome_primis | carehome_nhs_refset
+  )
 
 ###########################################################
 # Other clinical variables
@@ -332,6 +346,7 @@ def demographic_variables(dataset, index_date, var_name_suffix=""):
     dataset.add_column(f"region{var_name_suffix}", registration.practice_nuts1_region_name)
     dataset.add_column(f"stp{var_name_suffix}", registration.practice_stp)
     dataset.add_column(f"imd{var_name_suffix}", addresses.for_patient_on(index_date).imd_rounded)
+    dataset.add_column(f"carehome_status{var_name_suffix}", carehome_status(index_date))
 
 # See https://github.com/opensafely/reusable-variables/blob/main/analysis/vaccine-history/vaccine_variables.py
 # this is an adpated version that only selects vaccines _near_ the index date 
@@ -341,19 +356,20 @@ from ehrql.tables.tpp import (
   vaccinations
 )
 
-def add_n_vaccines(dataset, index_date, target_disease, name, direction = None, number_of_vaccines = 3):
+def add_n_vaccines(dataset, index_date, target_disease, name, direction = None, number_of_vaccines = 3, minimum_gap = 1):
 
     assert direction in ["after", "on_or_after", "before", "on_or_before"], "direction value must be after, on_or_after, before, on_or_before"
+    
+    assert minimum_gap > 0, "minimum_gap must be at least 1 to ensure that same-day vaccinations are not stuck in a loop"
 
-    # Date guaranteed to be before any vaccination events of interest
     if direction == "after":
-        current_date = index_date
+        current_date = index_date - days(minimum_gap-1)
     elif direction == "on_or_after":
-        current_date = index_date - days(1)
+        current_date = index_date - days(1) - days(minimum_gap-1)
     elif direction == "before":
-        current_date = index_date
+        current_date = index_date + days(minimum_gap-1)
     elif direction == "on_or_before":
-        current_date = index_date + days(1)
+        current_date = index_date + days(1) + days(minimum_gap-1)
     else:
         raise ValueError("direction must be 'before' or 'after'") 
     
@@ -370,9 +386,9 @@ def add_n_vaccines(dataset, index_date, target_disease, name, direction = None, 
 
         # vaccine variables
         if direction in ["after", "on_or_after"]:
-            current_vax = covid_vaccinations.where(covid_vaccinations.date > current_date).first_for_patient()
+            current_vax = covid_vaccinations.where(covid_vaccinations.date > (current_date + days(minimum_gap-1))).first_for_patient()
         if direction in ["before", "on_or_before"]:
-            current_vax = covid_vaccinations.where(covid_vaccinations.date < current_date).last_for_patient()
+            current_vax = covid_vaccinations.where(covid_vaccinations.date < (current_date - days(minimum_gap-1))).last_for_patient()
         
         dataset.add_column(f"{name}_{i}_date", current_vax.date)
         dataset.add_column(f"{name}_{i}_product", current_vax.product_name)

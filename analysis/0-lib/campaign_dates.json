@@ -1,0 +1,101 @@
+{
+  "1900-01-01": {
+    "campaign": "Pre-2020-07-01",
+    "campaign_start": "1900-01-01",
+    "primary_milestone": "1900-01-01",
+    "age_date": "1900-01-01",
+    "age_threshold": 16,
+    "early_milestone": "1900-02-25",
+    "final_milestone": "2020-06-30"
+  },
+  "2020-07-01": {
+    "campaign": "Pre-roll-out",
+    "campaign_start": "2020-07-01",
+    "primary_milestone": "2020-07-01",
+    "age_date": "2020-07-01",
+    "age_threshold": 16,
+    "early_milestone": "2020-08-25",
+    "final_milestone": "2020-12-06"
+  },
+  "2020-12-07": {
+    "campaign": "Primary series",
+    "campaign_start": "2020-12-07",
+    "primary_milestone": "2021-06-30",
+    "age_date": "2021-03-31",
+    "age_threshold": 16,
+    "early_milestone": "2021-01-31",
+    "final_milestone": "2021-09-05"
+  },
+  "2021-09-06": {
+    "campaign": "Autumn 2021",
+    "campaign_start": "2021-09-06",
+    "primary_milestone": "2022-02-28",
+    "age_date": "2021-08-31",
+    "age_threshold": 16,
+    "early_milestone": "2021-10-31",
+    "final_milestone": "2022-03-20"
+  },
+  "2022-03-21": {
+    "campaign": "Spring 2022",
+    "campaign_start": "2022-03-21",
+    "primary_milestone": "2022-06-30",
+    "age_date": "2022-06-30",
+    "age_threshold": 75,
+    "early_milestone": "2022-05-15",
+    "final_milestone": "2022-08-28"
+  },
+  "2022-08-29": {
+    "campaign": "Autumn 2022",
+    "campaign_start": "2022-08-29",
+    "primary_milestone": "2023-02-28",
+    "age_date": "2023-03-31",
+    "age_threshold": 50,
+    "early_milestone": "2022-10-23",
+    "final_milestone": "2023-04-02"
+  },
+  "2023-04-03": {
+    "campaign": "Spring 2023",
+    "campaign_start": "2023-04-03",
+    "primary_milestone": "2023-06-30",
+    "age_date": "2023-06-30",
+    "age_threshold": 75,
+    "early_milestone": "2023-05-28",
+    "final_milestone": "2023-08-27"
+  },
+  "2023-08-28": {
+    "campaign": "Autumn 2023",
+    "campaign_start": "2023-08-28",
+    "primary_milestone": "2024-02-28",
+    "age_date": "2024-03-31",
+    "age_threshold": 65,
+    "early_milestone": "2023-10-22",
+    "final_milestone": "2024-04-14"
+  },
+  "2024-04-15": {
+    "campaign": "Spring 2024",
+    "campaign_start": "2024-04-15",
+    "primary_milestone": "2024-06-30",
+    "age_date": "2024-06-30",
+    "age_threshold": 75,
+    "early_milestone": "2024-06-09",
+    "final_milestone": "2024-09-29"
+  },
+  "2024-09-30": {
+    "campaign": "Autumn 2024",
+    "campaign_start": "2024-09-30",
+    "primary_milestone": "2025-02-28",
+    "age_date": "2025-03-31",
+    "age_threshold": 65,
+    "early_milestone": "2024-11-24",
+    "final_milestone": "2025-03-30"
+  },
+  "2025-03-31": {
+    "campaign": "Spring 2025",
+    "campaign_start": "2025-03-31",
+    "primary_milestone": "2025-06-30",
+    "age_date": "2025-06-30",
+    "age_threshold": 75,
+    "early_milestone": "2025-05-25",
+    "final_milestone": "2029-12-31"
+  }
+}

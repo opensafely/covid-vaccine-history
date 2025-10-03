@@ -16,6 +16,7 @@ from ehrql import (
     case,
     create_dataset,
     days,
+    weeks,
     when,
     minimum_of,
     maximum_of
@@ -23,6 +24,7 @@ from ehrql import (
 from ehrql.tables.tpp import (
   patients,
   practice_registrations, 
+  apcs,
   ons_deaths,
 )
 
@@ -31,16 +33,20 @@ from codelists import *
 
 from variables_function import *
 
-study_dates = loads(
-    Path("analysis/0-lib/dates.json").read_text(),
-)
-
 # get arguments supplied in the yaml file, stored in argv[1], argv[2], etc
+snapshot_date_string = get_parameter(name="snapshot_date")
 snapshot_date = datetime.strptime(get_parameter(name="snapshot_date"), '%Y%m%d').strftime('%Y-%m-%d') 
 
-# Change these in ./lib/dates.json if necessary
-start_date = study_dates["start_date"]
-end_date = study_dates["end_date"]
+# extract campaign-specific dates
+all_campaign_dates = loads(
+    Path("analysis/0-lib/campaign_dates.json").read_text(),
+)
+
+campaign_dates = all_campaign_dates[snapshot_date]
+
+# get date on which age should be calculated
+# this is different to snapshot date because we allow people to be eligible if they reach the age during the campaign
+age_calculation_date = campaign_dates["age_date"]
 
 # initialise dataset
 
@@ -51,14 +57,19 @@ dataset.configure_dummy_data(population_size=1000)
 registered_patients = practice_registrations.for_patient_on(snapshot_date)
 
 registered = registered_patients.exists_for_patient()
-alive = (ons_deaths.date>snapshot_date) | ons_deaths.date.is_null()
-age = patients.age_on(snapshot_date)
+registered_start_date = registered_patients.start_date
+alive_ONS = (ons_deaths.date>snapshot_date) | ons_deaths.date.is_null()
+alive_GP = (patients.date_of_death>snapshot_date) | patients.date_of_death.is_null()
+alive = (alive_ONS & alive_GP)
+age = patients.age_on(age_calculation_date)
 
 # define dataset poppulation
 dataset.define_population(
   registered 
+  & (registered_start_date <= (snapshot_date - weeks(12)))
   & alive
-  & (age >= 16)
+  & (age >= 16) & (age <= 104)
+  & (patients.sex.is_in(["male", "female"]))
 )
 
 # --VARIABLES--
@@ -92,7 +103,8 @@ add_n_vaccines(
     target_disease = "SARS-2 CORONAVIRUS", 
     name = "covid_vax", 
     direction = "on_or_after",
-    number_of_vaccines = 2
+    number_of_vaccines = 2,
+    minimum_gap = 13
 )
 
 # add most recent 3 vaccines prior to snapshot date
@@ -102,7 +114,8 @@ add_n_vaccines(
     target_disease = "SARS-2 CORONAVIRUS", 
     name = "covid_vax_prior", 
     direction = "before",
-    number_of_vaccines = 3
+    number_of_vaccines = 3,
+    minimum_gap = 13
 )
 
 # count total number of vaccines prior to vaccine date
@@ -114,3 +127,38 @@ dataset.covid_vax_prior_count = (
 
 # Deregistration dates after the snapshot date
 dataset.deregistered_date = registered_patients.end_date
+
+# Covid-19 outcomes
+
+# covid-related admission 
+dataset.covid_admitted_date = (
+    apcs
+        .where(apcs.all_diagnoses.contains_any_of(codelists.covid_icd10))
+        .where(apcs.admission_method.is_in(["21", "22", "23", "24", "25", "2A", "2B", "2C", "2D", "28"]))
+        .where(apcs.patient_classification == "1")  # Ordinary admissions only
+        .where(apcs.admission_date.is_on_or_after(snapshot_date))
+        .sort_by(apcs.admission_date)
+        .first_for_patient()
+        .admission_date
+)
+# covid-related critical care admission 
+dataset.covid_critcare_date = (
+    apcs
+        .where(apcs.all_diagnoses.contains_any_of(codelists.covid_icd10))
+        .where(apcs.admission_method.is_in(["21", "22", "23", "24", "25", "2A", "2B", "2C", "2D", "28"]))
+        .where(apcs.patient_classification == "1")  # Ordinary admissions only
+        .where(apcs.days_in_critical_care>0)
+        .where(apcs.admission_date.is_on_or_after(snapshot_date))
+        .sort_by(apcs.admission_date)
+        .first_for_patient()
+        .admission_date
+)
+
+# covid-related death
+#dataset.covid_death_date = (
+#    ons_deaths
+#        .cause_of_death_is_in(codelists.covid_icd10)
+#        .date
+#)
+
+

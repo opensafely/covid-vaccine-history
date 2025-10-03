@@ -14,6 +14,7 @@ library("glue")
 library("here")
 library("arrow")
 library("survival")
+library("splines")
 
 # Import custom functions
 source(here("analysis", "0-lib", "design.R"))
@@ -30,14 +31,21 @@ if (length(args) == 0) {
 }
 
 # how wide are the temporal bins for frequencies over time? in days
-# use fix width, rather than months or bi-months or quarters, so that temporal denominator is even and ratio of weekends to weekdays is fixed
-temporal_resolution <- 28
+# use fix width, rather than months or bi-months or quarters, so that temporal denominator is even and the ratio of weekends to weekdays is fixed
+temporal_resolution_history <- 28L
 
-# maximum follow-up after snapshot date
-max_fup <- 24 * 7 # 24 weeks
+# how wide are the temporal bins for frequencies over time for Kaplan-Meier plots? in days
+temporal_resolution_km <- 7L
+
+campaign_info <- campaign_dates |> filter(campaign_start == snapshot_date)
 
 # Create next campaign start date
-next_campaign_date <- min(campaign_dates$start[campaign_dates$start > snapshot_date], as.Date(Inf), na.rm = TRUE)
+final_milestone <- campaign_info$final_milestone
+
+# maximum follow-up after snapshot date
+max_fup <- as.integer(final_milestone - snapshot_date + 1L)
+
+minimum_age <- campaign_info$age_threshold
 
 # dates to round down to
 # use this with `findInterval` until lubridate package is updated in the opensafely R image
@@ -45,7 +53,7 @@ next_campaign_date <- min(campaign_dates$start[campaign_dates$start > snapshot_d
 floor_dates <- seq(
   as.Date("2020-06-01"), # monday
   as.Date("2029-12-31"),  # to monday!
-  by = temporal_resolution
+  by = temporal_resolution_history
 )
 
 # create string representation of date in compact format YYYMMDD
@@ -79,12 +87,23 @@ data_combined <-
   data_snapshot |>
   lazy_dt() |>
   left_join(
-    lazy_dt(data_fixed) |> select(patient_id, sex, ethnicity5, ethnicity16, death_date),
+    lazy_dt(data_fixed) |> select(patient_id, sex, ethnicity5, ethnicity16, death_date, covid_death_date),
     by = "patient_id"
   ) |>
   mutate(
     all = "All",
-    !!!standardise_characteristics,
+    !!!standardise_demographic_characteristics,
+
+    cns_learndis = (cns | learndis),
+    immunosuppressed_asplenia = (immunosuppressed | asplenia),
+
+    # should be the same as primis_atrisk
+    # cv = (crd | chd |  ckd | cld | cns_learndis | diabetes | immunosuppressed_asplenia | severe_obesity | smi),
+
+    age_above_eligiblity_threshold = age >= minimum_age,
+    primis_atrisk_only = primis_atrisk & !age_above_eligiblity_threshold,
+
+    any_eligibility = age_above_eligiblity_threshold | primis_atrisk | carehome_status,
 
     # previous vaccine summary
     # add more variables here based on covid_vax_prior_1_date, covid_vax_prior_2_date,... etc if needed
@@ -105,21 +124,45 @@ data_combined <-
     next2_vax_date = covid_vax_2_date,
 
     censor_date = pmin(
-      death_date,
       deregistered_date,
-      next_campaign_date - 1,
-      snapshot_date + max_fup,
+      final_milestone,
       na.rm = TRUE
     ),
+
     # time from snapshot date until next vaccination
-    event_time = as.integer(pmin(next_vax_date, censor_date, na.rm = TRUE) - snapshot_date) + 1L, # +1 because vaccination on snapshot date is allowed, but events at time zero are not
-    event_indicator = (!is.na(next_vax_date)) & (next_vax_date <= censor_date)
+    vax_time = as.integer(pmin(next_vax_date, death_date, censor_date, na.rm = TRUE) - snapshot_date) + 1L, # +1 because vaccination on snapshot date is allowed, but events at time zero are not
+    vax_indicator = (next_vax_date <= pmin(censor_date, death_date, na.rm = TRUE)) & !is.na(next_vax_date),
+
+    # time from snapshot date until covid hospital admission
+    covid_admitted_time = as.integer(pmin(covid_admitted_date, death_date, censor_date, na.rm = TRUE) - snapshot_date) + 1L,
+    covid_admitted_indicator = (covid_admitted_date <= pmin(censor_date, death_date, na.rm = TRUE)) & !is.na(covid_admitted_date),
+
+    # time from snapshot date until covid critical care admission
+    covid_critcare_time = as.integer(pmin(covid_critcare_date, death_date, censor_date, na.rm = TRUE) - snapshot_date) + 1L,
+    covid_critcare_indicator = (covid_critcare_date <= pmin(censor_date, death_date, na.rm = TRUE)) & !is.na(covid_critcare_date),
+
+    # time from snapshot date until covid death
+    covid_death_time = as.integer(pmin(covid_death_date, death_date, censor_date, na.rm = TRUE) - snapshot_date) + 1L,
+    covid_death_indicator = (covid_death_date <= pmin(censor_date, death_date, na.rm = TRUE)) & !is.na(covid_death_date),
   ) |>
   as_tibble() |>
   mutate(
-    across(where(is.factor) | where(is.character), ~ fct_drop(fct_na_value_to_level(.x, level = "(Missing)")))
-  )
+    vax_status = case_when(
+      vax_indicator ~ "vaccinated",
+      (death_date <= censor_date) & !is.na(death_date) ~ "died",
+      (censor_date < death_date) | is.na(death_date) ~ "censored",
+      .default = NA_character_
+    ) |> factor(levels = c("censored", "vaccinated", "death")),
+    vax_status_product = if_else(vax_indicator, next_vax_product, vax_status),
+    next_vax_product_uncensored = if_else(vax_indicator, next_vax_product, NA_character_),
 
+    # setting missing values to explicit missing
+    across(where(is.factor) | where(is.character), ~ fct_drop(fct_na_value_to_level(.x, level = "(Missing)")))
+  ) |>
+  filter(
+    # only consider people with documented eligibility
+    any_eligibility
+  )
 
 # ________________________________________________________________________________________
 # Pre-snapshot date vaccine history, stratified by characteristic recorded on the snapshot_date ----
@@ -130,6 +173,8 @@ data_combined <-
 ## Report info on date of last vaccination
 ## _______________________________________________________________________________________
 
+# This produces data and a plot showing the distribution of most recent prior vaccination date (to the nearest 4 weeks)
+# if no documented prior vaccination, then values are stacked on the LHS of the chart
 
 plot_date_of_last_dose <- function(subgroup) {
   summary_by <-
@@ -137,7 +182,7 @@ plot_date_of_last_dose <- function(subgroup) {
     lazy_dt() |>
     group_by({{ subgroup }}, last_vax_product, last_vax_period) |>
     summarise(
-      n = ceiling_any(n(), sdc_threshold)
+      n = round_any(n(), sdc_threshold)
     ) |>
     ungroup() |>
     as_tibble() |>
@@ -146,19 +191,31 @@ plot_date_of_last_dose <- function(subgroup) {
       fill = list(n = 0)
     )
 
+  breaks <- seq(as.Date("2021-01-01"),  as.Date("2028-06-01"), by = "6 month")
+
+  over2years_dummy_date <- (snapshot_date - ceiling_any(365 * 2, 7))
 
   temp_plot <-
-    ggplot(summary_by) +
+    summary_by |>
+    mutate(
+
+      # if last vaccination date was over 2 years ago, replace with dummy date
+      last_vax_period = if_else(
+        (last_vax_period < over2years_dummy_date)  | is.na(last_vax_period),
+        over2years_dummy_date - 42,
+        last_vax_period
+      )
+    ) |>
+    ggplot() +
     geom_col(
       aes(x = last_vax_period, y = n, fill = last_vax_product, group = last_vax_product),
       alpha = 0.5,
       position = position_stack(reverse = TRUE),
       # position=position_identity(),
-      width = temporal_resolution
+      width = temporal_resolution_history
     ) +
     facet_grid(
       rows = vars({{ subgroup }}),
-      # cols=vars({{cols}}),
       switch = "y",
       space = "free_x",
       scales = "free_x"
@@ -177,10 +234,10 @@ plot_date_of_last_dose <- function(subgroup) {
       }
     ) +
     scale_x_date(
-      breaks = c(default_date - 30, as.Date(c("2021-01-01", "2022-01-01", "2023-01-01", "2024-01-01"))),
+      breaks = c(over2years_dummy_date - 42, breaks),
       date_minor_breaks = "month",
       # labels = ~{c("Unvaccinated", scales::label_date("%Y")(.x[-1]))},
-      labels = c("Unvaccinated", scales::label_date("%Y")(as.Date(c("2021-01-01", "2022-01-01", "2023-01-01", "2024-01-01")))),
+      labels = c("+2 years prior)", scales::label_date("%Y-%b")(breaks)),
     ) +
     theme_minimal() +
     theme(
@@ -193,7 +250,7 @@ plot_date_of_last_dose <- function(subgroup) {
       legend.position = "bottom"
     )
 
-  print(temp_plot)
+  # print(temp_plot)
 
   subgroup_name <- deparse(substitute(subgroup))
   # col_name = deparse(substitute(cols))
@@ -201,28 +258,30 @@ plot_date_of_last_dose <- function(subgroup) {
   ggsave(fs::path(output_dir, glue("last_vax_date_{subgroup_name}.png")), plot = temp_plot)
 
   # write tables that capture underlying plotting data
-  write_csv(summary_by, fs::path(output_dir, glue("last_vax_date_{subgroup_name}.csv")))
+  # write_csv(summary_by, fs::path(output_dir, glue("last_vax_date_{subgroup_name}.csv")))
 }
 
 
 ## --VARIABLES--
+
+# Demographic
 plot_date_of_last_dose(all)
 plot_date_of_last_dose(sex)
 plot_date_of_last_dose(ageband)
 plot_date_of_last_dose(ethnicity5)
 plot_date_of_last_dose(region)
 plot_date_of_last_dose(imd_quintile)
-# todo: care home residency
+plot_date_of_last_dose(carehome_status)
+
 # PRIMIS
 plot_date_of_last_dose(crd) # chronic respiratory disease
 plot_date_of_last_dose(chd) # chronic heart disease
 plot_date_of_last_dose(ckd) # chronic kidney disease
 plot_date_of_last_dose(cld) # chronic liver disease
 plot_date_of_last_dose(cns) # chronic neurological
-plot_date_of_last_dose(learndis) # learning disability
+plot_date_of_last_dose(cns_learndis) # chronic neurological or learning disability
 plot_date_of_last_dose(diabetes) # diabetes
-plot_date_of_last_dose(immunosuppressed) # immunosuppressed
-plot_date_of_last_dose(asplenia) # asplenia or dysfunction of the spleen
+plot_date_of_last_dose(immunosuppressed_asplenia) # immunosuppressed or asplenia
 plot_date_of_last_dose(severe_obesity) # obesity
 plot_date_of_last_dose(smi) # severe mental illness
 plot_date_of_last_dose(primis_atrisk) # clinically vulnerable
@@ -238,7 +297,7 @@ plot_vax_count <- function(subgroup) {
     lazy_dt() |>
     group_by({{ subgroup }}, vax_count_group) |>
     summarise(
-      n = ceiling_any(n(), sdc_threshold),
+      n = round_any(n(), sdc_threshold),
     ) |>
     ungroup() |>
     as_tibble() |>
@@ -289,7 +348,7 @@ plot_vax_count <- function(subgroup) {
     ) +
     NULL
 
-  # print(temp_plot)
+  print(temp_plot)
 
   subgroup_name <- deparse(substitute(subgroup))
   # col_name = deparse(substitute(cols))
@@ -300,26 +359,27 @@ plot_vax_count <- function(subgroup) {
   write_csv(summary_by, fs::path(output_dir, glue("vax_count_{subgroup_name}.csv")))
 }
 
-# all, ageband, region,
 
 ## --VARIABLES--
+
+# Demographic
 plot_vax_count(all)
 plot_vax_count(sex)
 plot_vax_count(ageband)
 plot_vax_count(ethnicity5)
 plot_vax_count(region)
 plot_vax_count(imd_quintile)
+plot_vax_count(carehome_status)
+
 
 # PRIMIS
 plot_vax_count(crd) # chronic respiratory disease
 plot_vax_count(chd) # chronic heart disease
 plot_vax_count(ckd) # chronic kidney disease
 plot_vax_count(cld) # chronic liver disease
-plot_vax_count(cns) # chronic neurological
-plot_vax_count(learndis) # learning disability
+plot_vax_count(cns_learndis) # chronic neurological disease or learning disability
 plot_vax_count(diabetes) # diabetes
-plot_vax_count(immunosuppressed) # immunosuppressed
-plot_vax_count(asplenia) # asplenia or dysfunction of the spleen
+plot_vax_count(immunosuppressed_asplenia) # immunosuppressed or asplenia
 plot_vax_count(severe_obesity) # obesity
 plot_vax_count(smi) # severe mental illness
 plot_vax_count(primis_atrisk) # clinically vulnerable
@@ -329,81 +389,99 @@ plot_vax_count(primis_atrisk) # clinically vulnerable
 ## Report info in a standardised table
 ## _______________________________________________________________________________________
 
-# Table
-create_summary_table <- function(subgroup) {
+# function to print table for an abritrary number of grouping variables
+
+# groups are passed as strings via dots (...)
+table_prior_vax_summary <- function(...) {
+
+  group_names <- c(...)
+
   summary_table <-
     data_combined |>
+    group_by(across(all_of(group_names))) |>
     lazy_dt() |>
-    group_by({{ subgroup }}) |>
     summarise(
       # Dose counts
-      total = ceiling_any(n(), sdc_threshold),
-      `0` = ceiling_any(sum(vax_count == 0, na.rm = TRUE), sdc_threshold),
-      `1` = ceiling_any(sum(vax_count == 1, na.rm = TRUE), sdc_threshold),
-      `2` = ceiling_any(sum(vax_count == 2, na.rm = TRUE), sdc_threshold),
-      `3` = ceiling_any(sum(vax_count == 3, na.rm = TRUE), sdc_threshold),
-      `4` = ceiling_any(sum(vax_count == 4, na.rm = TRUE), sdc_threshold),
-      `5+` = ceiling_any(sum(vax_count >= 5, na.rm = TRUE), sdc_threshold),
+      total = round_any(n(), sdc_threshold),
+      count_n0 = round_any(sum(vax_count == 0, na.rm = TRUE), sdc_threshold),
+      count_n1 = round_any(sum(vax_count == 1, na.rm = TRUE), sdc_threshold),
+      count_n2 = round_any(sum(vax_count == 2, na.rm = TRUE), sdc_threshold),
+      count_n3 = round_any(sum(vax_count == 3, na.rm = TRUE), sdc_threshold),
+      count_n4 = round_any(sum(vax_count == 4, na.rm = TRUE), sdc_threshold),
+      count_n5plus = round_any(sum(vax_count >= 5, na.rm = TRUE), sdc_threshold),
       # Dose summary
-      Dose_median = quantile(vax_count, probs = 0.5, na.rm = TRUE),
-      Dose_25 = quantile(vax_count, probs = 0.25, na.rm = TRUE),
-      Dose_75 = quantile(vax_count, probs = 0.75, na.rm = TRUE),
+      count_median = quantile(vax_count, probs = 0.5, na.rm = TRUE),
+      count_p10 = quantile(vax_count, probs = 0.10, na.rm = TRUE),
+      count_p25 = quantile(vax_count, probs = 0.25, na.rm = TRUE),
+      count_p75 = quantile(vax_count, probs = 0.75, na.rm = TRUE),
+      count_p90 = quantile(vax_count, probs = 0.90, na.rm = TRUE),
       # Vaccination in past 12 and 24 months
-      Vacc_12m_n = ceiling_any(sum(days_since_vax <= 365, na.rm = TRUE), sdc_threshold),
-      Vacc_24m_n = ceiling_any(sum(days_since_vax <= 365 * 2, na.rm = TRUE), sdc_threshold),
+      days_since_n12m = round_any(sum(days_since_vax <= 365, na.rm = TRUE), sdc_threshold),
+      days_since_n24m = round_any(sum(days_since_vax <= 365 * 2, na.rm = TRUE), sdc_threshold),
       # Time since last dose
-      Time_last_dose_median = quantile(days_since_vax, probs = 0.5, na.rm = TRUE),
-      Time_last_dose_10 = quantile(days_since_vax, probs = 0.10, na.rm = TRUE),
-      Time_last_dose_25 = quantile(days_since_vax, probs = 0.25, na.rm = TRUE),
-      Time_last_dose_75 = quantile(days_since_vax, probs = 0.75, na.rm = TRUE),
-      Time_last_dose_90 = quantile(days_since_vax, probs = 0.90, na.rm = TRUE),
+      days_since_median = quantile(days_since_vax, probs = 0.5, na.rm = TRUE),
+      days_since_p10 = quantile(days_since_vax, probs = 0.10, na.rm = TRUE),
+      days_since_p25 = quantile(days_since_vax, probs = 0.25, na.rm = TRUE),
+      days_since_p75 = quantile(days_since_vax, probs = 0.75, na.rm = TRUE),
+      days_since_p90 = quantile(days_since_vax, probs = 0.90, na.rm = TRUE),
+
+      .groups = "drop"
     ) |>
-    ungroup() |>
     mutate(
       # Dose percentages - put this here and not in earlier summarise step so that it works with dtplyr
-      `0_per` = round(`0` * 100 / total, 1),
-      `1_per` = round(`1` * 100 / total, 1),
-      `2_per` = round(`2` * 100 / total, 1),
-      `3_per` = round(`3` * 100 / total, 1),
-      `4_per` = round(`4` * 100 / total, 1),
-      `5+_per` = round(`5+` * 100 / total, 1),
+      count_pct0 = round(count_n0 * 100 / total, 1),
+      count_pct1 = round(count_n1 * 100 / total, 1),
+      count_pct2 = round(count_n2 * 100 / total, 1),
+      count_pct3 = round(count_n3 * 100 / total, 1),
+      count_pct4 = round(count_n4 * 100 / total, 1),
+      count_pct5plus = round(count_n5plus * 100 / total, 1),
       # Vaccination % in past 12 and 24 months
-      Vacc_12m_per = round(Vacc_12m_n * 100 / total, 1),
-      Vacc_24m_per = round(Vacc_24m_n * 100 / total, 1),
+      days_since_pct12m = round(days_since_n12m * 100 / total, 1),
+      days_since_pct24m = round(days_since_n24m * 100 / total, 1),
     ) |>
     as_tibble()
-  subgroup_name <- deparse(substitute(subgroup))
+
+  # subgroup_name <- map_chr(rlang::quos(...), rlang::as_name) |> paste0(collapse = "_")
+
   # Write table to a CSV file
-  write_csv(summary_table, fs::path(output_dir, glue("summary_table_{subgroup_name}.csv")))
-  # print(summary_table)
+  # write_csv(summary_table, fs::path(output_dir, glue("prior_vax_table_{subgroup_name}.csv")))
+
+  return(summary_table)
 }
 
-## --VARIABLES--
-create_summary_table(all)
-create_summary_table(sex)
-create_summary_table(ageband)
-create_summary_table(ethnicity5)
-create_summary_table(region)
-create_summary_table(imd_quintile)
 
-# PRIMIS
-create_summary_table(crd) # cronic respiratory disease
-create_summary_table(chd) # cronic heart disease
-create_summary_table(ckd) # chronic kidney disease
-create_summary_table(cld) # cronic liver disease
-create_summary_table(cns) # chronic neurological
-create_summary_table(learndis) # learning disability
-create_summary_table(diabetes) # diabetes
-create_summary_table(immunosuppressed) # immunosuppressed
-create_summary_table(asplenia) # asplenia or dysfunction of the spleen
-create_summary_table(severe_obesity) # obesity
-create_summary_table(smi) # severe mental illness
-create_summary_table(primis_atrisk) # clinically vulnerable
+# for testing function interactively
+# table_prior_vax_summary("all", "all")
+# table_prior_vax_summary("all", "ageband")
+# table_prior_vax_summary("ageband", "all")
+# table_prior_vax_summary("ageband", "sex")
 
+# loop over all group1 and group2 variable combinations and combine into one big dataset
+prior_vax_summary_table_all <-
+  level_combos |>
+  mutate(
+    prior_vax_summary = map2(
+      group1, group2,
+      .f = function(x, y) {
+
+        if (is.na(y)) y <- NULL
+        lookup <- c(group1_value = x, group2_value = y)
+
+        table_prior_vax_summary(x, y) |>
+          mutate(across(c(all_of(c(x, y))), as.character)) |>
+          rename(any_of(lookup))
+      }
+    )
+  ) |>
+  unnest(prior_vax_summary) |>
+  select(group1, group1_value, group2, group2_value, everything())
+
+# Write table to a CSV file
+write_csv(prior_vax_summary_table_all, fs::path(output_dir, glue("prior_vax_table.csv")))
 
 
 # ________________________________________________________________________________________
-# Post-snapshot vaccine uptake, stratified by characteristic recorded on the snapshot_date ----
+# Post-snapshot vaccine coverage, stratified by characteristic recorded on the snapshot_date ----
 # ________________________________________________________________________________________
 
 # This code borrows heavily from the KM reusable action https://github.com/opensafely-actions/kaplan-meier-function/blob/main/analysis/km.R
@@ -414,7 +492,7 @@ create_summary_table(primis_atrisk) # clinically vulnerable
 
 ## tests ----
 
-times_count <- table(cut(data_combined$event_time, c(-Inf, 0, 1, Inf), right = FALSE, labels = c("<0", "0", ">0")), useNA = "ifany")
+times_count <- table(cut(data_combined$vax_time, c(-Inf, 0, 1, Inf), right = FALSE, labels = c("<0", "0", ">0")), useNA = "ifany")
 
 if (!identical(as.integer(times_count), c(0L, 0L, nrow(data_combined)))) {
   print(times_count)
@@ -423,42 +501,77 @@ if (!identical(as.integer(times_count), c(0L, 0L, nrow(data_combined)))) {
 
 ## Function to calculate KM estimates for a given stratification variable ----
 
-km_estimates <- function(subgroup) {
+# group variables are provided as characters via dots (...)
+# resolution argument is the precision used for the time dimension. If zero, then original resolution is used.
+km_estimates <- function(..., event_name, event_time, event_indicator, resolution = 0) {
 
-  data_surv <-
+
+  group_names <- c(...)
+
+  group_name1 <- group_names[1]
+  group_name2 <- group_names[2]
+
+  # if (is.na(group_name2)) {
+  #   group_name2 <- "all"
+  # }
+
+  data_outcome <-
     data_combined |>
-    group_by({{ subgroup }}) |>
+    select(
+      patient_id,
+      all_of(group_names),
+      event_time = {{ event_time }},
+      event_indicator = {{ event_indicator }}
+    ) |>
+    mutate(event_time = ceiling_any(event_time, resolution))
+
+  data_km <-
+    data_outcome |>
+    group_by(across(all_of(group_names))) |>
     nest() |>
     mutate(
-      surv_obj_tidy = map(data, ~ {
-        survfit(
-          Surv(event_time, event_indicator) ~ 1,
-          data = .x,
-          conf.type = "log-log"
-        ) |>
-          broom::tidy() |>
-          complete(
-            time = seq_len(max_fup), # fill in 1 row for each day of follow up
-            fill = list(n.event = 0L, n.censor = 0L) # fill in zero events on those days
+      surv_obj_tidy = map(
+        data, ~ {
+          survfit(
+            Surv(event_time, event_indicator) ~ 1,
+            data = .x,
+            conf.type = "log-log"
           ) |>
-          fill(
-            n.risk,
-            .direction = "up"
-          ) |>
-          fill(
-            estimate, conf.low, conf.high,
-            .direction = "down"
-          )
-      }),
+            broom::tidy() |>
+            add_row(
+              time = 0, # assumes time origin is zero
+              n.risk = 0,
+              n.event = 0,
+              n.censor = 0,
+              estimate = 1,
+              conf.low = 1,
+              conf.high = 1,
+              .before = 1L
+            ) |>
+            complete(
+              time = seq(0L, max_fup, resolution), # fill in 1 row for each period (defined by resolution) of follow up
+              fill = list(n.event = 0L, n.censor = 0L) # fill in zero events on those days
+            ) |>
+            fill(
+              n.risk,
+              .direction = "up"
+            ) |>
+            fill(
+              estimate, conf.low, conf.high,
+              .direction = "down"
+            )
+        }
+      ),
     ) |>
     select(-data) |>
     unnest(surv_obj_tidy) |>
     mutate(
 
       # disclosure control
-      estimate = plyr::round_any(estimate, sdc_threshold / first(n.risk)),
-      conf.high = plyr::round_any(conf.high, sdc_threshold / first(n.risk)),
-      conf.low = plyr::round_any(conf.low, sdc_threshold / first(n.risk)),
+      n.risk = ceiling_any(n.risk, sdc_threshold),
+      estimate = plyr::round_any(estimate, sdc_threshold / nth(n.risk, 2)), # use 2nd value as this skips the t=0 row where n.risk=0
+      conf.low = plyr::round_any(conf.low, sdc_threshold / nth(n.risk, 2)),
+      conf.high = plyr::round_any(conf.high, sdc_threshold / nth(n.risk, 2)),
 
       # cumulative incidence
       cmlinc = 1 - estimate,
@@ -466,35 +579,24 @@ km_estimates <- function(subgroup) {
       cmlinc.high = 1 - conf.low,
     )
 
-  data_with_time0 <-
-    data_surv |>
+
+  # plot km curves locally for checking (but probs not for release as these can be reconstructed from released data)
+  coverage_plot <-
+    data_km |>
     mutate(
       lagtime = lag(time, 1, 0), # assumes the time-origin is zero
     ) |>
-    group_modify(
-      ~ add_row(
-        .x,
-        time = 0, # assumes time origin is zero
-        lagtime = 0,
-        cmlinc = 0,
-        cmlinc.low = 0,
-        cmlinc.high = 0,
-        .before = 0
-      )
-    )
-
-  coverage_plot <-
-    ggplot(data_with_time0) +
-    geom_step(aes(x = time, y = cmlinc, group = {{ subgroup }}, colour = {{ subgroup }}), direction = "vh") +
-    geom_step(aes(x = time, y = cmlinc, group = {{ subgroup }}, colour = {{ subgroup }}), direction = "vh", linetype = "dashed", alpha = 0.5) +
-    geom_rect(aes(xmin = lagtime, xmax = time, ymin = cmlinc.low, ymax = cmlinc.high, group = {{ subgroup }}, colour = {{ subgroup }}, fill = {{ subgroup }}), alpha = 0.1, colour = "transparent") +
-    # facet_grid(rows = vars(!!!subgroup_syms)) +
+    ggplot() +
+    geom_step(aes(x = time, y = cmlinc, group = .data[[group_name2]], colour = .data[[group_name2]]), direction = "vh") +
+    # geom_step(aes(x = time, y = cmlinc, group = {{ subgroup }}, colour = {{ subgroup }}), direction = "vh", linetype = "dashed", alpha = 0.5) +
+    geom_rect(aes(xmin = lagtime, xmax = time, ymin = cmlinc.low, ymax = cmlinc.high, group = .data[[group_name2]], fill = .data[[group_name2]]), alpha = 0.1, colour = "transparent") +
+    facet_grid(rows = group_name1) +
     scale_color_brewer(type = "qual", palette = "Set1", na.value = "grey") +
     scale_fill_brewer(type = "qual", palette = "Set1", guide = "none", na.value = "grey") +
     scale_y_continuous(expand = expansion(mult = c(0, 0.01))) +
     coord_cartesian(xlim = c(0, NA)) +
     labs(
-      x = "Time",
+      x = "Days since start of campaign",
       y = "Cumulative Incidence",
       colour = NULL,
       title = NULL
@@ -508,26 +610,199 @@ km_estimates <- function(subgroup) {
       legend.justification = c(0, 1),
     )
 
-  subgroup_name <- deparse(substitute(subgroup))
+  ggsave(fs::path(output_dir, glue("km_{event_name}_{paste0(group_names, collapse='_')}.png")), plot = coverage_plot)
 
-  ggsave(fs::path(output_dir, glue("km_{subgroup_name}.png")), plot = coverage_plot)
+  # print(data_km)
 
   # write tables that capture underlying plotting data
-  data_surv |>
+  data_km_nozero <-
+    data_km |>
+    arrange(across(all_of(group_names))) |>
+    ungroup() |>
+    filter(time != 0) |>
     select(
-      {{ subgroup }},
+      all_of(group_names),
       time,
       cmlinc,
       cmlinc.low,
       cmlinc.high,
-    ) |>
-    write_csv(fs::path(output_dir, glue("km_{subgroup_name}.csv")))
+    )
+
+  # write_csv(data_km_nozero, fs::path(output_dir, glue("km_{event_name}_{paste0(group_names, collapse='_')}.csv")))
+
+  return(data_km_nozero)
+
 }
 
-km_estimates(all)
-km_estimates(sex)
-km_estimates(ageband)
-km_estimates(ethnicity5)
-km_estimates(region)
-km_estimates(imd_quintile)
-km_estimates(primis_atrisk)
+# create specific function for vax outcomes
+km_estimates_vax <- partial(
+  km_estimates,
+  event_name = "vax", event_time = vax_time, event_indicator = vax_indicator, resolution = temporal_resolution_km
+)
+
+# for testing function interactively
+# km_estimates_vax("all", "all")
+# km_estimates_vax("all", "ageband")
+# km_estimates_vax("ageband", "all")
+# km_estimates_vax("ageband", "sex")
+
+
+# loop over all group1 and group2 variable combinations and combine into one big dataset
+km_estimates_all <-
+  level_combos |>
+  mutate(
+    km_summary = map2(
+      group1, group2,
+      .f = \(x, y) {
+
+        if (is.na(y)) y <- NULL
+        lookup <- c(group1_value = x, group2_value = y)
+
+        km_estimates_vax(x, y) |>
+          mutate(across(c(all_of(c(x, y))), as.character)) |>
+          rename(all_of(c(group1_value = x, group2_value = y)))
+      }
+    )
+  ) |>
+  unnest(km_summary) |>
+  select(group1, group1_value, group2, group2_value, everything())
+
+# Write table to a CSV file
+# split up by level1 grouping variables, so as not to exceed 5,000 row limit
+iwalk(
+  split(km_estimates_all, km_estimates_all$group1),
+  ~ write_csv(.x, fs::path(output_dir, glue("km_estimates_table_{.y}.csv")))
+)
+
+# write_csv(km_estimates_all, fs::path(output_dir, glue("km_estimates_table.csv")))
+
+# consider raw KM plots for disease burden too
+# km_estimates(all, covid_admitted_time, covid_admitted_indicator, temporal_resolution_km)
+
+
+# ________________________________________________________________________________________
+# Post-snapshot Covid-19 disease burden, stratified by characteristics recorded on the snapshot_date ----
+# ________________________________________________________________________________________
+
+# Function to output HRs and IRRs for disease  burden comparing different subgroups
+adjusted_estimates <- function(subgroup, event_name, event_time, event_indicator) {
+
+
+  cox_formula <- as.formula(glue("Surv(event_time, event_indicator) ~ {subgroup} + sex + ns(age, 3)"))
+  if (subgroup == "ageband") cox_formula <- as.formula(glue("Surv(event_time, event_indicator) ~ ageband + sex"))
+
+  poisson_formula <- as.formula(glue("event_indicator ~ {subgroup} + sex + ns(age, 3)"))
+  if (subgroup == "ageband") poisson_formula <- as.formula(glue("event_indicator ~ ageband + sex"))
+
+
+  data_outcome <-
+    data_combined |>
+    mutate(
+      event_time = {{ event_time }},
+      event_indicator =  {{ event_indicator }}
+    ) |>
+    select(
+      all_of(subgroup),
+      sex, age,
+      event_time,
+      event_indicator
+    )
+
+  data_cox <-
+    data_outcome |>
+    coxph(
+      data = _,
+      formula = cox_formula,
+      ties = "breslow"
+    ) |>
+    broom.helpers::tidy_plus_plus() |>
+    filter(variable == subgroup) |>
+    transmute(
+      variable, label, reference_row,
+      n_obs, n_event, exposure,
+      hr = exp(estimate),
+      hr.low = exp(conf.low),
+      hr.high = exp(conf.high),
+      hr.ln.std.error = std.error,
+    )
+
+  data_poisson <-
+    data_outcome |>
+    glm(
+      data = _,
+      formula = poisson_formula,
+      family = poisson,
+      offset = log(event_time)
+    ) |>
+    broom.helpers::tidy_plus_plus() |>
+    filter(variable == subgroup) |>
+    transmute(
+      variable, label, reference_row,
+      irr = exp(estimate),
+      irr.low = exp(conf.low),
+      irr.high = exp(conf.high),
+      irr.ln.std.error = std.error
+    )
+
+  data_estimates <-
+    data_cox |>
+    left_join(data_poisson, by = c("variable", "label", "reference_row"))
+
+  # write_csv(data_cox, fs::path(output_dir, glue("cox_{event_name}_{subgroup}.csv")))
+  return(data_estimates)
+}
+
+adjusted_estimates("ageband", "admitte", covid_admitted_time, covid_admitted_indicator)
+
+
+get_all_estimates <- function(event_name, event_time, event_indicator) {
+  # cox / glm function does not work when the contrast is a single valued vector
+  # so creating the summary info manually here
+  estimates_event_all <-
+    data_combined |>
+    summarise(
+      variable = "all",
+      label = NA_character_,
+      reference_row = TRUE,
+      n_obs = n(),
+      n_event = sum({{ event_indicator }}),
+      exposure = sum({{ event_time }}),
+    )
+
+  ## --VARIABLES--
+
+  # Demographic
+  estimates_event_sex <- adjusted_estimates("sex", event_name, {{ event_time }}, {{ event_indicator }})
+  estimates_event_ageband <- adjusted_estimates("ageband", event_name, {{ event_time }}, {{ event_indicator }})
+  estimates_event_ethnicity5 <- adjusted_estimates("ethnicity5", event_name, {{ event_time }}, {{ event_indicator }})
+  estimates_event_region <- adjusted_estimates("region", event_name, {{ event_time }}, {{ event_indicator }})
+  estimates_event_imd_quintile <- adjusted_estimates("imd_quintile", event_name, {{ event_time }}, {{ event_indicator }})
+  estimates_event_carehome_status <- adjusted_estimates("carehome_status", event_name, {{ event_time }}, {{ event_indicator }})
+
+  # PRIMIS
+  estimates_event_primis_atrisk <- adjusted_estimates("primis_atrisk", event_name, {{ event_time }}, {{ event_indicator }})
+
+  estimates <-
+    bind_rows(
+      estimates_event_all,
+      estimates_event_sex,
+      estimates_event_ageband,
+      estimates_event_ethnicity5,
+      estimates_event_imd_quintile,
+      estimates_event_carehome_status,
+      estimates_event_primis_atrisk
+    ) |>
+    mutate(
+      ir = n_event / exposure,
+      ir.ln.std.error = 1 / sqrt(n_event),
+      ir.low = exp(log(ir) + qnorm(0.025) * ir.ln.std.error),
+      ir.high = exp(log(ir) + qnorm(0.975) * ir.ln.std.error)
+    )
+
+  write_csv(estimates, fs::path(output_dir, glue("contrasts_{event_name}.csv")))
+
+}
+
+get_all_estimates("covid_admitted", covid_admitted_time, covid_admitted_indicator)
+get_all_estimates("covid_critcare", covid_critcare_time, covid_critcare_indicator)
+get_all_estimates("covid_death", covid_death_time, covid_death_indicator)

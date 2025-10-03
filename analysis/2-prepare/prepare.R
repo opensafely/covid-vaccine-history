@@ -50,8 +50,8 @@ data_processed_fixed <-
       # sex == "unknown" ~ "Unknown",
       TRUE ~ NA_character_
     ),
-    ethnicity5 = factor(ethnicity5, levels = factor_levels$ethnicity5),
-    ethnicity16 = factor(ethnicity16, levels = factor_levels$ethnicity16) |>
+    ethnicity5 = factor(ethnicity5, levels = factor_levels$ethnicity5, ordered = FALSE),
+    ethnicity16 = factor(ethnicity16, levels = factor_levels$ethnicity16, ordered = FALSE) |>
       fct_relabel(~ str_extract(.x, "(?<= - )(.*)")), # pick up everything after " - "
   ) |>
   as_tibble()
@@ -70,7 +70,8 @@ data_processed_fixed |>
     sex,
     ethnicity5,
     ethnicity16,
-    death_date
+    death_date,
+    covid_death_date
   ) |>
   write_feather(fs::path(output_dir, "data_fixed.arrow"))
 
@@ -140,12 +141,12 @@ data_vax <-
   ) |>
   # as_tibble() |> # insert this here to revert to standard dplyr as `cut` function doesn't work with dtplyr
   mutate(
-    !!!standardise_characteristics,
+    !!!standardise_demographic_characteristics,
     vax_campaign = cut(
       vax_date,
-      breaks = c(campaign_dates$start, end_date),
+      breaks = c(campaign_dates$campaign_start, end_date),
       labels = campaign_dates$campaign,
-      include.lowest = TRUE, right = TRUE
+      include.lowest = TRUE, right = FALSE
     )
   ) |>
   arrange(patient_id, vax_date) |>
@@ -218,13 +219,13 @@ data_vax_ELD <-
   mutate(
     campaign = cut(
       vax_date,
-      breaks = c(campaign_dates$start, as.Date(Inf)),
+      breaks = c(campaign_dates$campaign_start, as.Date(Inf)),
       labels = campaign_dates$campaign
     ),
     campaign_start = cut(
       vax_date,
-      breaks = c(campaign_dates$start, as.Date(Inf)),
-      labels = campaign_dates$start
+      breaks = c(campaign_dates$campaign_start, as.Date(Inf)),
+      labels = campaign_dates$campaign_start
     ),
   ) |>
   lazy_dt()
@@ -364,8 +365,8 @@ cat(
   "\n",
   "number of occassions where a person is vaccinated with a null date:\n",
   data_vax_ELD |>
-    summarise(n = n()) |>
-    pull(n)
+    as_tibble() |>
+    nrow()
 )
 
 
@@ -375,6 +376,6 @@ cat(
   "number of occassions where a person is vaccinated on or before 1899:\n",
   data_vax_ELD |>
     filter(vax_date <= as.Date("1899-01-01")) |>
-    summarise(n = n()) |>
-    pull(n)
+    as_tibble() |>
+    nrow()
 )
