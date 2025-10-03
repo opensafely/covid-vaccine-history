@@ -31,8 +31,11 @@ if (length(args) == 0) {
 }
 
 # how wide are the temporal bins for frequencies over time? in days
-# use fix width, rather than months or bi-months or quarters, so that temporal denominator is even and ratio of weekends to weekdays is fixed
-temporal_resolution <- 28
+# use fix width, rather than months or bi-months or quarters, so that temporal denominator is even and the ratio of weekends to weekdays is fixed
+temporal_resolution_history <- 28L
+
+# how wide are the temporal bins for frequencies over time for Kaplan-Meier plots? in days
+temporal_resolution_km <- 7L
 
 # Create next campaign start date
 next_campaign_date <- min(campaign_dates$campaign_start[campaign_dates$campaign_start > snapshot_date], as.Date(Inf), na.rm = TRUE)
@@ -52,7 +55,7 @@ minimum_age <- campaign_info$age_threshold
 floor_dates <- seq(
   as.Date("2020-06-01"), # monday
   as.Date("2029-12-31"),  # to monday!
-  by = temporal_resolution
+  by = temporal_resolution_history
 )
 
 # create string representation of date in compact format YYYMMDD
@@ -203,7 +206,7 @@ plot_date_of_last_dose <- function(subgroup) {
       alpha = 0.5,
       position = position_stack(reverse = TRUE),
       # position=position_identity(),
-      width = temporal_resolution
+      width = temporal_resolution_history
     ) +
     facet_grid(
       rows = vars({{ subgroup }}),
@@ -263,6 +266,7 @@ plot_date_of_last_dose(ethnicity5)
 plot_date_of_last_dose(region)
 plot_date_of_last_dose(imd_quintile)
 plot_date_of_last_dose(carehome_status)
+
 # PRIMIS
 plot_date_of_last_dose(crd) # chronic respiratory disease
 plot_date_of_last_dose(chd) # chronic heart disease
@@ -507,7 +511,7 @@ km_estimates <- function(subgroup, event_name, event_time, event_indicator) {
               .before = 1L
             ) |>
             complete(
-              time = c(0, seq_len(max_fup)), # fill in 1 row for each day of follow up
+              time = seq(0L, max_fup, resolution), # fill in 1 row for each period (defined by resolution) of follow up
               fill = list(n.event = 0L, n.censor = 0L) # fill in zero events on those days
             ) |>
             fill(
