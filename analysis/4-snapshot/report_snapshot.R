@@ -193,10 +193,18 @@ plot_date_of_last_dose <- function(subgroup) {
 
   breaks <- seq(as.Date("2021-01-01"),  as.Date("2028-06-01"), by = "6 month")
 
+  over2years_dummy_date <- (snapshot_date - ceiling_any(365 * 2, 7))
+
   temp_plot <-
     summary_by |>
     mutate(
-      last_vax_period = replace_na(last_vax_period, default_date - 42)
+
+      # if last vaccination date was over 2 years ago, replace with dummy date
+      last_vax_period = if_else(
+        (last_vax_period < over2years_dummy_date)  | is.na(last_vax_period),
+        over2years_dummy_date - 42,
+        last_vax_period
+      )
     ) |>
     ggplot() +
     geom_col(
@@ -226,10 +234,10 @@ plot_date_of_last_dose <- function(subgroup) {
       }
     ) +
     scale_x_date(
-      breaks = c(default_date - 42, breaks),
+      breaks = c(over2years_dummy_date - 42, breaks),
       date_minor_breaks = "month",
       # labels = ~{c("Unvaccinated", scales::label_date("%Y")(.x[-1]))},
-      labels = c("Unvaccinated", scales::label_date("%Y-%b")(breaks)),
+      labels = c("+2 years prior)", scales::label_date("%Y-%b")(breaks)),
     ) +
     theme_minimal() +
     theme(
@@ -242,7 +250,7 @@ plot_date_of_last_dose <- function(subgroup) {
       legend.position = "bottom"
     )
 
-  print(temp_plot)
+  # print(temp_plot)
 
   subgroup_name <- deparse(substitute(subgroup))
   # col_name = deparse(substitute(cols))
@@ -250,7 +258,7 @@ plot_date_of_last_dose <- function(subgroup) {
   ggsave(fs::path(output_dir, glue("last_vax_date_{subgroup_name}.png")), plot = temp_plot)
 
   # write tables that capture underlying plotting data
-  write_csv(summary_by, fs::path(output_dir, glue("last_vax_date_{subgroup_name}.csv")))
+  # write_csv(summary_by, fs::path(output_dir, glue("last_vax_date_{subgroup_name}.csv")))
 }
 
 
@@ -660,7 +668,7 @@ km_estimates_all <-
   select(group1, group1_value, group2, group2_value, everything())
 
 # Write table to a CSV file
-# split up by level1 grouping variables, so as not to exceed 10,000 row limit
+# split up by level1 grouping variables, so as not to exceed 5,000 row limit
 iwalk(
   split(km_estimates_all, km_estimates_all$group1),
   ~ write_csv(.x, fs::path(output_dir, glue("km_estimates_table_{.y}.csv")))
