@@ -441,6 +441,13 @@ table_prior_vax_summary <- function(...) {
   return(summary_table)
 }
 
+
+# for testing function interactively
+# table_prior_vax_summary("all", "all")
+# table_prior_vax_summary("all", "ageband")
+# table_prior_vax_summary("ageband", "all")
+# table_prior_vax_summary("ageband", "sex")
+
 # loop over all group1 and group2 variable combinations and combine into one big dataset
 prior_vax_summary_table_all <-
   level_combos |>
@@ -492,6 +499,13 @@ km_estimates <- function(..., event_name, event_time, event_indicator, resolutio
 
 
   group_names <- c(...)
+
+  group_name1 <- group_names[1]
+  group_name2 <- group_names[2]
+
+  # if (is.na(group_name2)) {
+  #   group_name2 <- "all"
+  # }
 
   data_outcome <-
     data_combined |>
@@ -546,9 +560,10 @@ km_estimates <- function(..., event_name, event_time, event_indicator, resolutio
     mutate(
 
       # disclosure control
-      estimate = plyr::round_any(estimate, sdc_threshold / nth(n.risk, 2)),
-      conf.high = plyr::round_any(conf.high, sdc_threshold / nth(n.risk, 2)),
+      n.risk = ceiling_any(n.risk, sdc_threshold),
+      estimate = plyr::round_any(estimate, sdc_threshold / nth(n.risk, 2)), # use 2nd value as this skips the t=0 row where n.risk=0
       conf.low = plyr::round_any(conf.low, sdc_threshold / nth(n.risk, 2)),
+      conf.high = plyr::round_any(conf.high, sdc_threshold / nth(n.risk, 2)),
 
       # cumulative incidence
       cmlinc = 1 - estimate,
@@ -556,27 +571,24 @@ km_estimates <- function(..., event_name, event_time, event_indicator, resolutio
       cmlinc.high = 1 - conf.low,
     )
 
-  group_name1 <- group_names[1]
-  group_name2 <- group_names[2]
 
-  if (is.na(group_name2)) group_name2 <- NULL
-
+  # plot km curves locally for checking (but probs not for release as these can be reconstructed from released data)
   coverage_plot <-
     data_km |>
     mutate(
       lagtime = lag(time, 1, 0), # assumes the time-origin is zero
     ) |>
     ggplot() +
-    geom_step(aes(x = time, y = cmlinc, group = !!sym(group_name2), colour = !!sym(group_name2)), direction = "vh") +
+    geom_step(aes(x = time, y = cmlinc, group = .data[[group_name2]], colour = .data[[group_name2]]), direction = "vh") +
     # geom_step(aes(x = time, y = cmlinc, group = {{ subgroup }}, colour = {{ subgroup }}), direction = "vh", linetype = "dashed", alpha = 0.5) +
-    geom_rect(aes(xmin = lagtime, xmax = time, ymin = cmlinc.low, ymax = cmlinc.high, group = !!sym(group_name2), colour = !!sym(group_name2), fill = !!sym(group_name2)), alpha = 0.1, colour = "transparent") +
+    geom_rect(aes(xmin = lagtime, xmax = time, ymin = cmlinc.low, ymax = cmlinc.high, group = .data[[group_name2]], fill = .data[[group_name2]]), alpha = 0.1, colour = "transparent") +
     facet_grid(rows = group_name1) +
     scale_color_brewer(type = "qual", palette = "Set1", na.value = "grey") +
     scale_fill_brewer(type = "qual", palette = "Set1", guide = "none", na.value = "grey") +
-    # scale_y_continuous(expand = expansion(mult = c(0, 0.01))) +
+    scale_y_continuous(expand = expansion(mult = c(0, 0.01))) +
     coord_cartesian(xlim = c(0, NA)) +
     labs(
-      x = "Time",
+      x = "Days since start of campaign",
       y = "Cumulative Incidence",
       colour = NULL,
       title = NULL
@@ -597,6 +609,7 @@ km_estimates <- function(..., event_name, event_time, event_indicator, resolutio
   # write tables that capture underlying plotting data
   data_km_nozero <-
     data_km |>
+    arrange(across(all_of(group_names))) |>
     ungroup() |>
     filter(time != 0) |>
     select(
@@ -619,7 +632,11 @@ km_estimates_vax <- partial(
   event_name = "vax", event_time = vax_time, event_indicator = vax_indicator, resolution = temporal_resolution_km
 )
 
-km_estimates_vax("ageband", "sex")
+# for testing function interactively
+# km_estimates_vax("all", "all")
+# km_estimates_vax("all", "ageband")
+# km_estimates_vax("ageband", "all")
+# km_estimates_vax("ageband", "sex")
 
 
 # loop over all group1 and group2 variable combinations and combine into one big dataset
@@ -643,23 +660,13 @@ km_estimates_all <-
   select(group1, group1_value, group2, group2_value, everything())
 
 # Write table to a CSV file
-# TODO: split this file up for output checking
-write_csv(km_estimates_all, fs::path(output_dir, glue("km_estimates_table.csv")))
+# split up by level1 grouping variables, so as not to exceed 10,000 row limit
+iwalk(
+  split(km_estimates_all, km_estimates_all$group1),
+  ~ write_csv(.x, fs::path(output_dir, glue("km_estimates_table_{.y}.csv")))
+)
 
-
-## --VARIABLES--
-
-# Demographic
-km_estimates_vax(all)
-km_estimates_vax(sex)
-km_estimates_vax(ageband)
-km_estimates_vax(ethnicity5)
-km_estimates_vax(region)
-km_estimates_vax(imd_quintile)
-km_estimates_vax(carehome_status)
-
-#  PRIMIS
-km_estimates_vax(primis_atrisk)
+# write_csv(km_estimates_all, fs::path(output_dir, glue("km_estimates_table.csv")))
 
 # consider raw KM plots for disease burden too
 # km_estimates(all, covid_admitted_time, covid_admitted_indicator, temporal_resolution_km)
@@ -669,25 +676,28 @@ km_estimates_vax(primis_atrisk)
 # Post-snapshot Covid-19 disease burden, stratified by characteristics recorded on the snapshot_date ----
 # ________________________________________________________________________________________
 
-
+# Function to output HRs and IRRs for disease  burden comparing different subgroups
 adjusted_estimates <- function(subgroup, event_name, event_time, event_indicator) {
 
-  subgroup_name <- deparse(substitute(subgroup))
 
-  cox_formula <- as.formula(glue("Surv(event_time, event_indicator) ~ {subgroup_name} + sex + ns(age, 3)"))
-  if (subgroup_name == "ageband") cox_formula <- as.formula(glue("Surv(event_time, event_indicator) ~ ageband + sex"))
+  cox_formula <- as.formula(glue("Surv(event_time, event_indicator) ~ {subgroup} + sex + ns(age, 3)"))
+  if (subgroup == "ageband") cox_formula <- as.formula(glue("Surv(event_time, event_indicator) ~ ageband + sex"))
 
-  poisson_formula <- as.formula(glue("event_indicator ~ {subgroup_name} + sex + ns(age, 3)"))
-  if (subgroup_name == "ageband") poisson_formula <- as.formula(glue("event_indicator ~ ageband + sex"))
+  poisson_formula <- as.formula(glue("event_indicator ~ {subgroup} + sex + ns(age, 3)"))
+  if (subgroup == "ageband") poisson_formula <- as.formula(glue("event_indicator ~ ageband + sex"))
 
 
   data_outcome <-
     data_combined |>
-    transmute(
-      {{ subgroup }},
-      sex, age,
+    mutate(
       event_time = {{ event_time }},
       event_indicator =  {{ event_indicator }}
+    ) |>
+    select(
+      all_of(subgroup),
+      sex, age,
+      event_time,
+      event_indicator
     )
 
   data_cox <-
@@ -698,7 +708,7 @@ adjusted_estimates <- function(subgroup, event_name, event_time, event_indicator
       ties = "breslow"
     ) |>
     broom.helpers::tidy_plus_plus() |>
-    filter(variable == subgroup_name) |>
+    filter(variable == subgroup) |>
     transmute(
       variable, label, reference_row,
       n_obs, n_event, exposure,
@@ -717,7 +727,7 @@ adjusted_estimates <- function(subgroup, event_name, event_time, event_indicator
       offset = log(event_time)
     ) |>
     broom.helpers::tidy_plus_plus() |>
-    filter(variable == subgroup_name) |>
+    filter(variable == subgroup) |>
     transmute(
       variable, label, reference_row,
       irr = exp(estimate),
@@ -730,9 +740,12 @@ adjusted_estimates <- function(subgroup, event_name, event_time, event_indicator
     data_cox |>
     left_join(data_poisson, by = c("variable", "label", "reference_row"))
 
-  # write_csv(data_cox, fs::path(output_dir, glue("cox_{event_name}_{subgroup_name}.csv")))
+  # write_csv(data_cox, fs::path(output_dir, glue("cox_{event_name}_{subgroup}.csv")))
   return(data_estimates)
 }
+
+adjusted_estimates("ageband", "admitte", covid_admitted_time, covid_admitted_indicator)
+
 
 get_all_estimates <- function(event_name, event_time, event_indicator) {
   # cox / glm function does not work when the contrast is a single valued vector
@@ -751,15 +764,15 @@ get_all_estimates <- function(event_name, event_time, event_indicator) {
   ## --VARIABLES--
 
   # Demographic
-  estimates_event_sex <- adjusted_estimates(sex, event_name, {{ event_time }}, {{ event_indicator }})
-  estimates_event_ageband <- adjusted_estimates(ageband, event_name, {{ event_time }}, {{ event_indicator }})
-  estimates_event_ethnicity5 <- adjusted_estimates(ethnicity5, event_name, {{ event_time }}, {{ event_indicator }})
-  estimates_event_region <- adjusted_estimates(region, event_name, {{ event_time }}, {{ event_indicator }})
-  estimates_event_imd_quintile <- adjusted_estimates(imd_quintile, event_name, {{ event_time }}, {{ event_indicator }})
-  estimates_event_carehome_status <- adjusted_estimates(carehome_status, event_name, {{ event_time }}, {{ event_indicator }})
+  estimates_event_sex <- adjusted_estimates("sex", event_name, {{ event_time }}, {{ event_indicator }})
+  estimates_event_ageband <- adjusted_estimates("ageband", event_name, {{ event_time }}, {{ event_indicator }})
+  estimates_event_ethnicity5 <- adjusted_estimates("ethnicity5", event_name, {{ event_time }}, {{ event_indicator }})
+  estimates_event_region <- adjusted_estimates("region", event_name, {{ event_time }}, {{ event_indicator }})
+  estimates_event_imd_quintile <- adjusted_estimates("imd_quintile", event_name, {{ event_time }}, {{ event_indicator }})
+  estimates_event_carehome_status <- adjusted_estimates("carehome_status", event_name, {{ event_time }}, {{ event_indicator }})
 
   # PRIMIS
-  estimates_event_primis_atrisk <- adjusted_estimates(primis_atrisk, event_name, {{ event_time }}, {{ event_indicator }})
+  estimates_event_primis_atrisk <- adjusted_estimates("primis_atrisk", event_name, {{ event_time }}, {{ event_indicator }})
 
   estimates <-
     bind_rows(

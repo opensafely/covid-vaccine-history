@@ -24,6 +24,19 @@ ceiling_any <- function(x, to = 1) {
     return(x)
   } else {
     return(ceiling(plyr::round_any(x / to, 1 / 100000000)) * to)
+    # return(plyr::round_any(x, to, f=ceiling))
+  }
+}
+
+
+floor_any <- function(x, to = 1) {
+  # round to nearest 100 millionth to avoid floating point errors
+
+  if (to == 0) {
+    return(x)
+  } else {
+    return(floor(plyr::round_any(x / to, 1 / 100000000)) * to)
+    # return(plyr::round_any(x, to, f=floor))
   }
 }
 
@@ -281,10 +294,10 @@ level2_group <- c(
 
 level_combos <- expand_grid(group1 = level1_group, group2 = level2_group) |>
   mutate(
-    group2 = na_if(group2, "all")
+    # group2 = na_if(group2, "all")
   ) |>
   filter(
-    (group1 == group2) %in% c(FALSE, NA)
+    (group1 == group2) %in% c(FALSE, NA) | (group1 == "all")
   )
 
 # Local run flag ----
