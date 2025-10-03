@@ -37,8 +37,6 @@ temporal_resolution_history <- 28L
 # how wide are the temporal bins for frequencies over time for Kaplan-Meier plots? in days
 temporal_resolution_km <- 7L
 
-# Create next campaign start date
-next_campaign_date <- min(campaign_dates$campaign_start[campaign_dates$campaign_start > snapshot_date], as.Date(Inf), na.rm = TRUE)
 campaign_info <- campaign_dates |> filter(campaign_start == snapshot_date)
 
 # Create next campaign start date
@@ -342,7 +340,7 @@ plot_vax_count <- function(subgroup) {
     ) +
     NULL
 
-  # print(temp_plot)
+  print(temp_plot)
 
   subgroup_name <- deparse(substitute(subgroup))
   # col_name = deparse(substitute(cols))
@@ -353,7 +351,6 @@ plot_vax_count <- function(subgroup) {
   write_csv(summary_by, fs::path(output_dir, glue("vax_count_{subgroup_name}.csv")))
 }
 
-# all, ageband, region,
 
 ## --VARIABLES--
 
@@ -384,53 +381,64 @@ plot_vax_count(primis_atrisk) # clinically vulnerable
 ## Report info in a standardised table
 ## _______________________________________________________________________________________
 
-# Table
-create_summary_table <- function(subgroup) {
+# function to print table for an abritrary number of grouping variables
+
+# groups are passed as strings via dots (...)
+table_prior_vax_summary <- function(...) {
+
+  group_names <- c(...)
+
   summary_table <-
     data_combined |>
+    group_by(across(all_of(group_names))) |>
     lazy_dt() |>
-    group_by({{ subgroup }}) |>
     summarise(
       # Dose counts
       total = round_any(n(), sdc_threshold),
-      `0` = round_any(sum(vax_count == 0, na.rm = TRUE), sdc_threshold),
-      `1` = round_any(sum(vax_count == 1, na.rm = TRUE), sdc_threshold),
-      `2` = round_any(sum(vax_count == 2, na.rm = TRUE), sdc_threshold),
-      `3` = round_any(sum(vax_count == 3, na.rm = TRUE), sdc_threshold),
-      `4` = round_any(sum(vax_count == 4, na.rm = TRUE), sdc_threshold),
-      `5+` = round_any(sum(vax_count >= 5, na.rm = TRUE), sdc_threshold),
+      count_n0 = round_any(sum(vax_count == 0, na.rm = TRUE), sdc_threshold),
+      count_n1 = round_any(sum(vax_count == 1, na.rm = TRUE), sdc_threshold),
+      count_n2 = round_any(sum(vax_count == 2, na.rm = TRUE), sdc_threshold),
+      count_n3 = round_any(sum(vax_count == 3, na.rm = TRUE), sdc_threshold),
+      count_n4 = round_any(sum(vax_count == 4, na.rm = TRUE), sdc_threshold),
+      count_n5plus = round_any(sum(vax_count >= 5, na.rm = TRUE), sdc_threshold),
       # Dose summary
-      Dose_median = quantile(vax_count, probs = 0.5, na.rm = TRUE),
-      Dose_25 = quantile(vax_count, probs = 0.25, na.rm = TRUE),
-      Dose_75 = quantile(vax_count, probs = 0.75, na.rm = TRUE),
+      count_median = quantile(vax_count, probs = 0.5, na.rm = TRUE),
+      count_p10 = quantile(vax_count, probs = 0.10, na.rm = TRUE),
+      count_p25 = quantile(vax_count, probs = 0.25, na.rm = TRUE),
+      count_p75 = quantile(vax_count, probs = 0.75, na.rm = TRUE),
+      count_p90 = quantile(vax_count, probs = 0.90, na.rm = TRUE),
       # Vaccination in past 12 and 24 months
-      Vacc_12m_n = round_any(sum(days_since_vax <= 365, na.rm = TRUE), sdc_threshold),
-      Vacc_24m_n = round_any(sum(days_since_vax <= 365 * 2, na.rm = TRUE), sdc_threshold),
+      days_since_n12m = round_any(sum(days_since_vax <= 365, na.rm = TRUE), sdc_threshold),
+      days_since_n24m = round_any(sum(days_since_vax <= 365 * 2, na.rm = TRUE), sdc_threshold),
       # Time since last dose
-      Time_last_dose_median = quantile(days_since_vax, probs = 0.5, na.rm = TRUE),
-      Time_last_dose_10 = quantile(days_since_vax, probs = 0.10, na.rm = TRUE),
-      Time_last_dose_25 = quantile(days_since_vax, probs = 0.25, na.rm = TRUE),
-      Time_last_dose_75 = quantile(days_since_vax, probs = 0.75, na.rm = TRUE),
-      Time_last_dose_90 = quantile(days_since_vax, probs = 0.90, na.rm = TRUE),
+      days_since_median = quantile(days_since_vax, probs = 0.5, na.rm = TRUE),
+      days_since_p10 = quantile(days_since_vax, probs = 0.10, na.rm = TRUE),
+      days_since_p25 = quantile(days_since_vax, probs = 0.25, na.rm = TRUE),
+      days_since_p75 = quantile(days_since_vax, probs = 0.75, na.rm = TRUE),
+      days_since_p90 = quantile(days_since_vax, probs = 0.90, na.rm = TRUE),
+
+      .groups = "drop"
     ) |>
-    ungroup() |>
     mutate(
       # Dose percentages - put this here and not in earlier summarise step so that it works with dtplyr
-      `0_per` = round(`0` * 100 / total, 1),
-      `1_per` = round(`1` * 100 / total, 1),
-      `2_per` = round(`2` * 100 / total, 1),
-      `3_per` = round(`3` * 100 / total, 1),
-      `4_per` = round(`4` * 100 / total, 1),
-      `5+_per` = round(`5+` * 100 / total, 1),
+      count_pct0 = round(count_n0 * 100 / total, 1),
+      count_pct1 = round(count_n1 * 100 / total, 1),
+      count_pct2 = round(count_n2 * 100 / total, 1),
+      count_pct3 = round(count_n3 * 100 / total, 1),
+      count_pct4 = round(count_n4 * 100 / total, 1),
+      count_pct5plus = round(count_n5plus * 100 / total, 1),
       # Vaccination % in past 12 and 24 months
-      Vacc_12m_per = round(Vacc_12m_n * 100 / total, 1),
-      Vacc_24m_per = round(Vacc_24m_n * 100 / total, 1),
+      days_since_pct12m = round(days_since_n12m * 100 / total, 1),
+      days_since_pct24m = round(days_since_n24m * 100 / total, 1),
     ) |>
     as_tibble()
-  subgroup_name <- deparse(substitute(subgroup))
+
+  # subgroup_name <- map_chr(rlang::quos(...), rlang::as_name) |> paste0(collapse = "_")
+
   # Write table to a CSV file
-  write_csv(summary_table, fs::path(output_dir, glue("summary_table_{subgroup_name}.csv")))
-  # print(summary_table)
+  # write_csv(summary_table, fs::path(output_dir, glue("prior_vax_table_{subgroup_name}.csv")))
+
+  return(summary_table)
 }
 
 ## --VARIABLES--
