@@ -38,15 +38,15 @@ snapshot_date_string = get_parameter(name="snapshot_date")
 snapshot_date = datetime.strptime(get_parameter(name="snapshot_date"), '%Y%m%d').strftime('%Y-%m-%d') 
 
 # extract campaign-specific dates
-all_campaign_dates = loads(
-    Path("analysis/0-lib/campaign_dates.json").read_text(),
+all_campaign_info = loads(
+    Path("analysis/0-lib/campaign_info.json").read_text(),
 )
 
-campaign_dates = all_campaign_dates[snapshot_date]
+campaign_info = all_campaign_info[snapshot_date]
 
 # get date on which age should be calculated
 # this is different to snapshot date because we allow people to be eligible if they reach the age during the campaign
-age_calculation_date = campaign_dates["age_date"]
+age_calculation_date = campaign_info["age_date"]
 
 # initialise dataset
 

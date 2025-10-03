@@ -6,6 +6,8 @@
 # this script should be sourced (using `source(here("analysis", "utility.R"))`) at the start of each R script
 # _________________________________________________
 
+library("tidyverse")
+
 # utility functions ----
 
 roundmid_any <- function(x, to = 1) {
@@ -88,21 +90,21 @@ study_dates <-
     start_date = "2020-12-07",
     end_date = "2026-12-31"
   ) |>
-  map(as.Date)
+  lapply(as.Date)
 
 # make these available in the global environment
 # so we don't have to use `study_dates$start_date` or `start_date <- study_dates$start_date` in each script
-list2env(study_dates, globalenv())
+# list2env(study_dates, globalenv())
 
 # statistical disclosure control rounding precision
 sdc_threshold <- 10
 
 # covid-19 vaccine campaign dates
-campaign_dates <-
+campaign_info <-
   tribble(
-    ~campaign,        ~campaign_start,      ~primary_milestone, ~age_date, ~age_threshold,
+    ~campaign_label,        ~campaign_start_date,      ~primary_milestone_date, ~age_date, ~age_threshold,
     "Pre-2020-07-01", "1900-01-01", "1900-01-01", "1900-01-01", 16,
-    "Pre-roll-out",   as.character(firstpossiblevax_date), as.character(firstpossiblevax_date), as.character(firstpossiblevax_date), 16,
+    "Pre-roll-out",   as.character(study_dates$firstpossiblevax_date), as.character(study_dates$firstpossiblevax_date), as.character(study_dates$firstpossiblevax_date), 16,
     "Primary series", "2020-12-07", "2021-06-30", "2021-03-31", 16,
     "Autumn 2021",    "2021-09-06", "2022-02-28", "2021-08-31", 16,
     "Spring 2022",    "2022-03-21", "2022-06-30", "2022-06-30", 75,
@@ -114,14 +116,14 @@ campaign_dates <-
     "Spring 2025",    "2025-03-31", "2025-06-30", "2025-06-30", 75,
   ) |>
   mutate(
-    across(c(campaign_start, primary_milestone, age_date), as.Date),
-    early_milestone = campaign_start + (7 * 8) - 1,
-    final_milestone = lead(campaign_start, 1, as.Date("2030-01-01")) - 1
+    across(c(campaign_start_date, primary_milestone_date, age_date), as.Date),
+    early_milestone_date = campaign_start_date + (7 * 8) - 1,
+    final_milestone_date = lead(campaign_start_date, 1, as.Date("2030-01-01")) - 1
   )  |>
   mutate(
-    early_milestone_days = as.integer(primary_milestone - campaign_start) + 1,
-    primary_milestone_days = as.integer(early_milestone - campaign_start) + 1,
-    final_milestone_days = as.integer(final_milestone - campaign_start) + 1
+    early_milestone_days = as.integer(primary_milestone_date - campaign_start_date) + 1L,
+    primary_milestone_days = as.integer(early_milestone_date - campaign_start_date) + 1L,
+    final_milestone_days = as.integer(final_milestone_date - campaign_start_date) + 1L
   )
 
 # output from https://jobs.opensafely.org/opensafely-internal/tpp-vaccination-names/ workspace
@@ -314,13 +316,13 @@ if (localrun) {
 
   jsonlite::write_json(
     study_dates,
-    path = here("analysis", "0-lib", "study_dates.json"),
+    path = here::here("analysis", "0-lib", "study_dates.json"),
     pretty = TRUE, auto_unbox = TRUE
   )
 
   jsonlite::write_json(
-    split(campaign_dates, f = campaign_dates$campaign_start) |> map (as.list),
-    path = here("analysis", "0-lib", "campaign_dates.json"),
+    split(campaign_info, f = campaign_info$campaign_start_date) |> lapply(as.list),
+    path = here::here("analysis", "0-lib", "campaign_info.json"),
     pretty = TRUE, auto_unbox = TRUE,
   )
 }

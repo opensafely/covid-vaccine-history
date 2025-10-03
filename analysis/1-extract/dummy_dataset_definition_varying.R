@@ -31,12 +31,12 @@ population_size <- 1000
 # we do this because some dplyr operations to not preserve date attributes, so dates will be converted to numerics
 
 # choose the june 2020 to pick up possible trial participants, but definitely exclude errors or unknown dates (1900-01-01, 2018-03-24, etc)
-index_date <- firstpossiblevax_date
+index_date <- study_dates$firstpossiblevax_date
 
 index_day <- 0L
 
 
-start_day <- as.integer(start_date - index_date)
+start_day <- as.integer(study_dates$start_date - study_dates$index_date)
 
 # set the variables that are known a-priori to the simulation engine
 # ie, defined ad accessible outside of the scope of the dataset

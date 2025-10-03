@@ -144,8 +144,8 @@ data_vax <-
     !!!standardise_demographic_characteristics,
     vax_campaign = cut(
       vax_date,
-      breaks = c(campaign_dates$campaign_start, end_date),
-      labels = campaign_dates$campaign,
+      breaks = c(campaign_info$campaign_start_date, study_dates$end_date),
+      labels = campaign_info$campaign_label,
       include.lowest = TRUE, right = FALSE
     )
   ) |>
@@ -187,8 +187,8 @@ data_vax_clean <-
   filter(
     !is.na(vax_date),
     is.na(vax_interval) | vax_interval >= 14,
-    vax_date >= start_date,
-    vax_date <= end_date
+    vax_date >= study_dates$start_date,
+    vax_date <= study_dates$end_date
   ) |>
   group_by(patient_id) |>
   mutate(
@@ -219,13 +219,13 @@ data_vax_ELD <-
   mutate(
     campaign = cut(
       vax_date,
-      breaks = c(campaign_dates$campaign_start, as.Date(Inf)),
-      labels = campaign_dates$campaign
+      breaks = c(campaign_info$campaign_start_date, as.Date(Inf)),
+      labels = campaign_info$campaign_label
     ),
     campaign_start = cut(
       vax_date,
-      breaks = c(campaign_dates$campaign_start, as.Date(Inf)),
-      labels = campaign_dates$campaign_start
+      breaks = c(campaign_info$campaign_start_date, as.Date(Inf)),
+      labels = campaign_info$campaign_start_date
     ),
   ) |>
   lazy_dt()

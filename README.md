@@ -44,7 +44,7 @@ The analysis scripts in the [`analysis/`](./analysis) directory are organised in
   - [`design.R`](./analysis/0-lib/design.R) defines the design configurations used throughout the study - start and end dates, eligibility, products, look-up dictionaries, etc.
   It also defines R functions used throughout the codebase.
   This script is run at the start of all relevant R scripts. 
-  It must also be run manually if values in either of the [`study_dates.json`](./analysis/0-lib/study_dates.json) or [`campaign_dates.json`](./analysis/0-lib/campaign_dates.json) files need to be updated, 
+  It must also be run manually if values in either of the [`study_dates.json`](./analysis/0-lib/study_dates.json) or [`campaign_info.json`](./analysis/0-lib/campaign_info.json) files need to be updated, 
   so that the ehrQL scripts use the most up-to-date values too. 
 - [`1-extract/`](./analysis/1-extract/):
   - [`dataset_definition_fixed.py`](./analysis/1-extract/dataset_definition_fixed.py) is the ehrQL script for selecting all variables that are fixed (e.g., date of death), or assumed to be fixed (e.g., ethnicity), as at the study end date.

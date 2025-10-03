@@ -24,7 +24,7 @@ args <- commandArgs(trailingOnly = TRUE)
 if (length(args) == 0) {
   # use for interactive testing
   # removeobjects <- FALSE
-  snapshot_date <- as.Date("20220829", format = "%Y%m%d")
+  snapshot_date <- as.Date("20201207", format = "%Y%m%d")
 } else {
   # removeobjects <- TRUE
   snapshot_date <- as.Date(args[[1]], format = "%Y%m%d")
@@ -37,15 +37,13 @@ temporal_resolution_history <- 28L
 # how wide are the temporal bins for frequencies over time for Kaplan-Meier plots? in days
 temporal_resolution_km <- 7L
 
-campaign_info <- campaign_dates |> filter(campaign_start == snapshot_date)
+campaign_info <- campaign_info |> filter(campaign_start_date == snapshot_date)
 
-# Create next campaign start date
-final_milestone <- campaign_info$final_milestone
+# list2env(campaign_info, globalenv())
 
 # maximum follow-up after snapshot date
 max_fup <- as.integer(final_milestone - snapshot_date + 1L)
 
-minimum_age <- campaign_info$age_threshold
 
 # dates to round down to
 # use this with `findInterval` until lubridate package is updated in the opensafely R image
@@ -59,16 +57,10 @@ floor_dates <- seq(
 # create string representation of date in compact format YYYMMDD
 snapshot_date_compact <- format(snapshot_date, "%Y%m%d")
 
-# use this to indicate a "last vaccination date" for unvaccinated people
-default_date <- firstpossiblevax_date
-
 ## Create output directory
 output_dir <- here("output", "4-snapshot", glue("report_snapshot_{snapshot_date_compact}"))
 fs::dir_create(output_dir)
 options(width = 200) # set output width for capture.output
-
-
-stopifnot("snapshot date is greater than observation end date - extend end date to pick up all vaccinations prior to snapshot date" = snapshot_date <= end_date)
 
 
 # Import processed data ----
@@ -100,7 +92,7 @@ data_combined <-
     # should be the same as primis_atrisk
     # cv = (crd | chd |  ckd | cld | cns_learndis | diabetes | immunosuppressed_asplenia | severe_obesity | smi),
 
-    age_above_eligiblity_threshold = age >= minimum_age,
+    age_above_eligiblity_threshold = (age >= campaign_info$age_threshold),
     primis_atrisk_only = primis_atrisk & !age_above_eligiblity_threshold,
 
     any_eligibility = age_above_eligiblity_threshold | primis_atrisk | carehome_status,
@@ -114,7 +106,7 @@ data_combined <-
     days_since_vax = snapshot_date - last_vax_date,
 
     last_vax_product = fct_na_value_to_level(last_vax_product, "Unvaccinated"),
-    last_vax_date = if_else(vax_count == 0, default_date + as.integer(runif(n(), 0, 10)), last_vax_date),
+    last_vax_date = if_else(vax_count == 0, study_dates$firstpossiblevax_date + as.integer(runif(n(), 0, 10)), last_vax_date),
     last_vax_week = floor_date(last_vax_date, unit = "week", week_start = 1), # starting on a monday
     last_vax_period = floor_date(last_vax_date, unit = floor_dates), # use floor_dates[findInterval(last_vax_date, floor_dates)] if lubridate isn't working
 
@@ -125,7 +117,7 @@ data_combined <-
 
     censor_date = pmin(
       deregistered_date,
-      final_milestone,
+      campaign_info$final_milestone_date,
       na.rm = TRUE
     ),
 
@@ -549,7 +541,7 @@ km_estimates <- function(..., event_name, event_time, event_indicator, resolutio
               .before = 1L
             ) |>
             complete(
-              time = seq(0L, max_fup, resolution), # fill in 1 row for each period (defined by resolution) of follow up
+              time = seq(0L, campaign_info$final_milestone_days, resolution), # fill in 1 row for each period (defined by resolution) of follow up
               fill = list(n.event = 0L, n.censor = 0L) # fill in zero events on those days
             ) |>
             fill(
