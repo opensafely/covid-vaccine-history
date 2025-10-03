@@ -486,20 +486,26 @@ if (!identical(as.integer(times_count), c(0L, 0L, nrow(data_combined)))) {
 
 ## Function to calculate KM estimates for a given stratification variable ----
 
-km_estimates <- function(subgroup, event_name, event_time, event_indicator) {
+# group variables are provided as characters via dots (...)
+# resolution argument is the precision used for the time dimension. If zero, then original resolution is used.
+km_estimates <- function(..., event_name, event_time, event_indicator, resolution = 0) {
+
+
+  group_names <- c(...)
 
   data_outcome <-
     data_combined |>
     select(
       patient_id,
-      {{ subgroup }},
+      all_of(group_names),
       event_time = {{ event_time }},
       event_indicator = {{ event_indicator }}
-    )
+    ) |>
+    mutate(event_time = ceiling_any(event_time, resolution))
 
   data_km <-
     data_outcome |>
-    group_by({{ subgroup }}) |>
+    group_by(across(all_of(group_names))) |>
     nest() |>
     mutate(
       surv_obj_tidy = map(
@@ -540,9 +546,9 @@ km_estimates <- function(subgroup, event_name, event_time, event_indicator) {
     mutate(
 
       # disclosure control
-      # estimate = plyr::round_any(estimate, sdc_threshold / first(n.risk)),
-      # conf.high = plyr::round_any(conf.high, sdc_threshold / first(n.risk)),
-      # conf.low = plyr::round_any(conf.low, sdc_threshold / first(n.risk)),
+      estimate = plyr::round_any(estimate, sdc_threshold / nth(n.risk, 2)),
+      conf.high = plyr::round_any(conf.high, sdc_threshold / nth(n.risk, 2)),
+      conf.low = plyr::round_any(conf.low, sdc_threshold / nth(n.risk, 2)),
 
       # cumulative incidence
       cmlinc = 1 - estimate,
@@ -550,16 +556,21 @@ km_estimates <- function(subgroup, event_name, event_time, event_indicator) {
       cmlinc.high = 1 - conf.low,
     )
 
+  group_name1 <- group_names[1]
+  group_name2 <- group_names[2]
+
+  if (is.na(group_name2)) group_name2 <- NULL
+
   coverage_plot <-
     data_km |>
     mutate(
       lagtime = lag(time, 1, 0), # assumes the time-origin is zero
     ) |>
     ggplot() +
-    geom_step(aes(x = time, y = cmlinc, group = {{ subgroup }}, colour = {{ subgroup }}), direction = "vh") +
+    geom_step(aes(x = time, y = cmlinc, group = !!sym(group_name2), colour = !!sym(group_name2)), direction = "vh") +
     # geom_step(aes(x = time, y = cmlinc, group = {{ subgroup }}, colour = {{ subgroup }}), direction = "vh", linetype = "dashed", alpha = 0.5) +
-    geom_rect(aes(xmin = lagtime, xmax = time, ymin = cmlinc.low, ymax = cmlinc.high, group = {{ subgroup }}, colour = {{ subgroup }}, fill = {{ subgroup }}), alpha = 0.1, colour = "transparent") +
-    # facet_grid(rows = vars(!!!subgroup_syms)) +
+    geom_rect(aes(xmin = lagtime, xmax = time, ymin = cmlinc.low, ymax = cmlinc.high, group = !!sym(group_name2), colour = !!sym(group_name2), fill = !!sym(group_name2)), alpha = 0.1, colour = "transparent") +
+    facet_grid(rows = group_name1) +
     scale_color_brewer(type = "qual", palette = "Set1", na.value = "grey") +
     scale_fill_brewer(type = "qual", palette = "Set1", guide = "none", na.value = "grey") +
     # scale_y_continuous(expand = expansion(mult = c(0, 0.01))) +
@@ -579,34 +590,81 @@ km_estimates <- function(subgroup, event_name, event_time, event_indicator) {
       legend.justification = c(0, 1),
     )
 
-  subgroup_name <- deparse(substitute(subgroup))
+  ggsave(fs::path(output_dir, glue("km_{event_name}_{paste0(group_names, collapse='_')}.png")), plot = coverage_plot)
 
-  ggsave(fs::path(output_dir, glue("km_{event_name}_{subgroup_name}.png")), plot = coverage_plot)
+  # print(data_km)
 
   # write tables that capture underlying plotting data
-  data_km |>
+  data_km_nozero <-
+    data_km |>
+    ungroup() |>
     filter(time != 0) |>
     select(
-      {{ subgroup }},
+      all_of(group_names),
       time,
       cmlinc,
       cmlinc.low,
       cmlinc.high,
-    ) |>
-    write_csv(fs::path(output_dir, glue("km_{event_name}_{subgroup_name}.csv")))
+    )
+
+  # write_csv(data_km_nozero, fs::path(output_dir, glue("km_{event_name}_{paste0(group_names, collapse='_')}.csv")))
+
+  return(data_km_nozero)
 
 }
 
-km_estimates(all, "vax", vax_time, vax_indicator)
-km_estimates(sex, "vax", vax_time, vax_indicator)
-km_estimates(ageband, "vax", vax_time, vax_indicator)
-km_estimates(ethnicity5, "vax", vax_time, vax_indicator)
-km_estimates(region, "vax", vax_time, vax_indicator)
-km_estimates(imd_quintile, "vax", vax_time, vax_indicator)
-km_estimates(primis_atrisk, "vax", vax_time, vax_indicator)
+# create specific function for vax outcomes
+km_estimates_vax <- partial(
+  km_estimates,
+  event_name = "vax", event_time = vax_time, event_indicator = vax_indicator, resolution = temporal_resolution_km
+)
 
-# consider raw KM plots for diseae burden too
-# km_estimates(all, covid_admitted_time, covid_admitted_indicator)
+km_estimates_vax("ageband", "sex")
+
+
+# loop over all group1 and group2 variable combinations and combine into one big dataset
+km_estimates_all <-
+  level_combos |>
+  mutate(
+    km_summary = map2(
+      group1, group2,
+      .f = \(x, y) {
+
+        if (is.na(y)) y <- NULL
+        lookup <- c(group1_value = x, group2_value = y)
+
+        km_estimates_vax(x, y) |>
+          mutate(across(c(all_of(c(x, y))), as.character)) |>
+          rename(all_of(c(group1_value = x, group2_value = y)))
+      }
+    )
+  ) |>
+  unnest(km_summary) |>
+  select(group1, group1_value, group2, group2_value, everything())
+
+# Write table to a CSV file
+# TODO: split this file up for output checking
+write_csv(km_estimates_all, fs::path(output_dir, glue("km_estimates_table.csv")))
+
+
+## --VARIABLES--
+
+# Demographic
+km_estimates_vax(all)
+km_estimates_vax(sex)
+km_estimates_vax(ageband)
+km_estimates_vax(ethnicity5)
+km_estimates_vax(region)
+km_estimates_vax(imd_quintile)
+km_estimates_vax(carehome_status)
+
+#  PRIMIS
+km_estimates_vax(primis_atrisk)
+
+# consider raw KM plots for disease burden too
+# km_estimates(all, covid_admitted_time, covid_admitted_indicator, temporal_resolution_km)
+
+
 # ________________________________________________________________________________________
 # Post-snapshot Covid-19 disease burden, stratified by characteristics recorded on the snapshot_date ----
 # ________________________________________________________________________________________
