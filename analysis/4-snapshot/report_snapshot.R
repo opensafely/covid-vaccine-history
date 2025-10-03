@@ -44,7 +44,7 @@ final_milestone <- campaign_info$final_milestone
 # maximum follow-up after snapshot date
 max_fup <- as.integer(final_milestone - snapshot_date + 1L)
 
-minimum_age <- campaign_dates$age_threshold[campaign_dates$campaign_start == snapshot_date]
+minimum_age <- campaign_info$age_threshold
 
 # dates to round down to
 # use this with `findInterval` until lubridate package is updated in the opensafely R image
@@ -96,15 +96,13 @@ data_combined <-
     cns_learndis = (cns | learndis),
     immunosuppressed_asplenia = (immunosuppressed | asplenia),
 
-    # hould be the same as primis_atrisk
+    # should be the same as primis_atrisk
     # cv = (crd | chd |  ckd | cld | cns_learndis | diabetes | immunosuppressed_asplenia | severe_obesity | smi),
 
-    eligible_age = age >= minimum_age,
-    eligible_atrisk = primis_atrisk,
-    eligible_atrisk_only = primis_atrisk & !eligible_age,
-    eligible_carehome = carehome_status,
+    age_above_eligiblity_threshold = age >= minimum_age,
+    primis_atrisk_only = primis_atrisk & !age_above_eligiblity_threshold,
 
-    eligible_any = eligible_age | eligible_atrisk | eligible_carehome,
+    any_eligibility = age_above_eligiblity_threshold | primis_atrisk | carehome_status,
 
     # previous vaccine summary
     # add more variables here based on covid_vax_prior_1_date, covid_vax_prior_2_date,... etc if needed
@@ -162,7 +160,7 @@ data_combined <-
   ) |>
   filter(
     # only consider people with documented eligibility
-    eligible_any
+    any_eligibility
   )
 
 # ________________________________________________________________________________________
@@ -256,13 +254,15 @@ plot_date_of_last_dose <- function(subgroup) {
 
 
 ## --VARIABLES--
+
+# Demographic
 plot_date_of_last_dose(all)
 plot_date_of_last_dose(sex)
 plot_date_of_last_dose(ageband)
 plot_date_of_last_dose(ethnicity5)
 plot_date_of_last_dose(region)
 plot_date_of_last_dose(imd_quintile)
-# todo: care home residency
+plot_date_of_last_dose(carehome_status)
 # PRIMIS
 plot_date_of_last_dose(crd) # chronic respiratory disease
 plot_date_of_last_dose(chd) # chronic heart disease
@@ -352,12 +352,16 @@ plot_vax_count <- function(subgroup) {
 # all, ageband, region,
 
 ## --VARIABLES--
+
+# Demographic
 plot_vax_count(all)
 plot_vax_count(sex)
 plot_vax_count(ageband)
 plot_vax_count(ethnicity5)
 plot_vax_count(region)
 plot_vax_count(imd_quintile)
+plot_vax_count(carehome_status)
+
 
 # PRIMIS
 plot_vax_count(crd) # chronic respiratory disease
@@ -672,11 +676,17 @@ get_all_estimates <- function(event_name, event_time, event_indicator) {
       exposure = sum({{ event_time }}),
     )
 
+  ## --VARIABLES--
+
+  # Demographic
   estimates_event_sex <- adjusted_estimates(sex, event_name, {{ event_time }}, {{ event_indicator }})
   estimates_event_ageband <- adjusted_estimates(ageband, event_name, {{ event_time }}, {{ event_indicator }})
   estimates_event_ethnicity5 <- adjusted_estimates(ethnicity5, event_name, {{ event_time }}, {{ event_indicator }})
   estimates_event_region <- adjusted_estimates(region, event_name, {{ event_time }}, {{ event_indicator }})
   estimates_event_imd_quintile <- adjusted_estimates(imd_quintile, event_name, {{ event_time }}, {{ event_indicator }})
+  estimates_event_carehome_status <- adjusted_estimates(carehome_status, event_name, {{ event_time }}, {{ event_indicator }})
+
+  # PRIMIS
   estimates_event_primis_atrisk <- adjusted_estimates(primis_atrisk, event_name, {{ event_time }}, {{ event_indicator }})
 
   estimates <-
@@ -686,6 +696,7 @@ get_all_estimates <- function(event_name, event_time, event_indicator) {
       estimates_event_ageband,
       estimates_event_ethnicity5,
       estimates_event_imd_quintile,
+      estimates_event_carehome_status,
       estimates_event_primis_atrisk
     ) |>
     mutate(
