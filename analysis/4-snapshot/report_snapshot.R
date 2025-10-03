@@ -41,8 +41,8 @@ campaign_info <- campaign_info |> filter(campaign_start_date == snapshot_date)
 
 # list2env(campaign_info, globalenv())
 
-# maximum follow-up after snapshot date
-max_fup <- as.integer(final_milestone - snapshot_date + 1L)
+# overwrite primary milestone to match rounded kaplan meier curve
+campaign_info$primary_milestone_days <- ceiling_any(campaign_info$primary_milestone_days, temporal_resolution_km)
 
 
 # dates to round down to
