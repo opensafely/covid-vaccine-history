@@ -441,26 +441,28 @@ table_prior_vax_summary <- function(...) {
   return(summary_table)
 }
 
-## --VARIABLES--
-create_summary_table(all)
-create_summary_table(sex)
-create_summary_table(ageband)
-create_summary_table(ethnicity5)
-create_summary_table(region)
-create_summary_table(imd_quintile)
+# loop over all group1 and group2 variable combinations and combine into one big dataset
+prior_vax_summary_table_all <-
+  level_combos |>
+  mutate(
+    prior_vax_summary = map2(
+      group1, group2,
+      .f = function(x, y) {
 
-# PRIMIS
-create_summary_table(crd) # cronic respiratory disease
-create_summary_table(chd) # cronic heart disease
-create_summary_table(ckd) # chronic kidney disease
-create_summary_table(cld) # cronic liver disease
-create_summary_table(cns_learndis) # chronic neurological or learning disability
-create_summary_table(diabetes) # diabetes
-create_summary_table(immunosuppressed_asplenia) # immunosuppressed or asplenia
-create_summary_table(severe_obesity) # obesity
-create_summary_table(smi) # severe mental illness
-create_summary_table(primis_atrisk) # clinically vulnerable
+        if (is.na(y)) y <- NULL
+        lookup <- c(group1_value = x, group2_value = y)
 
+        table_prior_vax_summary(x, y) |>
+          mutate(across(c(all_of(c(x, y))), as.character)) |>
+          rename(any_of(lookup))
+      }
+    )
+  ) |>
+  unnest(prior_vax_summary) |>
+  select(group1, group1_value, group2, group2_value, everything())
+
+# Write table to a CSV file
+write_csv(prior_vax_summary_table_all, fs::path(output_dir, glue("prior_vax_table.csv")))
 
 
 # ________________________________________________________________________________________
