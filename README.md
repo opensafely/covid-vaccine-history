@@ -68,6 +68,9 @@ The analysis scripts in the [`analysis/`](./analysis) directory are organised in
   - [`report_snapshot.R`](./analysis/4-snapshot/report_snapshot.R) reports vaccine history for people on the start of a given vaccine campaign, and subsequent vaccine coverage within this campaign. 
   It imports the vaccination data from the `prepare.R` script, processes date-specific info from the `dataset_definition_snapshot.py` script, combines them, then produces a collection of outputs about the eligible vaccine population and subsequent coverage on that date. 
 
+## Output files
+
+The structure of the output directory (not tracked via git) is designed to match the structure of the [analysis directory](./analysis). For example, all files created by the action `report_snapshot_20210906`, which runs the [`./output/4-snapshot/report_snapshot.R`](./analysis/4-snapshot/report_snapshot.R) script for `snapshot_date=20210906`, will be saved in the `./output/4-snapshot/report_snapshot_20210906/` directory. 
 
 ## Adding variables
 
