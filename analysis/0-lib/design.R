@@ -117,6 +117,11 @@ campaign_dates <-
     across(c(campaign_start, primary_milestone, age_date), as.Date),
     early_milestone = campaign_start + (7 * 8) - 1,
     final_milestone = lead(campaign_start, 1, as.Date("2030-01-01")) - 1
+  )  |>
+  mutate(
+    early_milestone_days = as.integer(primary_milestone - campaign_start) + 1,
+    primary_milestone_days = as.integer(early_milestone - campaign_start) + 1,
+    final_milestone_days = as.integer(final_milestone - campaign_start) + 1
   )
 
 # output from https://jobs.opensafely.org/opensafely-internal/tpp-vaccination-names/ workspace

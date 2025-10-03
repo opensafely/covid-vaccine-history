@@ -24,7 +24,7 @@ args <- commandArgs(trailingOnly = TRUE)
 if (length(args) == 0) {
   # use for interactive testing
   # removeobjects <- FALSE
-  snapshot_date <- as.Date("20210906", format = "%Y%m%d")
+  snapshot_date <- as.Date("20220829", format = "%Y%m%d")
 } else {
   # removeobjects <- TRUE
   snapshot_date <- as.Date(args[[1]], format = "%Y%m%d")
@@ -348,7 +348,7 @@ plot_vax_count <- function(subgroup) {
     ) +
     NULL
 
-  print(temp_plot)
+  # print(temp_plot)
 
   subgroup_name <- deparse(substitute(subgroup))
   # col_name = deparse(substitute(cols))
@@ -665,7 +665,17 @@ km_estimates_all <-
     )
   ) |>
   unnest(km_summary) |>
-  select(group1, group1_value, group2, group2_value, everything())
+  select(group1, group1_value, group2, group2_value, everything()) |>
+  mutate(
+    early_milestone = (time == campaign_info$early_milestone_days) * 1L,
+    primary_milestone = (time == campaign_info$primary_milestone_days) * 1L, # TODO this doesn't work as we're reporting weekly but we the primary milestone is not always the same day of the week - to fix
+    final_milestone = (time == campaign_info$final_milestone_days) * 1L,
+  )
+
+
+# km_estimates_all |>
+#   group_by(group1) |>
+#   summarise(n = n())
 
 # Write table to a CSV file
 # split up by level1 grouping variables, so as not to exceed 5,000 row limit
