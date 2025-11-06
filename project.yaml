@@ -83,6 +83,7 @@ actions:
   extract_snapshot_20220321:
     run: ehrql:v1 generate-dataset analysis/1-extract/dataset_definition_snapshot.py
       --output output/1-extract/extract_snapshot_20220321.arrow
+      --dummy-data-file analysis/1-extract/dummy-data/dummy_snapshot_20220321.arrow
       --
       --snapshot_date 20220321
     outputs:
@@ -102,6 +103,7 @@ actions:
   extract_snapshot_20220829:
     run: ehrql:v1 generate-dataset analysis/1-extract/dataset_definition_snapshot.py
       --output output/1-extract/extract_snapshot_20220829.arrow
+      --dummy-data-file analysis/1-extract/dummy-data/dummy_snapshot_20220829.arrow
       --
       --snapshot_date 20220829
     outputs:
@@ -121,6 +123,7 @@ actions:
   extract_snapshot_20230403:
     run: ehrql:v1 generate-dataset analysis/1-extract/dataset_definition_snapshot.py
       --output output/1-extract/extract_snapshot_20230403.arrow
+      --dummy-data-file analysis/1-extract/dummy-data/dummy_snapshot_20230403.arrow
       --
       --snapshot_date 20230403
     outputs:
@@ -140,6 +143,7 @@ actions:
   extract_snapshot_20230828:
     run: ehrql:v1 generate-dataset analysis/1-extract/dataset_definition_snapshot.py
       --output output/1-extract/extract_snapshot_20230828.arrow
+      --dummy-data-file analysis/1-extract/dummy-data/dummy_snapshot_20230828.arrow
       --
       --snapshot_date 20230828
     outputs:
@@ -159,6 +163,7 @@ actions:
   extract_snapshot_20240415:
     run: ehrql:v1 generate-dataset analysis/1-extract/dataset_definition_snapshot.py
       --output output/1-extract/extract_snapshot_20240415.arrow
+      --dummy-data-file analysis/1-extract/dummy-data/dummy_snapshot_20240415.arrow
       --
       --snapshot_date 20240415
     outputs:
@@ -178,6 +183,7 @@ actions:
   extract_snapshot_20240930:
     run: ehrql:v1 generate-dataset analysis/1-extract/dataset_definition_snapshot.py
       --output output/1-extract/extract_snapshot_20240930.arrow
+      --dummy-data-file analysis/1-extract/dummy-data/dummy_snapshot_20240930.arrow
       --
       --snapshot_date 20240930
     outputs:
@@ -197,6 +203,7 @@ actions:
   extract_snapshot_20250331:
     run: ehrql:v1 generate-dataset analysis/1-extract/dataset_definition_snapshot.py
       --output output/1-extract/extract_snapshot_20250331.arrow
+      --dummy-data-file analysis/1-extract/dummy-data/dummy_snapshot_20250331.arrow
       --
       --snapshot_date 20250331
     outputs:
