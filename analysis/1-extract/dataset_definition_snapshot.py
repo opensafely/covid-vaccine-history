@@ -11,15 +11,15 @@ from pathlib import Path
 from datetime import datetime
 
 from ehrql import (
-    show,
+#    show,
     get_parameter,
-    case,
+#    case,
     create_dataset,
-    days,
+#    days,
     weeks,
-    when,
-    minimum_of,
-    maximum_of
+#    when,
+#    minimum_of,
+#    maximum_of
 )
 from ehrql.tables.tpp import (
   patients,
@@ -82,6 +82,8 @@ demographic_variables(dataset = dataset, index_date = snapshot_date)
 
 primis_variables(dataset = dataset, index_date = snapshot_date)
 
+## extended subgroups ----
+extended_subgroups(dataset = dataset, index_date = snapshot_date)
 
 # other_cx_variables(dataset = dataset, index_date = snapshot_date)
 

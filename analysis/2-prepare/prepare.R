@@ -1,6 +1,6 @@
 # _________________________________________________
 # Purpose:
-# import vaccination date data extracted by cohort extractor
+# import vaccination date data extracted by ehrql
 # organise vaccination date data to "vax X product", "vax X date" (rather than "pfizer X date", "az X date", ...)
 # _________________________________________________
 
@@ -123,6 +123,11 @@ data_vax <-
     #    matches("asplenia_\\d+"), # asplenia or dysfunction of the spleen
     #    matches("severe_obesity_\\d+"), # obesity
     #    matches("smi_\\d+"), #severe mental illness
+    # Extended subgroups
+    #    matches("ckd_rrt_\\d+"), # CKD/RRT
+    #    matches("copd_\\d+"), # Chronic obstructive pulmonary disease
+    #    matches("down_sydrome_\\d+"), # Down's syndrome
+    #    matches("sickle_cell_\\d+"), # Sickle cell disease    
   ) |>
   pivot_longer(
     cols = -patient_id,

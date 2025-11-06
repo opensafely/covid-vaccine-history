@@ -224,7 +224,28 @@ sim_list_varying_i <- function(i) {
     "smi_{i}" := bn_node(~ rbernoulli(n = ..n, p = 0.02),
       needs = vax_variable), # severe mental illness
     "primis_atrisk_{i}" := bn_node(~ rbernoulli(n = ..n, p = 0.02),
-      needs = vax_variable) # clinically vulnerable
+      needs = vax_variable), # clinically vulnerable
+    # extended subgroups
+    "ckd_rrt_{i}" : = bn_node(
+    variable_formula = ~ rfactor(n = ..n, 
+    levels = c(      
+      "No CKD or RRT",
+      "Stage 3a",
+      "Stage 3b",
+      "Stage 4",
+      "Stage 5",
+      "RRT (transplant)",
+      "RRT (dialysis)"), 
+     p = c(0.9408, 0.0360, 0.0150, 0.0060, 0.0010, 0.0007,0.0005)),
+      needs = vax_variable),
+    "dialysis_{i}":= bn_node(~ rbernoulli(n = ..n, p = 0.02),
+      needs = vax_variable), # Dialysis
+    "copd_{i}":= bn_node(~ rbernoulli(n = ..n, p = 0.02),
+      needs = vax_variable), # Chronic obstructive pulmonary disease
+    "down_sydrome_{i}":= bn_node(~ rbernoulli(n = ..n, p = 0.02),
+      needs = vax_variable), # Down's syndrome
+    "sickle_cell_{i}":= bn_node(~ rbernoulli(n = ..n, p = 0.02),
+      needs = vax_variable), # Sickle cell disease
   )
 }
 

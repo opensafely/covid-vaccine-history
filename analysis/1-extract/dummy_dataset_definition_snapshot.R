@@ -111,7 +111,32 @@ sim_list <- lst(
   primis_atrisk = bn_node(
     ~ crd | chd | ckd | cld | cns | learndis | diabetes | immunosuppressed | asplenia | severe_obesity | smi,
   ),
-
+  # extended subgroups
+  ckd_rrt= bn_node(
+    variable_formula = ~ rfactor(n = ..n, 
+    levels = c(      
+      "No CKD or RRT",
+      "Stage 3a",
+      "Stage 3b",
+      "Stage 4",
+      "Stage 5",
+      "RRT (transplant)",
+      "RRT (dialysis)"), 
+     p = c(0.9408, 0.0360, 0.0150, 0.0060, 0.0010, 0.0007,0.0005) 
+    )
+  ),
+  copd = bn_node(
+    ~ rbernoulli(n = ..n, p = 0.02),
+  ),
+  down_sydrome = bn_node(
+    ~ rbernoulli(n = ..n, p = 0.02),
+  ),
+  sickle_cell = bn_node(
+    ~ rbernoulli(n = ..n, p = 0.02),
+  ),
+  cirrhosis = bn_node(
+    ~ rbernoulli(n = ..n, p = 0.02),
+  ),
   # covid vaccines
   covid_vax_1_day = bn_node(
     ~ runif(n = ..n, snapshot_day, snapshot_day + 200),
