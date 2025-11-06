@@ -240,17 +240,23 @@
       "downloaded_at": "2025-09-26 20:14:30.885894Z",
       "sha": "76ec7b04a909c50941c7ea16913560b4696d05a0"
     },
-    "opensafely-kidney-transplant.csv": {
-      "id": "opensafely/kidney-transplant/2020-07-15",
-      "url": "https://www.opencodelists.org/codelist/opensafely/kidney-transplant/2020-07-15/",
-      "downloaded_at": "2025-10-09 12:12:47.928826Z",
-      "sha": "db6b47d17273b563cb428e4a97a7ba8b6d62afa9"
+    "nhsd-primary-care-domain-refsets-renaltransp_cod.csv": {
+      "id": "nhsd-primary-care-domain-refsets/renaltransp_cod/20250627",
+      "url": "https://www.opencodelists.org/codelist/nhsd-primary-care-domain-refsets/renaltransp_cod/20250627/",
+      "downloaded_at": "2025-10-21 10:27:18.816049Z",
+      "sha": "1afa14313a2abc930ab8c11f4a7a548e800e2182"
     },
-    "opensafely-dialysis.csv": {
-      "id": "opensafely/dialysis/3ce108ac",
-      "url": "https://www.opencodelists.org/codelist/opensafely/dialysis/3ce108ac/",
-      "downloaded_at": "2025-10-09 12:12:48.004913Z",
-      "sha": "ace47eee209d55a7506e60e7e664f8e75ad9848c"
+    "nhsd-primary-care-domain-refsets-dialysis_cod.csv": {
+      "id": "nhsd-primary-care-domain-refsets/dialysis_cod/20250627",
+      "url": "https://www.opencodelists.org/codelist/nhsd-primary-care-domain-refsets/dialysis_cod/20250627/",
+      "downloaded_at": "2025-10-21 10:27:18.897669Z",
+      "sha": "40704496978d4b5353138ff41c1a4f0029313765"
+    },
+    "nhsd-primary-care-domain-refsets-cre_cod.csv": {
+      "id": "nhsd-primary-care-domain-refsets/cre_cod/20250627",
+      "url": "https://www.opencodelists.org/codelist/nhsd-primary-care-domain-refsets/cre_cod/20250627/",
+      "downloaded_at": "2025-10-14 12:22:52.881295Z",
+      "sha": "c6f53558c19c41b025c564d408d03eaad883345b"
     },
     "nhsd-primary-care-domain-refsets-copd_cod.csv": {
       "id": "nhsd-primary-care-domain-refsets/copd_cod/20250627",

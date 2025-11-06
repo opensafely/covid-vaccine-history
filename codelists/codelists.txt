@@ -95,8 +95,9 @@ opensafely/haematological-cancer-snomed/2020-04-15
 nhsd-primary-care-domain-refsets/carehome_cod/20250627
 
 # Extended subgroups
-opensafely/kidney-transplant/2020-07-15 
-opensafely/dialysis/3ce108ac
+nhsd-primary-care-domain-refsets/renaltransp_cod/20250627
+nhsd-primary-care-domain-refsets/dialysis_cod/20250627
+nhsd-primary-care-domain-refsets/cre_cod/20250627
 nhsd-primary-care-domain-refsets/copd_cod/20250627
 nhsd-primary-care-domain-refsets/ds_cod/20250627
 nhsd/sickle-spl-atriskv4-snomed-ct/7083ed37

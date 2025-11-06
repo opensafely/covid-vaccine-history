@@ -261,7 +261,37 @@ covid_icd10 = ["U071", "U072", "U109"]
 
 # Extended subgroups
 
-CKD_RRT = codelist_from_csv(
-    "codelists/nhsd-hiv-aids-snomed.csv",
+dialysis = codelist_from_csv(
+    "codelists/nhsd-primary-care-domain-refsets-dialysis_cod.csv",
+    column="code",
+)
+
+kidney_transplant = codelist_from_csv(
+    "codelists/nhsd-primary-care-domain-refsets-renaltransp_cod.csv",
+    column="code",
+)
+
+creatinine = codelist_from_csv(
+    "codelists/nhsd-primary-care-domain-refsets-cre_cod.csv",
+    column="code",
+)
+
+copd = codelist_from_csv(
+    "codelists/nhsd-primary-care-domain-refsets-copd_cod.csv", 
+    column="code",
+)
+
+down_sydrome = codelist_from_csv(
+    "codelists/nhsd-primary-care-domain-refsets-ds_cod.csv", 
+    column="code",
+)
+
+sickle_cell = codelist_from_csv(
+    "codelists/nhsd-sickle-spl-atriskv4-snomed-ct.csv", 
+    column="code",
+)
+
+cirrhosis = codelist_from_csv(
+    "codelists/nhsd-primary-care-domain-refsets-cirrhosis_cod.csv", 
     column="code",
 )
