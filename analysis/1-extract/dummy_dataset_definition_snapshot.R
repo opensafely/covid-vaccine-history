@@ -52,8 +52,8 @@ sim_list <- lst(
     ~ as.integer(rnorm(n = ..n, mean = 60, sd = 14))
   ),
   imd = bn_node(
-    ~ as.integer(plyr::round_any(runif(n = ..n, 100, 32000), 100)),
-    missing = ~0.05
+        ~ as.integer(plyr::round_any(runif(n = ..n, 100, 32000), 100)),
+            missing = ~0.05
   ),
   stp = bn_node(
     ~ factor(as.integer(runif(n = ..n, 1, 36)), levels = 1:36)
@@ -112,18 +112,19 @@ sim_list <- lst(
     ~ crd | chd | ckd | cld | cns | learndis | diabetes | immunosuppressed | asplenia | severe_obesity | smi,
   ),
   # extended subgroups
-  ckd_rrt= bn_node(
-    variable_formula = ~ rfactor(n = ..n, 
-    levels = c(      
-      "No CKD or RRT",
-      "Stage 3a",
-      "Stage 3b",
-      "Stage 4",
-      "Stage 5",
-      "RRT (transplant)",
-      "RRT (dialysis)"), 
-     p = c(0.9408, 0.0360, 0.0150, 0.0060, 0.0010, 0.0007,0.0005) 
-    )
+  rrt = bn_node(
+    variable_formula = ~ rfactor(n = ..n, levels = c(
+      "0", 
+      "1", 
+      "2"),
+    p = c(0.98, 0.01, 0.01)
+  ) ),
+  creatinine_umol = bn_node(
+    ~ as.numeric(runif(n = ..n, 20.0, 3000.0)),
+    missing_rate = ~0.60
+  ),
+  creatinine_age = bn_node(
+    ~ as.integer(rnorm(n = ..n, mean = 60, sd = 14))
   ),
   copd = bn_node(
     ~ rbernoulli(n = ..n, p = 0.02),

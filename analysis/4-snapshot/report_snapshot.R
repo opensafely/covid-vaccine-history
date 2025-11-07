@@ -278,6 +278,11 @@ plot_date_of_last_dose(severe_obesity) # obesity
 plot_date_of_last_dose(smi) # severe mental illness
 plot_date_of_last_dose(primis_atrisk) # clinically vulnerable
 
+#Extended subgroups
+plot_date_of_last_dose(ckd_rrt) # Chronic kidney disease clasif
+plot_date_of_last_dose(copd) # Chronic obstructive pulmonary disease
+plot_date_of_last_dose(down_sydrome) 
+plot_date_of_last_dose(sickle_cell) 
 
 ## _______________________________________________________________________________________
 ## Report info on prior dose count and product type
@@ -376,7 +381,13 @@ plot_vax_count(severe_obesity) # obesity
 plot_vax_count(smi) # severe mental illness
 plot_vax_count(primis_atrisk) # clinically vulnerable
 
-
+# Extended subgroups
+#Extended subgroups
+plot_vax_count(ckd_rrt) # Chronic kidney disease clasif
+plot_vax_count(copd) # Chronic obstructive pulmonary disease
+plot_vax_count(down_sydrome) 
+plot_vax_count(sickle_cell)
+ 
 ## _______________________________________________________________________________________
 ## Report info in a standardised table
 ## _______________________________________________________________________________________
