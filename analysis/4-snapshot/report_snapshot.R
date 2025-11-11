@@ -24,7 +24,7 @@ args <- commandArgs(trailingOnly = TRUE)
 if (length(args) == 0) {
   # use for interactive testing
   # removeobjects <- FALSE
-  snapshot_date <- as.Date("20201207", format = "%Y%m%d")
+  snapshot_date <- as.Date("20210906", format = "%Y%m%d")
 } else {
   # removeobjects <- TRUE
   snapshot_date <- as.Date(args[[1]], format = "%Y%m%d")
@@ -85,7 +85,8 @@ data_combined <-
   mutate(
     all = "All",
     !!!standardise_demographic_characteristics,
-
+    !!!ckd_rrt_clasif,
+    ckd_rrt = factor(ckd_rrt, levels = factor_levels$ckd_rrt, ordered = TRUE),
     cns_learndis = (cns | learndis),
     immunosuppressed_asplenia = (immunosuppressed | asplenia),
 
@@ -281,8 +282,8 @@ plot_date_of_last_dose(primis_atrisk) # clinically vulnerable
 #Extended subgroups
 plot_date_of_last_dose(ckd_rrt) # Chronic kidney disease clasif
 plot_date_of_last_dose(copd) # Chronic obstructive pulmonary disease
-plot_date_of_last_dose(down_sydrome) 
-plot_date_of_last_dose(sickle_cell) 
+plot_date_of_last_dose(down_sydrome)
+plot_date_of_last_dose(sickle_cell)
 
 ## _______________________________________________________________________________________
 ## Report info on prior dose count and product type
@@ -305,26 +306,25 @@ plot_vax_count <- function(subgroup) {
     group_by({{ subgroup }}) |>
     mutate(
       row_total = sum(n),
-      prop = n / row_total,
+      prop = ifelse(row_total > 0, n / row_total * 100, 0),
     ) |>
     ungroup()
 
   temp_plot <-
-    ggplot(summary_by) +
-    geom_bar(
-      aes(x = prop, y = {{ subgroup }}, width = row_total, fill = vax_count_group),
-      stat = "identity", # position = "fill",
-      position = position_stack(reverse = TRUE),
+    ggplot(
+      summary_by,
+      aes(
+        x = prop,
+        y = {{ subgroup }},
+        fill = vax_count_group
+      )
     ) +
-    facet_grid(
-      rows = vars({{ subgroup }}),
-      scales = "free_y",
-      space = "free_y"
-    ) +
+    geom_col(
+      position = position_stack(reverse = TRUE)
+    )+
     labs(
       x = "%",
-      y = NULL,
-      fill = "Vaccine count"
+      y = NULL, fill = "Vaccine count"
     ) +
     scale_fill_brewer(
       palette = "Set2",
@@ -345,7 +345,7 @@ plot_vax_count <- function(subgroup) {
     ) +
     NULL
 
-  # print(temp_plot)
+   print(temp_plot)
 
   subgroup_name <- deparse(substitute(subgroup))
   # col_name = deparse(substitute(cols))
@@ -385,9 +385,9 @@ plot_vax_count(primis_atrisk) # clinically vulnerable
 #Extended subgroups
 plot_vax_count(ckd_rrt) # Chronic kidney disease clasif
 plot_vax_count(copd) # Chronic obstructive pulmonary disease
-plot_vax_count(down_sydrome) 
+plot_vax_count(down_sydrome)
 plot_vax_count(sickle_cell)
- 
+
 ## _______________________________________________________________________________________
 ## Report info in a standardised table
 ## _______________________________________________________________________________________

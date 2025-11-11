@@ -243,7 +243,7 @@ ckd_rrt_clasif <-
     is.na(creatinine_age) ~ NA_real_,
     TRUE ~ (min_creat * max_creat * 141) * (0.993 ^ creatinine_age)
   ),
-  egfr = if_else(sex == "female", 1.018 * egfr_raw, egfr_male),
+  egfr = if_else(sex == "female", 1.018 * egfr_male, egfr_male),
   ckd_rrt = case_when(
       rrt_chr == "1" ~ "RRT (dialysis)",
       rrt_chr == "2" ~ "RRT (transplant)",

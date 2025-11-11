@@ -180,7 +180,7 @@ summary_stratified <-
     #   crd, chd, ckd, cld, cns, learndis, diabetes, immunosuppressed, asplenia, severe_obesity, smi,
     #   primis_atrisk
     # Extended subgroups
-    #   ckd_rrt, dialysis, copd, down_sydrome, sickle_cell
+    #   ckd_rrt, copd, down_sydrome, sickle_cell
 
   ) |>
   summarise(
