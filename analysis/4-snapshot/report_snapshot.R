@@ -138,6 +138,10 @@ data_combined <-
     covid_death_time = as.integer(pmin(covid_death_date, death_date, censor_date, na.rm = TRUE) - snapshot_date) + 1L,
     covid_death_indicator = (covid_death_date <= pmin(censor_date, death_date, na.rm = TRUE)) & !is.na(covid_death_date),
   ) |>
+  filter(
+    # only consider people with documented eligibility
+    any_eligibility
+  ) |>
   as_tibble() |>
   mutate(
     vax_status = case_when(
@@ -151,10 +155,6 @@ data_combined <-
 
     # setting missing values to explicit missing
     across(where(is.factor) | where(is.character), ~ fct_drop(fct_na_value_to_level(.x, level = "(Missing)")))
-  ) |>
-  filter(
-    # only consider people with documented eligibility
-    any_eligibility
   )
 
 # ________________________________________________________________________________________
@@ -766,6 +766,7 @@ adjusted_estimates("ageband", "admitte", covid_admitted_time, covid_admitted_ind
 
 
 get_all_estimates <- function(event_name, event_time, event_indicator) {
+
   # cox / glm function does not work when the contrast is a single valued vector
   # so creating the summary info manually here
   estimates_event_all <-
