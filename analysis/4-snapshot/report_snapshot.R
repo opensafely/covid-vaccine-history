@@ -319,8 +319,7 @@ plot_vax_count <- function(subgroup) {
     facet_grid(
       rows = vars({{ subgroup }}),
       scales = "free_y",
-      space = "free_y")
-      +
+      space = "free_y")+
     labs(
       x = "%",
       y = NULL,
