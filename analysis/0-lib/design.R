@@ -244,7 +244,8 @@ ckd_rrt_clasif <-
     TRUE ~ (min_creat * max_creat * 141) * (0.993 ^ creatinine_age)
   ),
   egfr = if_else(sex == "female", 1.018 * egfr_male, egfr_male),
-  ckd_rrt = case_when(
+  ckd_rrt = factor(
+    case_when(
       rrt_chr == "1" ~ "RRT (dialysis)",
       rrt_chr == "2" ~ "RRT (transplant)",
       (egfr >= 0 & egfr < 15) ~ "Stage 5",
@@ -252,6 +253,17 @@ ckd_rrt_clasif <-
       (egfr >= 30 & egfr < 45) ~ "Stage 3b",
       (egfr >= 45 & egfr < 60) ~ "Stage 3a",
       ((is.na(egfr) |(egfr >= 60)) & rrt_chr == "0") ~ "No CKD or RRT"
+    ),
+      levels = c(
+        "No CKD or RRT",
+        "Stage 3a",
+        "Stage 3b",
+        "Stage 4",
+        "Stage 5",
+        "RRT (transplant)",
+        "RRT (dialysis)"
+      ),
+      ordered = TRUE
     )
   )
 
@@ -283,15 +295,6 @@ factor_levels <-
       "Black or Black British - Any other Black background",
       "Other Ethnic Groups - Chinese",
       "Other Ethnic Groups - Any other ethnic group"
-    ),
-    ckd_rrt = c(
-      "No CKD or RRT",
-      "Stage 3a",
-      "Stage 3b",
-      "Stage 4",
-      "Stage 5",
-      "RRT (transplant)",
-      "RRT (dialysis)"
     )
   )
 

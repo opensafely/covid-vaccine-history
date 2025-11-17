@@ -86,7 +86,6 @@ data_combined <-
     all = "All",
     !!!standardise_demographic_characteristics,
     !!!ckd_rrt_clasif,
-    ckd_rrt = factor(ckd_rrt, levels = factor_levels$ckd_rrt, ordered = TRUE),
     cns_learndis = (cns | learndis),
     immunosuppressed_asplenia = (immunosuppressed | asplenia),
 
@@ -138,6 +137,10 @@ data_combined <-
     covid_death_time = as.integer(pmin(covid_death_date, death_date, censor_date, na.rm = TRUE) - snapshot_date) + 1L,
     covid_death_indicator = (covid_death_date <= pmin(censor_date, death_date, na.rm = TRUE)) & !is.na(covid_death_date),
   ) |>
+  filter(
+    # only consider people with documented eligibility
+    any_eligibility
+  )
   as_tibble() |>
   mutate(
     vax_status = case_when(
@@ -151,11 +154,7 @@ data_combined <-
 
     # setting missing values to explicit missing
     across(where(is.factor) | where(is.character), ~ fct_drop(fct_na_value_to_level(.x, level = "(Missing)")))
-  ) |>
-  filter(
-    # only consider people with documented eligibility
-    any_eligibility
-  )
+  ) 
 
 # ________________________________________________________________________________________
 # Pre-snapshot date vaccine history, stratified by characteristic recorded on the snapshot_date ----
@@ -311,20 +310,21 @@ plot_vax_count <- function(subgroup) {
     ungroup()
 
   temp_plot <-
-    ggplot(
-      summary_by,
-      aes(
-        x = prop,
-        y = {{ subgroup }},
-        fill = vax_count_group
-      )
+    ggplot(summary_by) +
+    geom_bar(
+      aes(x = prop, y = {{ subgroup }}, width = row_total, fill = vax_count_group),
+      stat = "identity", # position = "fill",
+      position = position_stack(reverse = TRUE),
     ) +
-    geom_col(
-      position = position_stack(reverse = TRUE)
-    )+
+    facet_grid(
+      rows = vars({{ subgroup }}),
+      scales = "free_y",
+      space = "free_y")
+      +
     labs(
       x = "%",
-      y = NULL, fill = "Vaccine count"
+      y = NULL,
+      fill = "Vaccine count"
     ) +
     scale_fill_brewer(
       palette = "Set2",
@@ -345,7 +345,7 @@ plot_vax_count <- function(subgroup) {
     ) +
     NULL
 
-   print(temp_plot)
+  # print(temp_plot)
 
   subgroup_name <- deparse(substitute(subgroup))
   # col_name = deparse(substitute(cols))
@@ -382,7 +382,7 @@ plot_vax_count(smi) # severe mental illness
 plot_vax_count(primis_atrisk) # clinically vulnerable
 
 # Extended subgroups
-#Extended subgroups
+
 plot_vax_count(ckd_rrt) # Chronic kidney disease clasif
 plot_vax_count(copd) # Chronic obstructive pulmonary disease
 plot_vax_count(down_sydrome)
