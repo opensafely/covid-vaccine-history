@@ -140,7 +140,7 @@ data_combined <-
   filter(
     # only consider people with documented eligibility
     any_eligibility
-  )
+  )|>
   as_tibble() |>
   mutate(
     vax_status = case_when(
