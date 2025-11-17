@@ -766,6 +766,7 @@ adjusted_estimates("ageband", "admitte", covid_admitted_time, covid_admitted_ind
 
 
 get_all_estimates <- function(event_name, event_time, event_indicator) {
+
   # cox / glm function does not work when the contrast is a single valued vector
   # so creating the summary info manually here
   estimates_event_all <-
