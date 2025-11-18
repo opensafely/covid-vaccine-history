@@ -3,7 +3,7 @@
 # define useful functions used in the codebase
 # define key design features for the study
 # define some look up tables to use in the codebase
-# this script should be sourced (using `source(here("analysis", "utility.R"))`) at the start of each R script
+# this script should be sourced (using `source(here("analysis", "design.R"))`) at the start of each R script
 # _________________________________________________
 
 library("tidyverse")
@@ -216,6 +216,56 @@ standardise_demographic_characteristics <-
     ),
   )
 
+## CKD-RRT classification
+# adapted from https://github.com/opensafely/covid_mortality_over_time/blob/main/analysis/utils/kidney_functions.R
+ckd_rrt_classif <-
+  rlang::quos(
+    # transform rrt to character
+    rrt_chr = as.character(rrt),
+
+    # creatinine mg/dL from µmol/L
+    SCR_adj = creatinine_umol / 88.4,
+
+    # min/max creatinine
+    min_creat = if_else(
+      sex == "male",
+      pmin(SCR_adj / 0.9, 1)^-0.411,
+      pmin(SCR_adj / 0.7, 1)^-0.329
+    ),
+    max_creat = if_else(
+      sex == "male",
+      pmax(SCR_adj / 0.9, 1)^-1.209,
+      pmax(SCR_adj / 0.7, 1)^-1.209
+    ),
+    # eGFR (male/female)
+    egfr_male = case_when(
+      is.na(creatinine_umol) ~ NA_real_,
+      is.na(creatinine_age) ~ NA_real_,
+      TRUE ~ (min_creat * max_creat * 141) * (0.993^creatinine_age)
+    ),
+    egfr = if_else(sex == "female", 1.018 * egfr_male, egfr_male),
+    ckd_rrt = case_when(
+      rrt_chr == "1" ~ "RRT (dialysis)",
+      rrt_chr == "2" ~ "RRT (transplant)",
+      (egfr >= 0 & egfr < 15) ~ "Stage 5",
+      (egfr >= 15 & egfr < 30) ~ "Stage 4",
+      (egfr >= 30 & egfr < 45) ~ "Stage 3b",
+      (egfr >= 45 & egfr < 60) ~ "Stage 3a",
+      ((is.na(egfr) | (egfr >= 60)) & rrt_chr == "0") ~ "No CKD or RRT"
+    ) |>
+      factor(
+        levels = c(
+          "No CKD or RRT",
+          "Stage 3a",
+          "Stage 3b",
+          "Stage 4",
+          "Stage 5",
+          "RRT (transplant)",
+          "RRT (dialysis)"
+        )
+      )
+  )
+
 ## factor levels provided in a sensible order, as this won't happen directly from opensafely ----
 
 factor_levels <-
@@ -244,7 +294,7 @@ factor_levels <-
       "Black or Black British - Any other Black background",
       "Other Ethnic Groups - Chinese",
       "Other Ethnic Groups - Any other ethnic group"
-    ),
+    )
   )
 
 # function to convert ethnicity 16 group into 5 group
@@ -294,9 +344,12 @@ level2_group <- c(
   "diabetes",
   "immunosuppressed_asplenia",
   "severe_obesity",
-  "smi"
-
-  # additional subgroups of interest go here!
+  "smi",
+  # Extended subgroups
+  "ckd_rrt", # CKD/RRT
+  "copd", # Chronic obstructive pulmonary disease
+  "down_sydrome", # Down's syndrome
+  "sickle_cell" # Sickle Cell
 )
 
 level_combos <- expand_grid(group1 = level1_group, group2 = level2_group) |>

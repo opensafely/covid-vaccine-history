@@ -11,15 +11,15 @@ from pathlib import Path
 from datetime import datetime
 
 from ehrql import (
-    show,
+#    show,
     get_parameter,
-    case,
+#    case,
     create_dataset,
-    days,
+#    days,
     weeks,
-    when,
-    minimum_of,
-    maximum_of
+#    when,
+#    minimum_of,
+#    maximum_of
 )
 from ehrql.tables.tpp import (
   patients,
@@ -82,6 +82,8 @@ demographic_variables(dataset = dataset, index_date = snapshot_date)
 
 primis_variables(dataset = dataset, index_date = snapshot_date)
 
+## extended subgroups ----
+extended_subgroups(dataset = dataset, index_date = snapshot_date)
 
 # other_cx_variables(dataset = dataset, index_date = snapshot_date)
 
@@ -141,6 +143,19 @@ dataset.covid_admitted_date = (
         .first_for_patient()
         .admission_date
 )
+
+# covid-related admission, primary diagnosis only
+dataset.covid_admitted_primary_date = (
+    apcs
+        .where(apcs.primary_diagnosis.is_in(codelists.covid_icd10))
+        .where(apcs.admission_method.is_in(["21", "22", "23", "24", "25", "2A", "2B", "2C", "2D", "28"]))
+        .where(apcs.patient_classification == "1")  # Ordinary admissions only
+        .where(apcs.admission_date.is_on_or_after(snapshot_date))
+        .sort_by(apcs.admission_date)
+        .first_for_patient()
+        .admission_date
+)
+
 # covid-related critical care admission 
 dataset.covid_critcare_date = (
     apcs

@@ -239,6 +239,48 @@
       "url": "https://www.opencodelists.org/codelist/nhsd-primary-care-domain-refsets/carehome_cod/20250627/",
       "downloaded_at": "2025-09-26 20:14:30.885894Z",
       "sha": "76ec7b04a909c50941c7ea16913560b4696d05a0"
+    },
+    "nhsd-primary-care-domain-refsets-renaltransp_cod.csv": {
+      "id": "nhsd-primary-care-domain-refsets/renaltransp_cod/20250627",
+      "url": "https://www.opencodelists.org/codelist/nhsd-primary-care-domain-refsets/renaltransp_cod/20250627/",
+      "downloaded_at": "2025-10-21 10:27:18.816049Z",
+      "sha": "1afa14313a2abc930ab8c11f4a7a548e800e2182"
+    },
+    "nhsd-primary-care-domain-refsets-dialysis_cod.csv": {
+      "id": "nhsd-primary-care-domain-refsets/dialysis_cod/20250627",
+      "url": "https://www.opencodelists.org/codelist/nhsd-primary-care-domain-refsets/dialysis_cod/20250627/",
+      "downloaded_at": "2025-10-21 10:27:18.897669Z",
+      "sha": "40704496978d4b5353138ff41c1a4f0029313765"
+    },
+    "nhsd-primary-care-domain-refsets-cre_cod.csv": {
+      "id": "nhsd-primary-care-domain-refsets/cre_cod/20250627",
+      "url": "https://www.opencodelists.org/codelist/nhsd-primary-care-domain-refsets/cre_cod/20250627/",
+      "downloaded_at": "2025-10-14 12:22:52.881295Z",
+      "sha": "c6f53558c19c41b025c564d408d03eaad883345b"
+    },
+    "nhsd-primary-care-domain-refsets-copd_cod.csv": {
+      "id": "nhsd-primary-care-domain-refsets/copd_cod/20250627",
+      "url": "https://www.opencodelists.org/codelist/nhsd-primary-care-domain-refsets/copd_cod/20250627/",
+      "downloaded_at": "2025-10-09 12:12:48.081636Z",
+      "sha": "e7ff15f6e5d3ae560f40799d46d917e01216ebb9"
+    },
+    "nhsd-primary-care-domain-refsets-ds_cod.csv": {
+      "id": "nhsd-primary-care-domain-refsets/ds_cod/20250627",
+      "url": "https://www.opencodelists.org/codelist/nhsd-primary-care-domain-refsets/ds_cod/20250627/",
+      "downloaded_at": "2025-10-09 12:12:48.156407Z",
+      "sha": "2ff6fcb3e669783ccd0c58d915484c66360c3436"
+    },
+    "nhsd-sickle-spl-atriskv4-snomed-ct.csv": {
+      "id": "nhsd/sickle-spl-atriskv4-snomed-ct/7083ed37",
+      "url": "https://www.opencodelists.org/codelist/nhsd/sickle-spl-atriskv4-snomed-ct/7083ed37/",
+      "downloaded_at": "2025-10-09 12:12:48.247324Z",
+      "sha": "9798e11fac7650aa56002ded0177d38c5c2192a7"
+    },
+    "nhsd-primary-care-domain-refsets-cirrhosis_cod.csv": {
+      "id": "nhsd-primary-care-domain-refsets/cirrhosis_cod/20250627",
+      "url": "https://www.opencodelists.org/codelist/nhsd-primary-care-domain-refsets/cirrhosis_cod/20250627/",
+      "downloaded_at": "2025-10-09 12:12:48.317401Z",
+      "sha": "b5e48eca0f7a0614cd57f51e89b3f832fb1900cd"
     }
   }
 }

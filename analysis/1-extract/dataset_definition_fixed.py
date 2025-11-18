@@ -16,8 +16,8 @@ from ehrql import (
     create_dataset,
     days,
     when,
-    minimum_of,
-    maximum_of
+#    minimum_of,
+#    maximum_of
 )
 from ehrql.tables.tpp import (
   patients,

@@ -179,6 +179,9 @@ summary_stratified <-
     # PRIMIS
     #   crd, chd, ckd, cld, cns, learndis, diabetes, immunosuppressed, asplenia, severe_obesity, smi,
     #   primis_atrisk
+    # Extended subgroups
+    #   ckd_rrt, copd, down_sydrome, sickle_cell
+
   ) |>
   summarise(
     n = round_any(n(), sdc_threshold)

@@ -20,13 +20,13 @@ source(here("analysis", "0-lib", "design.R"))
 # Define and simulate the dataset ----
 
 # Set the size of the dataset
-population_size <- 1000
+population_size <- 10000
 
 # set the index date for date variables
 # all variables will be defined as the number of days before or after this day
 # and then at the end of the script they are transformed into dates
 # we do this because some dplyr operations to not preserve date attributes, so dates will be converted to numerics
-snapshot_date <- as.Date("2021-09-06")
+snapshot_date <- as.Date("2020-12-07")
 
 snapshot_day <- 0L
 
@@ -111,7 +111,33 @@ sim_list <- lst(
   primis_atrisk = bn_node(
     ~ crd | chd | ckd | cld | cns | learndis | diabetes | immunosuppressed | asplenia | severe_obesity | smi,
   ),
-
+  # extended subgroups
+  rrt = bn_node(
+    variable_formula = ~ rfactor(n = ..n, levels = c(
+      "0",
+      "1",
+      "2"),
+    p = c(0.98, 0.01, 0.01)
+    )),
+  creatinine_umol = bn_node(
+    ~ as.numeric(runif(n = ..n, 20.0, 3000.0)),
+    missing_rate = ~0.60
+  ),
+  creatinine_age = bn_node(
+    ~ as.integer(rnorm(n = ..n, mean = 60, sd = 14))
+  ),
+  copd = bn_node(
+    ~ rbernoulli(n = ..n, p = 0.02),
+  ),
+  down_sydrome = bn_node(
+    ~ rbernoulli(n = ..n, p = 0.02),
+  ),
+  sickle_cell = bn_node(
+    ~ rbernoulli(n = ..n, p = 0.02),
+  ),
+  cirrhosis = bn_node(
+    ~ rbernoulli(n = ..n, p = 0.02),
+  ),
   # covid vaccines
   covid_vax_1_day = bn_node(
     ~ runif(n = ..n, snapshot_day, snapshot_day + 200),
@@ -150,6 +176,9 @@ sim_list <- lst(
   covid_admitted_day = bn_node(
     ~ as.integer(runif(n = ..n, snapshot_day, snapshot_day + 300)),
     missing_rate = ~0.7
+  ),
+  covid_admitted_primary_day = bn_node(
+    ~ if_else(rbernoulli(n = ..n, p = 0.5) == 1, covid_admitted_day, NA_integer_)
   ),
   covid_critcare_day = bn_node(
     ~covid_admitted_day,

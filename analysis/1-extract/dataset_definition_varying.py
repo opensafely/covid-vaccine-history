@@ -11,20 +11,21 @@ from json import loads
 from pathlib import Path
 
 from ehrql import (
-    case,
+   # case,
     create_dataset,
-    days,
-    when,
-    minimum_of,
-    maximum_of
+    # days,
+    # when,
+    # minimum_of,
+    # maximum_of,
+    claim_permissions
 )
 from ehrql.tables.tpp import (
   patients,
   practice_registrations, 
   vaccinations, 
-  clinical_events, 
-  ons_deaths,
-  addresses,
+#   clinical_events, 
+#   ons_deaths,
+#   addresses,
 )
 # import codelists
 from codelists import *
@@ -87,7 +88,9 @@ for i in range(1, 16+1):
 #    primis_variables(dataset = dataset, index_date = current_vax.date, var_name_suffix = suffix)
 #    dataset.add_column(f"primis_atrisk_{i}", primis_atrisk(current_vax.date)) # at risk 
 
-    # other clinical variables
+    # Extended subgroups
+#    extended_subgroups(dataset = dataset, index_date = current_vax.date, var_name_suffix = suffix)
+
 #    other_cx_variables(dataset = dataset, index_date = current_vax.date, var_name_suffix = suffix)
 
     previous_vax_date = current_vax.date
@@ -101,6 +104,15 @@ for i in range(1, 16+1):
 # so I'll do this post-extract
 
 # covid_vaccinations_ELD = covid_vaccinations.where(covid_vaccinations.date>"1899-01-01")
+
+# Some of the tables or features you are using require special permission to use with real
+# patient data. The permissions needed are:`dataset.add_event_table()` method
+# You can continue to work on your code using dummy data by “claiming” the required permisions:
+# Note that you will only be able to run your code against real data if you actually have these
+# permissions assigned by the OpenSAFELY team. For more information see: https://docs.opensafely.org/ehrql/reference/language/#permissions
+
+claim_permissions("event_level_data")
+
 covid_vaccinations_ELD = covid_vaccinations 
 dataset.add_event_table(
     "vaccinations",

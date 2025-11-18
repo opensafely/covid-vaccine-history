@@ -24,7 +24,7 @@ args <- commandArgs(trailingOnly = TRUE)
 if (length(args) == 0) {
   # use for interactive testing
   # removeobjects <- FALSE
-  snapshot_date <- as.Date("20201207", format = "%Y%m%d")
+  snapshot_date <- as.Date("20210906", format = "%Y%m%d")
 } else {
   # removeobjects <- TRUE
   snapshot_date <- as.Date(args[[1]], format = "%Y%m%d")
@@ -85,7 +85,7 @@ data_combined <-
   mutate(
     all = "All",
     !!!standardise_demographic_characteristics,
-
+    !!!ckd_rrt_classif,
     cns_learndis = (cns | learndis),
     immunosuppressed_asplenia = (immunosuppressed | asplenia),
 
@@ -137,6 +137,10 @@ data_combined <-
     covid_death_time = as.integer(pmin(covid_death_date, death_date, censor_date, na.rm = TRUE) - snapshot_date) + 1L,
     covid_death_indicator = (covid_death_date <= pmin(censor_date, death_date, na.rm = TRUE)) & !is.na(covid_death_date),
   ) |>
+  filter(
+    # only consider people with documented eligibility
+    any_eligibility
+  ) |>
   as_tibble() |>
   mutate(
     vax_status = case_when(
@@ -150,10 +154,6 @@ data_combined <-
 
     # setting missing values to explicit missing
     across(where(is.factor) | where(is.character), ~ fct_drop(fct_na_value_to_level(.x, level = "(Missing)")))
-  ) |>
-  filter(
-    # only consider people with documented eligibility
-    any_eligibility
   )
 
 # ________________________________________________________________________________________
@@ -278,6 +278,11 @@ plot_date_of_last_dose(severe_obesity) # obesity
 plot_date_of_last_dose(smi) # severe mental illness
 plot_date_of_last_dose(primis_atrisk) # clinically vulnerable
 
+# Extended subgroups
+plot_date_of_last_dose(ckd_rrt) # Chronic kidney disease classification
+plot_date_of_last_dose(copd) # Chronic obstructive pulmonary disease
+plot_date_of_last_dose(down_sydrome)
+plot_date_of_last_dose(sickle_cell)
 
 ## _______________________________________________________________________________________
 ## Report info on prior dose count and product type
@@ -300,7 +305,7 @@ plot_vax_count <- function(subgroup) {
     group_by({{ subgroup }}) |>
     mutate(
       row_total = sum(n),
-      prop = n / row_total,
+      prop = ifelse(row_total > 0, n / row_total * 100, 0),
     ) |>
     ungroup()
 
@@ -314,8 +319,7 @@ plot_vax_count <- function(subgroup) {
     facet_grid(
       rows = vars({{ subgroup }}),
       scales = "free_y",
-      space = "free_y"
-    ) +
+      space = "free_y") +
     labs(
       x = "%",
       y = NULL,
@@ -376,6 +380,12 @@ plot_vax_count(severe_obesity) # obesity
 plot_vax_count(smi) # severe mental illness
 plot_vax_count(primis_atrisk) # clinically vulnerable
 
+# Extended subgroups
+
+plot_vax_count(ckd_rrt) # Chronic kidney disease classification
+plot_vax_count(copd) # Chronic obstructive pulmonary disease
+plot_vax_count(down_sydrome)
+plot_vax_count(sickle_cell)
 
 ## _______________________________________________________________________________________
 ## Report info in a standardised table

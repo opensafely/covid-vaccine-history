@@ -5,6 +5,7 @@
 # from ehrql.codes import CTV3Code, ICD10Code
 
 from ehrql import case, days, when, years
+from ehrql.tables.tpp import clinical_events_ranges
 
 import codelists
  
@@ -322,9 +323,81 @@ def carehome_status(index_date):
   )
 
 ###########################################################
-# Other clinical variables
-##################################################################
+# Extended subgroups
+###########################################################
 
+# CKD/RRT
+# adapted from https://github.com/opensafely/covid_mortality_over_time/blob/main/analysis/utils/kidney_functions.R
+def has_rrt(index_date):
+    # RRT: dialysis / transplant) ----------------------------------------------
+    has_kidney_tx = has_prior_event(codelists.kidney_transplant, index_date)
+    has_dial      = has_prior_event(codelists.dialysis, index_date)
+
+    tx_date   = last_prior_event(codelists.kidney_transplant, index_date).date
+    dial_date = last_prior_event(codelists.dialysis, index_date).date
+
+    # Transplant: (AND NOT dialysis) OR (after dialysis)
+    rrt_transplant = case(
+        when(has_kidney_tx & ~has_dial).then(True),
+        when(
+            has_kidney_tx & has_dial &
+            tx_date.is_not_null() & dial_date.is_not_null() &
+            (tx_date > dial_date)
+        ).then(True),
+        otherwise=False
+    )
+
+    # Dialysis: (AND NOT transplant) OR (after transplant)
+    rrt_dialysis = case(
+        when(has_dial & ~has_kidney_tx).then(True),
+        when(
+            has_dial & has_kidney_tx &
+            dial_date.is_not_null() & tx_date.is_not_null() &
+            (dial_date > tx_date)
+        ).then(True),
+        otherwise=False
+    )
+    # RRT category: "1" dialysis, "2" transplant,  "0" none
+    rrt_cat = case(
+    when(rrt_dialysis).then("1"),
+    when(rrt_transplant).then("2"),
+    otherwise="0"
+    )
+    return rrt_cat
+
+#Creatinine event
+def last_creatinine_event(index_date):
+    creatinine_event = (
+        clinical_events_ranges
+        .where(clinical_events_ranges.snomedct_code.is_in(codelists.creatinine))
+        .where(
+            clinical_events_ranges.date.is_on_or_between(
+                index_date - years(2), index_date
+            )
+        )
+        .where(
+            (clinical_events_ranges.comparator == "=")
+            | (clinical_events_ranges.comparator.is_null())
+        )
+        .where(
+            clinical_events_ranges.numeric_value.is_not_null()
+            & (clinical_events_ranges.numeric_value > 20.0)
+            & (clinical_events_ranges.numeric_value < 3000.0)
+        )
+        .sort_by(clinical_events_ranges.date)
+        .last_for_patient()
+    )
+    return creatinine_event
+
+def extended_subgroups(dataset, index_date, var_name_suffix=""):
+    ## extended subgroups
+    dataset.add_column(f"rrt{var_name_suffix}", has_rrt(index_date))
+    dataset.add_column(f"creatinine_umol{var_name_suffix}", last_creatinine_event(index_date).numeric_value)
+    dataset.add_column(f"creatinine_age{var_name_suffix}", patients.age_on(last_creatinine_event(index_date).date))
+    dataset.add_column(f"copd{var_name_suffix}", has_prior_event(codelists.copd, index_date)) # Chronic obstructive pulmonary disease
+    dataset.add_column(f"down_sydrome{var_name_suffix}", has_prior_event(codelists.down_sydrome, index_date)) #Down's sydrome
+    dataset.add_column(f"sickle_cell{var_name_suffix}", has_prior_event(codelists.sickle_cell, index_date)) # Sickle cell anaemia
+    dataset.add_column(f"cirrhosis{var_name_suffix}", has_prior_event(codelists.cirrhosis, index_date)) #Down's sydrome 
 
 # def other_cx_variables(dataset, index_date, var_name_suffix=""):
     ## others of interest
@@ -335,11 +408,9 @@ def carehome_status(index_date):
 #                       has_prior_event(cancer_haem_snomed, index_date, where=clinical_events.date.is_after(index_date - days(int(3 * 365.25))))
 #                       ) #cancer   
 
-
-
 ############################################################
 # demographic variables
-###################################################################
+############################################################
 def demographic_variables(dataset, index_date, var_name_suffix=""):
     registration = practice_registrations.for_patient_on(index_date)
     dataset.add_column(f"age{var_name_suffix}", patients.age_on(index_date))
