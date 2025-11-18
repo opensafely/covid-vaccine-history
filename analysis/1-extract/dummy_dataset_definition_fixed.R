@@ -20,13 +20,13 @@ source(here("analysis", "0-lib", "design.R"))
 # Define and simulate the dataset ----
 
 # Set the size of the dataset
-population_size <- 1000
+population_size <- 10000
 
 # set the index date for date variables
 # all variables will be defined as the number of days before or after this day
 # and then at the end of the script they are transformed into dates
 # we do this because some dplyr operations to not preserve date attributes, so dates will be converted to numerics
-index_date <- end_date
+index_date <- study_dates$start_date
 
 index_day <- 0L
 
@@ -83,8 +83,8 @@ sim_list <- lst(
     missing_rate = ~0.1,
   ),
   death_day = bn_node(
-    ~ as.integer(runif(n = ..n, index_day, index_day + 2000)),
-    missing_rate = ~0.99
+    ~ as.integer(runif(n = ..n, index_day, index_day + 3000)),
+    missing_rate = ~0.98
   ),
 
   covid_death_day = bn_node(
