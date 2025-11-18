@@ -85,7 +85,7 @@ data_combined <-
   mutate(
     all = "All",
     !!!standardise_demographic_characteristics,
-    !!!ckd_rrt_clasif,
+    !!!ckd_rrt_classif,
     cns_learndis = (cns | learndis),
     immunosuppressed_asplenia = (immunosuppressed | asplenia),
 
@@ -140,7 +140,7 @@ data_combined <-
   filter(
     # only consider people with documented eligibility
     any_eligibility
-  )|>
+  ) |>
   as_tibble() |>
   mutate(
     vax_status = case_when(
@@ -154,7 +154,7 @@ data_combined <-
 
     # setting missing values to explicit missing
     across(where(is.factor) | where(is.character), ~ fct_drop(fct_na_value_to_level(.x, level = "(Missing)")))
-  ) 
+  )
 
 # ________________________________________________________________________________________
 # Pre-snapshot date vaccine history, stratified by characteristic recorded on the snapshot_date ----
@@ -278,8 +278,8 @@ plot_date_of_last_dose(severe_obesity) # obesity
 plot_date_of_last_dose(smi) # severe mental illness
 plot_date_of_last_dose(primis_atrisk) # clinically vulnerable
 
-#Extended subgroups
-plot_date_of_last_dose(ckd_rrt) # Chronic kidney disease clasif
+# Extended subgroups
+plot_date_of_last_dose(ckd_rrt) # Chronic kidney disease classification
 plot_date_of_last_dose(copd) # Chronic obstructive pulmonary disease
 plot_date_of_last_dose(down_sydrome)
 plot_date_of_last_dose(sickle_cell)
@@ -319,7 +319,7 @@ plot_vax_count <- function(subgroup) {
     facet_grid(
       rows = vars({{ subgroup }}),
       scales = "free_y",
-      space = "free_y")+
+      space = "free_y") +
     labs(
       x = "%",
       y = NULL,
@@ -382,7 +382,7 @@ plot_vax_count(primis_atrisk) # clinically vulnerable
 
 # Extended subgroups
 
-plot_vax_count(ckd_rrt) # Chronic kidney disease clasif
+plot_vax_count(ckd_rrt) # Chronic kidney disease classification
 plot_vax_count(copd) # Chronic obstructive pulmonary disease
 plot_vax_count(down_sydrome)
 plot_vax_count(sickle_cell)
@@ -765,7 +765,6 @@ adjusted_estimates("ageband", "admitte", covid_admitted_time, covid_admitted_ind
 
 
 get_all_estimates <- function(event_name, event_time, event_indicator) {
-
   # cox / glm function does not work when the contrast is a single valued vector
   # so creating the summary info manually here
   estimates_event_all <-
