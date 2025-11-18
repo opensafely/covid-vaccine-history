@@ -26,7 +26,7 @@ population_size <- 10000
 # all variables will be defined as the number of days before or after this day
 # and then at the end of the script they are transformed into dates
 # we do this because some dplyr operations to not preserve date attributes, so dates will be converted to numerics
-snapshot_date <- as.Date("2025-03-31")
+snapshot_date <- as.Date("2020-12-07")
 
 snapshot_day <- 0L
 
@@ -176,6 +176,9 @@ sim_list <- lst(
   covid_admitted_day = bn_node(
     ~ as.integer(runif(n = ..n, snapshot_day, snapshot_day + 300)),
     missing_rate = ~0.7
+  ),
+  covid_admitted_primary_day = bn_node(
+    ~ if_else(rbernoulli(n = ..n, p = 0.5) == 1, covid_admitted_day, NA_integer_)
   ),
   covid_critcare_day = bn_node(
     ~covid_admitted_day,

@@ -143,6 +143,19 @@ dataset.covid_admitted_date = (
         .first_for_patient()
         .admission_date
 )
+
+# covid-related admission, primary diagnosis only
+dataset.covid_admitted_primary_date = (
+    apcs
+        .where(apcs.primary_diagnosis.contains_any_of(codelists.covid_icd10))
+        .where(apcs.admission_method.is_in(["21", "22", "23", "24", "25", "2A", "2B", "2C", "2D", "28"]))
+        .where(apcs.patient_classification == "1")  # Ordinary admissions only
+        .where(apcs.admission_date.is_on_or_after(snapshot_date))
+        .sort_by(apcs.admission_date)
+        .first_for_patient()
+        .admission_date
+)
+
 # covid-related critical care admission 
 dataset.covid_critcare_date = (
     apcs
