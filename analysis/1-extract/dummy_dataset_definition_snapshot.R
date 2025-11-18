@@ -20,13 +20,13 @@ source(here("analysis", "0-lib", "design.R"))
 # Define and simulate the dataset ----
 
 # Set the size of the dataset
-population_size <- 1000
+population_size <- 10000
 
 # set the index date for date variables
 # all variables will be defined as the number of days before or after this day
 # and then at the end of the script they are transformed into dates
 # we do this because some dplyr operations to not preserve date attributes, so dates will be converted to numerics
-snapshot_date <- as.Date("2021-09-06")
+snapshot_date <- as.Date("2025-03-31")
 
 snapshot_day <- 0L
 
@@ -52,8 +52,8 @@ sim_list <- lst(
     ~ as.integer(rnorm(n = ..n, mean = 60, sd = 14))
   ),
   imd = bn_node(
-        ~ as.integer(plyr::round_any(runif(n = ..n, 100, 32000), 100)),
-            missing = ~0.05
+    ~ as.integer(plyr::round_any(runif(n = ..n, 100, 32000), 100)),
+    missing = ~0.05
   ),
   stp = bn_node(
     ~ factor(as.integer(runif(n = ..n, 1, 36)), levels = 1:36)
@@ -114,11 +114,11 @@ sim_list <- lst(
   # extended subgroups
   rrt = bn_node(
     variable_formula = ~ rfactor(n = ..n, levels = c(
-      "0", 
-      "1", 
+      "0",
+      "1",
       "2"),
     p = c(0.98, 0.01, 0.01)
-  ) ),
+    )),
   creatinine_umol = bn_node(
     ~ as.numeric(runif(n = ..n, 20.0, 3000.0)),
     missing_rate = ~0.60
