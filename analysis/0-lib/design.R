@@ -191,10 +191,16 @@ standardise_demographic_characteristics <-
 
     ## --VARIABLES--
     ## demographics
-    ageband = cut(
+    ageband4 = cut(
       age,
       breaks = c(-Inf, 16, 50, 65, 75, 105, Inf),
-      labels = c("under 16", "16-49", "50-64", "65-74", "75-104", "105+"), # under 16 and 105+ are excluded in analysis but include here to ensure nobody slipped through the net
+      labels = c("under 16", "16-49", "50-64", "65-74", "75-104", "105+"), # under 16 and 105+ should be excluded in analysis but include here to ensure nobody slipped through the net
+      right = FALSE
+    ),
+    ageband13 = cut(
+      age,
+      breaks = c(-Inf, 16, 20, 30, 40, 50, 55, 60, 65, 70, 75, 80, 85, 90, 105, Inf),
+      labels = c("under 16", "16-19", "20-29", "30-39", "40-49", "50-54", "55-59", "60-64", "65-69", "70-74", "75-79", "80-84", "85-89", "90-104", "105+"), # under 16 and 105+ should be excluded in analysis but include here to ensure nobody slipped through the net
       right = FALSE
     ),
     region = fct_collapse(
@@ -315,7 +321,7 @@ level1_group <- c(
   "primis_atrisk",
   "primis_atrisk_only",
   "carehome_status",
-  "ageband",
+  "ageband4",
   "crd",
   "chd",
   "ckd",
@@ -330,7 +336,8 @@ level1_group <- c(
 level2_group <- c(
   "all",
   "sex",
-  "ageband",
+  "ageband4",
+  "ageband13",
   "ethnicity5",
   "region",
   "imd_quintile",
@@ -357,7 +364,8 @@ level_combos <- expand_grid(group1 = level1_group, group2 = level2_group) |>
     # group2 = na_if(group2, "all")
   ) |>
   filter(
-    (group1 == group2) %in% c(FALSE, NA) | (group1 == "all")
+    (group1 == group2) %in% c(FALSE, NA) | (group1 == "all"),
+    !(group1 == ageband4 & group2 == ageand13)
   )
 
 # Local run flag ----

@@ -266,7 +266,7 @@ plot_date_of_last_dose <- function(subgroup) {
 # Demographic
 plot_date_of_last_dose(all)
 plot_date_of_last_dose(sex)
-plot_date_of_last_dose(ageband)
+plot_date_of_last_dose(ageband4)
 plot_date_of_last_dose(ethnicity5)
 plot_date_of_last_dose(region)
 plot_date_of_last_dose(imd_quintile)
@@ -368,7 +368,7 @@ plot_vax_count <- function(subgroup) {
 # Demographic
 plot_vax_count(all)
 plot_vax_count(sex)
-plot_vax_count(ageband)
+plot_vax_count(ageband4)
 plot_vax_count(ethnicity5)
 plot_vax_count(region)
 plot_vax_count(imd_quintile)
@@ -461,9 +461,9 @@ table_prior_vax_summary <- function(...) {
 
 # for testing function interactively
 # table_prior_vax_summary("all", "all")
-# table_prior_vax_summary("all", "ageband")
-# table_prior_vax_summary("ageband", "all")
-# table_prior_vax_summary("ageband", "sex")
+# table_prior_vax_summary("all", "ageband4")
+# table_prior_vax_summary("ageband4", "all")
+# table_prior_vax_summary("ageband4", "sex")
 
 # loop over all group1 and group2 variable combinations and combine into one big dataset
 prior_vax_summary_table_all <-
@@ -648,9 +648,9 @@ km_estimates_vax <- partial(
 
 # for testing function interactively
 # km_estimates_vax("all", "all")
-# km_estimates_vax("all", "ageband")
-# km_estimates_vax("ageband", "all")
-# km_estimates_vax("ageband", "sex")
+# km_estimates_vax("all", "ageband4")
+# km_estimates_vax("ageband4", "all")
+# km_estimates_vax("ageband4", "sex")
 
 
 # loop over all group1 and group2 variable combinations and combine into one big dataset
@@ -705,10 +705,12 @@ adjusted_estimates <- function(subgroup, event_name, event_time, event_indicator
 
 
   cox_formula <- as.formula(glue("Surv(event_time, event_indicator) ~ {subgroup} + sex + ns(age, 3)"))
-  if (subgroup == "ageband") cox_formula <- as.formula(glue("Surv(event_time, event_indicator) ~ ageband + sex"))
+  if (subgroup == "ageband4") cox_formula <- as.formula(glue("Surv(event_time, event_indicator) ~ ageband4 + sex"))
+  if (subgroup == "ageband13") cox_formula <- as.formula(glue("Surv(event_time, event_indicator) ~ ageband13 + sex"))
 
   poisson_formula <- as.formula(glue("event_indicator ~ {subgroup} + sex + ns(age, 3)"))
-  if (subgroup == "ageband") poisson_formula <- as.formula(glue("event_indicator ~ ageband + sex"))
+  if (subgroup == "ageband4") poisson_formula <- as.formula(glue("event_indicator ~ ageband4 + sex"))
+  if (subgroup == "ageband13") poisson_formula <- as.formula(glue("event_indicator ~ ageband13 + sex"))
 
 
   data_outcome <-
@@ -771,7 +773,7 @@ adjusted_estimates <- function(subgroup, event_name, event_time, event_indicator
   return(data_estimates)
 }
 
-# adjusted_estimates("ageband", "admitte", covid_admitted_time, covid_admitted_indicator)
+# adjusted_estimates("ageband4", "admitte", covid_admitted_time, covid_admitted_indicator)
 
 
 get_all_estimates <- function(event_name, event_time, event_indicator) {
@@ -792,7 +794,7 @@ get_all_estimates <- function(event_name, event_time, event_indicator) {
 
   # Demographic
   estimates_event_sex <- adjusted_estimates("sex", event_name, {{ event_time }}, {{ event_indicator }})
-  estimates_event_ageband <- adjusted_estimates("ageband", event_name, {{ event_time }}, {{ event_indicator }})
+  estimates_event_ageband4 <- adjusted_estimates("ageband4", event_name, {{ event_time }}, {{ event_indicator }})
   estimates_event_ethnicity5 <- adjusted_estimates("ethnicity5", event_name, {{ event_time }}, {{ event_indicator }})
   estimates_event_region <- adjusted_estimates("region", event_name, {{ event_time }}, {{ event_indicator }})
   estimates_event_imd_quintile <- adjusted_estimates("imd_quintile", event_name, {{ event_time }}, {{ event_indicator }})
@@ -805,7 +807,7 @@ get_all_estimates <- function(event_name, event_time, event_indicator) {
     bind_rows(
       estimates_event_all,
       estimates_event_sex,
-      estimates_event_ageband,
+      estimates_event_ageband4,
       estimates_event_ethnicity5,
       estimates_event_imd_quintile,
       estimates_event_carehome_status,
