@@ -15,6 +15,7 @@ library("here")
 library("arrow")
 library("survival")
 library("splines")
+library("parglm")
 
 # Import custom functions
 source(here("analysis", "0-lib", "design.R"))
@@ -741,13 +742,16 @@ adjusted_estimates <- function(subgroup, event_name, event_time, event_indicator
       hr.ln.std.error = std.error,
     )
 
+  parglm_control <- parglm.control(maxit = 40, nthreads = 4)
+
   data_poisson <-
     data_outcome |>
     glm(
       data = _,
       formula = poisson_formula,
       family = poisson,
-      offset = log(event_time)
+      offset = log(event_time),
+      control = parglm_control
     ) |>
     broom.helpers::tidy_plus_plus() |>
     filter(variable == subgroup) |>
