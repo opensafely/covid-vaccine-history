@@ -156,6 +156,12 @@ data_combined <-
     across(where(is.factor) | where(is.character), ~ fct_drop(fct_na_value_to_level(.x, level = "(Missing)")))
   )
 
+capture.output(
+  skimr::skim_without_charts(data_combined),
+  file = fs::path(output_dir, "data_combined_skim.txt"),
+  split = FALSE
+)
+
 # ________________________________________________________________________________________
 # Pre-snapshot date vaccine history, stratified by characteristic recorded on the snapshot_date ----
 # ________________________________________________________________________________________
