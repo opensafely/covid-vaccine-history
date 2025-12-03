@@ -49,7 +49,7 @@ campaign_info = all_campaign_info[snapshot_date]
 age_calculation_date = campaign_info["age_date"]
 
 # end of follow-up for campaign (= day before next campaign))
-end_of_campaign_date = all_campaign_info[final_milestone_date]
+end_of_campaign_date = campaign_info["final_milestone_date"]
 
 # initialise dataset
 
