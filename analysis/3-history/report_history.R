@@ -175,7 +175,7 @@ summary_stratified <-
   data_vax |>
   group_by(
     vax_dosenumber, vax_product8, vax_campaign,
-    sex, ageband, ethnicity5, region, imd_quintile,
+    sex, ageband4, ethnicity5, region, imd_quintile,
     # PRIMIS
     #   crd, chd, ckd, cld, cns, learndis, diabetes, immunosuppressed, asplenia, severe_obesity, smi,
     #   primis_atrisk
@@ -266,7 +266,7 @@ plot_vax_dates <- function(rows, cols) {
 plot_vax_dates(all, all2)
 
 plot_vax_dates(sex, all)
-plot_vax_dates(ageband, all)
+plot_vax_dates(ageband4, all)
 plot_vax_dates(ethnicity5, all)
 plot_vax_dates(region, all)
 plot_vax_dates(imd_quintile, all)
@@ -289,7 +289,7 @@ plot_vax_dates(vax_dosenumber, all)
 
 
 plot_vax_dates(sex, vax_dosenumber)
-plot_vax_dates(ageband, vax_dosenumber)
+plot_vax_dates(ageband4, vax_dosenumber)
 plot_vax_dates(ethnicity5, vax_dosenumber)
 plot_vax_dates(region, vax_dosenumber)
 plot_vax_dates(imd_quintile, vax_dosenumber)
@@ -378,7 +378,7 @@ plot_vax_intervals <- function(rows, cols) {
 }
 
 plot_vax_intervals(sex, vax_dosenumber)
-plot_vax_intervals(ageband, vax_dosenumber)
+plot_vax_intervals(ageband4, vax_dosenumber)
 plot_vax_intervals(ethnicity5, vax_dosenumber)
 plot_vax_intervals(region, vax_dosenumber)
 plot_vax_intervals(imd_quintile, vax_dosenumber)
