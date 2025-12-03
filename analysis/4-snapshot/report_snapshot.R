@@ -771,7 +771,7 @@ adjusted_estimates <- function(subgroup, event_name, event_time, event_indicator
   return(data_estimates)
 }
 
-adjusted_estimates("ageband", "admitte", covid_admitted_time, covid_admitted_indicator)
+# adjusted_estimates("ageband", "admitte", covid_admitted_time, covid_admitted_indicator)
 
 
 get_all_estimates <- function(event_name, event_time, event_indicator) {
