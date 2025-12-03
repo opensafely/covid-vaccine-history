@@ -166,7 +166,7 @@ dataset.covid_admitted_primary_date = (
 # length of stay across all covid admissions with admission within the campaign date
 dataset.covid_admitted_los = (
   all_covid_admissions.discharge_date - all_covid_admissions.admission_date
-).sum_for_patient()
+).as_int().sum_for_patient()
 
 # covid-related critical care admission 
 dataset.covid_critcare_date = (
