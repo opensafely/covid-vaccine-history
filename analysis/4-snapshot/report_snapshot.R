@@ -176,6 +176,9 @@ capture.output(
 # if no documented prior vaccination, then values are stacked on the LHS of the chart
 
 plot_date_of_last_dose <- function(subgroup) {
+
+  over2years_dummy_date <- (snapshot_date - ceiling_any(365 * 2, 7))
+
   summary_by <-
     data_combined |>
     lazy_dt() |>
@@ -184,6 +187,14 @@ plot_date_of_last_dose <- function(subgroup) {
       n = round_any(n(), sdc_threshold)
     ) |>
     ungroup() |>
+    mutate(
+      # if last vaccination date was over 2 years ago, replace with dummy date
+      last_vax_period = if_else(
+        (last_vax_period < over2years_dummy_date)  | is.na(last_vax_period),
+        over2years_dummy_date - 42,
+        last_vax_period
+      )
+    ) |>
     as_tibble() |>
     complete(
       {{ subgroup }}, last_vax_product, last_vax_period,
@@ -192,19 +203,8 @@ plot_date_of_last_dose <- function(subgroup) {
 
   breaks <- seq(as.Date("2021-01-01"),  as.Date("2028-06-01"), by = "6 month")
 
-  over2years_dummy_date <- (snapshot_date - ceiling_any(365 * 2, 7))
-
   temp_plot <-
     summary_by |>
-    mutate(
-
-      # if last vaccination date was over 2 years ago, replace with dummy date
-      last_vax_period = if_else(
-        (last_vax_period < over2years_dummy_date)  | is.na(last_vax_period),
-        over2years_dummy_date - 42,
-        last_vax_period
-      )
-    ) |>
     ggplot() +
     geom_col(
       aes(x = last_vax_period, y = n, fill = last_vax_product, group = last_vax_product),
