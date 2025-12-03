@@ -131,9 +131,9 @@ for (snapshot_date in all_snapshot_dates) {
     # extended subgroups
     rrt_cat = bn_node(
       variable_formula = ~ rfactor(n = ..n, levels = c(
-        "0",
-        "1",
-        "2"),
+        "0 no RRT",
+        "1 dialysis",
+        "2 transplant"),
       p = c(0.98, 0.01, 0.01)
       )),
     creatinine_umol = bn_node(
