@@ -181,7 +181,7 @@ data_vax |>
   ) |>
   group_by(vax_product_raw) |>
   summarise(
-    n = ceiling_any(n(), 100),
+    n = round_any(n(), sdc_threshold),
   ) |>
   write_csv(fs::path(output_dir, "vax_product_count.csv"))
 
@@ -247,10 +247,10 @@ count_product <-
   ) |>
   group_by(adult, vax_product) |>
   summarise(
-    count_total = round(n(), 100),
-    count_before20200101 = round(sum(vax_date < as.Date("2020-01-01")), 100),
-    count_onorafter20200101 = round(sum(vax_date >= as.Date("2020-01-01")), 100),
-    count_onorafter20201201 = round(sum(vax_date >= as.Date("2020-12-01")), 100),
+    count_total = round_any(n(), sdc_threshold),
+    count_before20200101 = round_any(sum(vax_date < as.Date("2020-01-01")), sdc_threshold),
+    count_onorafter20200101 = round_any(sum(vax_date >= as.Date("2020-01-01")), sdc_threshold),
+    count_onorafter20201201 = round_any(sum(vax_date >= as.Date("2020-12-01")), sdc_threshold),
     first_date_onorafter20201201 = min(if_else(vax_date >= as.Date("2020-12-01"), vax_date, as.Date(NA)))
   ) |>
   as_tibble()
@@ -266,7 +266,7 @@ count_product_campaign <-
   ) |>
   group_by(adult, campaign, vax_product) |>
   summarise(
-    count_total = round(n(), 100),
+    count_total = round_any(n(), sdc_threshold),
     first_date_during_campaign = min(vax_date)
   ) |>
   as_tibble()
@@ -289,10 +289,10 @@ count_products_cooccurrence <-
   products_cooccurrence |>
   group_by(vax_product) |>
   summarise(
-    count_total = round(n(), 100),
-    count_before20200101 = round(sum(vax_date < as.Date("2020-01-01")), 100),
-    count_onorafter20200101 = round(sum(vax_date >= as.Date("2020-01-01")), 100),
-    count_onorafter20201201 = round(sum(vax_date >= as.Date("2020-12-01")), 100),
+    count_total = round_any(n(), sdc_threshold),
+    count_before20200101 = round_any(sum(vax_date < as.Date("2020-01-01")), sdc_threshold),
+    count_onorafter20200101 = round_any(sum(vax_date >= as.Date("2020-01-01")), sdc_threshold),
+    count_onorafter20201201 = round_any(sum(vax_date >= as.Date("2020-12-01")), sdc_threshold),
     first_date_onorafter20201201 = min(if_else(vax_date >= as.Date("2020-12-01"), vax_date, as.Date(NA)))
   ) |>
   as_tibble()
@@ -305,10 +305,10 @@ count_products_cooccurrence_campaign <-
   products_cooccurrence |>
   group_by(vax_product, campaign) |>
   summarise(
-    count_total = round(n(), 100),
-    count_before20200101 = round(sum(vax_date < as.Date("2020-01-01")), 100),
-    count_onorafter20200101 = round(sum(vax_date >= as.Date("2020-01-01")), 100),
-    count_onorafter20201201 = round(sum(vax_date >= as.Date("2020-12-01")), 100),
+    count_total = round_any(n(), sdc_threshold),
+    count_before20200101 = round_any(sum(vax_date < as.Date("2020-01-01")), sdc_threshold),
+    count_onorafter20200101 = round_any(sum(vax_date >= as.Date("2020-01-01")), sdc_threshold),
+    count_onorafter20201201 = round_any(sum(vax_date >= as.Date("2020-12-01")), sdc_threshold),
     first_date_during_campaign = min(vax_date)
   ) |>
   as_tibble()

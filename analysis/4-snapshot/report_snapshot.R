@@ -783,9 +783,9 @@ get_all_estimates <- function(event_name, event_time, event_indicator) {
       variable = "all",
       label = NA_character_,
       reference_row = TRUE,
-      n_obs = n(),
-      n_event = sum({{ event_indicator }}),
-      exposure = sum({{ event_time }}),
+      n_obs = round_any(n(), sdc_threshold),
+      n_event = round_any(sum({{ event_indicator }}), sdc_threshold),
+      exposure = round_any(sum({{ event_time }}), sdc_threshold),
     )
 
   ## --VARIABLES--
