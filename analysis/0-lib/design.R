@@ -369,7 +369,7 @@ level_combos <- expand_grid(group1 = level1_group, group2 = level2_group) |>
   ) |>
   filter(
     (group1 == group2) %in% c(FALSE, NA) | (group1 == "all"),
-    !(group1 == ageband4 & group2 == ageand13)
+    !(group1 == "ageband4" & group2 == "ageand13")
   )
 
 # Local run flag ----
