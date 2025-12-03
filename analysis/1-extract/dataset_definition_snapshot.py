@@ -15,9 +15,8 @@ from ehrql import (
     get_parameter,
 #    case,
     create_dataset,
-#    days,
+    days,
     weeks,
-    as_int,
 #    when,
 #    minimum_of,
 #    maximum_of
@@ -165,7 +164,7 @@ dataset.covid_admitted_primary_date = (
 
 
 # length of stay across all covid admissions with admission within the campaign date
-dataset.covid_admitted_los = as_int(
+dataset.covid_admitted_los = days(
   all_covid_admissions.discharge_date - all_covid_admissions.admission_date
 ).sum_for_patient()
 
