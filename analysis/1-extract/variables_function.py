@@ -328,7 +328,7 @@ def carehome_status(index_date):
 
 # CKD/RRT
 # adapted from https://github.com/opensafely/covid_mortality_over_time/blob/main/analysis/utils/kidney_functions.R
-def has_rrt(index_date):
+def rrt_cat(index_date):
     # RRT: dialysis / transplant) ----------------------------------------------
     has_kidney_tx = has_prior_event(codelists.kidney_transplant, index_date)
     has_dial      = has_prior_event(codelists.dialysis, index_date)
@@ -359,9 +359,9 @@ def has_rrt(index_date):
     )
     # RRT category: "1" dialysis, "2" transplant,  "0" none
     rrt_cat = case(
-    when(rrt_dialysis).then("1"),
-    when(rrt_transplant).then("2"),
-    otherwise="0"
+      when(rrt_dialysis).then("1 dialysis"),
+      when(rrt_transplant).then("2 transplant"),
+      otherwise="0 no RRT"
     )
     return rrt_cat
 
@@ -391,9 +391,9 @@ def last_creatinine_event(index_date):
 
 def extended_subgroups(dataset, index_date, var_name_suffix=""):
     ## extended subgroups
-    dataset.add_column(f"rrt{var_name_suffix}", has_rrt(index_date))
-    dataset.add_column(f"creatinine_umol{var_name_suffix}", last_creatinine_event(index_date).numeric_value)
-    dataset.add_column(f"creatinine_age{var_name_suffix}", patients.age_on(last_creatinine_event(index_date).date))
+    dataset.add_column(f"rrt_cat{var_name_suffix}", rrt_cat(index_date))
+    # dataset.add_column(f"creatinine_umol{var_name_suffix}", last_creatinine_event(index_date).numeric_value)
+    # dataset.add_column(f"creatinine_age{var_name_suffix}", patients.age_on(last_creatinine_event(index_date).date))
     dataset.add_column(f"copd{var_name_suffix}", has_prior_event(codelists.copd, index_date)) # Chronic obstructive pulmonary disease
     dataset.add_column(f"down_sydrome{var_name_suffix}", has_prior_event(codelists.down_sydrome, index_date)) #Down's sydrome
     dataset.add_column(f"sickle_cell{var_name_suffix}", has_prior_event(codelists.sickle_cell, index_date)) # Sickle cell anaemia
