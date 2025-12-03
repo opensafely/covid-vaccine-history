@@ -104,7 +104,6 @@ data_vax <-
     matches("registered_\\d+"),
     matches("deregistered_\\d+"),
     matches("age_\\d+"),
-    matches("ageband_\\d+"),
     matches("region_\\d+"),
     matches("stp_\\d+"),
     matches("imd_\\d+"),
