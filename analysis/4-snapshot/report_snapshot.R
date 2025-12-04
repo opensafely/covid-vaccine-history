@@ -748,7 +748,7 @@ adjusted_estimates <- function(subgroup, event_name, event_time, event_indicator
 
   data_poisson <-
     data_outcome |>
-    glm(
+    parglm(
       data = _,
       formula = poisson_formula,
       family = poisson,

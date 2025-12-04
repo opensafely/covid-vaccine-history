@@ -17,6 +17,19 @@ library("dd4d")
 # Import custom functions
 source(here("analysis", "0-lib", "design.R"))
 
+
+# truncated normal distribution
+rnormt <- function(n, range, mean, sd = 1) {
+
+  F.a <- pnorm(min(range), mean = mean, sd = sd)
+  F.b <- pnorm(max(range), mean = mean, sd = sd)
+
+  u <- runif(n, min = F.a, max = F.b)
+
+  qnorm(u, mean = mean, sd = sd)
+}
+
+
 # Define and simulate the dataset ----
 
 # Set the size of the dataset
@@ -66,7 +79,7 @@ for (snapshot_date in all_snapshot_dates) {
       missing_rate = ~0.99
     ),
     age = bn_node(
-      ~ as.integer(rnorm(n = ..n, mean = 60, sd = 14))
+      ~ as.integer(rnormt(n = ..n, mean = 60, sd = 14, range=c(16,104)))
     ),
     imd = bn_node(
       ~ as.integer(plyr::round_any(runif(n = ..n, 100, 32000), 100)),
