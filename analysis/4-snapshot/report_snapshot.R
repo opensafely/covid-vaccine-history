@@ -137,6 +137,14 @@ data_combined <-
     # time from snapshot date until covid death
     covid_death_time = as.integer(pmin(covid_death_date, death_date, censor_date, na.rm = TRUE) - snapshot_date) + 1L,
     covid_death_indicator = (covid_death_date <= pmin(censor_date, death_date, na.rm = TRUE)) & !is.na(covid_death_date),
+
+    # time from snapshot date until death
+    death_time = as.integer(pmin(death_date, censor_date, na.rm = TRUE) - snapshot_date) + 1L,
+    death_indicator = (death_date <= pmin(censor_date, death_date, na.rm = TRUE)) & !is.na(death_date),
+
+    # time from snapshot date until deregistration
+    deregistration_time = as.integer(pmin(deregistered_date, censor_date, na.rm = TRUE) - snapshot_date) + 1L,
+    deregistration_indicator = (deregistered_date <= pmin(censor_date, na.rm = TRUE)) & !is.na(deregistered_date),
   ) |>
   filter(
     # only consider people with documented eligibility
@@ -697,24 +705,26 @@ iwalk(
 
 
 # ________________________________________________________________________________________
-# Post-snapshot Covid-19 disease burden, stratified by characteristics recorded on the snapshot_date ----
+# Post-snapshot Covid-19 vaccination and disease burden up to final milestone, stratified by characteristics recorded on the snapshot_date ----
 # ________________________________________________________________________________________
 
 # Function to output HRs and IRRs for disease  burden comparing different subgroups
-adjusted_estimates <- function(subgroup, event_name, event_time, event_indicator) {
+adjusted_estimates <- function(data, subgroup, event_name, event_time, event_indicator) {
 
-
-  cox_formula <- as.formula(glue("Surv(event_time, event_indicator) ~ {subgroup} + sex + ns(age, 3)"))
-  if (subgroup == "ageband4") cox_formula <- as.formula(glue("Surv(event_time, event_indicator) ~ ageband4 + sex"))
-  if (subgroup == "ageband13") cox_formula <- as.formula(glue("Surv(event_time, event_indicator) ~ ageband13 + sex"))
+  # use age-splines unless age is the subgroup of interest
 
   poisson_formula <- as.formula(glue("event_indicator ~ {subgroup} + sex + ns(age, 3)"))
   if (subgroup == "ageband4") poisson_formula <- as.formula(glue("event_indicator ~ ageband4 + sex"))
   if (subgroup == "ageband13") poisson_formula <- as.formula(glue("event_indicator ~ ageband13 + sex"))
 
+  cox_formula <- as.formula(glue("Surv(event_time, event_indicator) ~ {subgroup} + sex + ns(age, 3)"))
+  if (subgroup == "ageband4") cox_formula <- as.formula(glue("Surv(event_time, event_indicator) ~ ageband4 + sex"))
+  if (subgroup == "ageband13") cox_formula <- as.formula(glue("Surv(event_time, event_indicator) ~ ageband13 + sex"))
+
+  # prepare dataset
 
   data_outcome <-
-    data_combined |>
+    data |>
     mutate(
       event_time = {{ event_time }},
       event_indicator =  {{ event_indicator }}
@@ -726,23 +736,7 @@ adjusted_estimates <- function(subgroup, event_name, event_time, event_indicator
       event_indicator
     )
 
-  data_cox <-
-    data_outcome |>
-    coxph(
-      data = _,
-      formula = cox_formula,
-      ties = "breslow"
-    ) |>
-    broom.helpers::tidy_plus_plus() |>
-    filter(variable == subgroup) |>
-    transmute(
-      variable, label, reference_row,
-      n_obs, n_event, exposure,
-      hr = exp(estimate),
-      hr.low = exp(conf.low),
-      hr.high = exp(conf.high),
-      hr.ln.std.error = std.error,
-    )
+  # IRR model
 
   parglm_control <- parglm.control(maxit = 40, nthreads = 4)
 
@@ -755,32 +749,55 @@ adjusted_estimates <- function(subgroup, event_name, event_time, event_indicator
       offset = log(event_time),
       control = parglm_control
     ) |>
-    broom.helpers::tidy_plus_plus() |>
+    broom.helpers::tidy_plus_plus(tidy_fun = broom.helpers::tidy_parameters) |>
     filter(variable == subgroup) |>
     transmute(
       variable, label, reference_row,
+      n_obs, n_event, exposure,
       irr = exp(estimate),
       irr.low = exp(conf.low),
       irr.high = exp(conf.high),
       irr.ln.std.error = std.error
     )
 
+
+
+  # HR model
+  #
+  # data_cox <-
+  #   data_outcome |>
+  #   coxph(
+  #     data = _,
+  #     formula = cox_formula,
+  #     ties = "breslow"
+  #   ) |>
+  #   broom.helpers::tidy_plus_plus(tidy_fun = broom.helpers::tidy_parameters) |>
+  #   filter(variable == subgroup) |>
+  #   transmute(
+  #     variable, label, reference_row,
+  #     n_obs, n_event, exposure,
+  #     hr = exp(estimate),
+  #     hr.low = exp(conf.low),
+  #     hr.high = exp(conf.high),
+  #     hr.ln.std.error = std.error,
+  #   )
+
   data_estimates <-
-    data_cox |>
-    left_join(data_poisson, by = c("variable", "label", "reference_row"))
+    data_poisson #|>
+    #left_join(data_cox, by = c("variable", "label", "reference_row"))
 
   # write_csv(data_cox, fs::path(output_dir, glue("cox_{event_name}_{subgroup}.csv")))
   return(data_estimates)
 }
 
-# adjusted_estimates("ageband4", "admitte", covid_admitted_time, covid_admitted_indicator)
+adjusted_estimates(data_combined, "ageband4", "admittes", covid_admitted_time, covid_admitted_indicator)
 
 
-get_all_estimates <- function(event_name, event_time, event_indicator) {
+get_all_estimates <- function(data, event_name, event_time, event_indicator) {
   # cox / glm function does not work when the contrast is a single valued vector
   # so creating the summary info manually here
   estimates_event_all <-
-    data_combined |>
+    data |>
     summarise(
       variable = "all",
       label = NA_character_,
@@ -793,15 +810,15 @@ get_all_estimates <- function(event_name, event_time, event_indicator) {
   ## --VARIABLES--
 
   # Demographic
-  estimates_event_sex <- adjusted_estimates("sex", event_name, {{ event_time }}, {{ event_indicator }})
-  estimates_event_ageband4 <- adjusted_estimates("ageband4", event_name, {{ event_time }}, {{ event_indicator }})
-  estimates_event_ethnicity5 <- adjusted_estimates("ethnicity5", event_name, {{ event_time }}, {{ event_indicator }})
-  estimates_event_region <- adjusted_estimates("region", event_name, {{ event_time }}, {{ event_indicator }})
-  estimates_event_imd_quintile <- adjusted_estimates("imd_quintile", event_name, {{ event_time }}, {{ event_indicator }})
-  estimates_event_carehome_status <- adjusted_estimates("carehome_status", event_name, {{ event_time }}, {{ event_indicator }})
+  estimates_event_sex <- adjusted_estimates(data, "sex", event_name, {{ event_time }}, {{ event_indicator }})
+  estimates_event_ageband4 <- adjusted_estimates(data, "ageband4", event_name, {{ event_time }}, {{ event_indicator }})
+  estimates_event_ethnicity5 <- adjusted_estimates(data, "ethnicity5", event_name, {{ event_time }}, {{ event_indicator }})
+  estimates_event_region <- adjusted_estimates(data, "region", event_name, {{ event_time }}, {{ event_indicator }})
+  estimates_event_imd_quintile <- adjusted_estimates(data, "imd_quintile", event_name, {{ event_time }}, {{ event_indicator }})
+  estimates_event_carehome_status <- adjusted_estimates(data, "carehome_status", event_name, {{ event_time }}, {{ event_indicator }})
 
   # PRIMIS
-  estimates_event_primis_atrisk <- adjusted_estimates("primis_atrisk", event_name, {{ event_time }}, {{ event_indicator }})
+  estimates_event_primis_atrisk <- adjusted_estimates(data, "primis_atrisk", event_name, {{ event_time }}, {{ event_indicator }})
 
   estimates <-
     bind_rows(
@@ -824,6 +841,18 @@ get_all_estimates <- function(event_name, event_time, event_indicator) {
 
 }
 
-get_all_estimates("covid_admitted", covid_admitted_time, covid_admitted_indicator)
-get_all_estimates("covid_critcare", covid_critcare_time, covid_critcare_indicator)
-get_all_estimates("covid_death", covid_death_time, covid_death_indicator)
+# uptake estimates
+
+# IRR for vaccination, in the usual way
+get_all_estimates(data_combined, "vax", vax_time, vax_indicator)
+# IRR for vaccination, only looking at those who survived or stayed registered to the end of the season (collider bias! but matches UKHSA reports)
+get_all_estimates(
+  filter(data_combined, (!death_indicator) & (!deregistration_indicator)),
+  "vax_alive", vax_time, vax_indicator
+)
+
+# IRR for COVID burden, in the usual way
+get_all_estimates(data_combined, "covid_admitted", covid_admitted_time, covid_admitted_indicator)
+get_all_estimates(data_combined, "covid_critcare", covid_critcare_time, covid_critcare_indicator)
+get_all_estimates(data_combined, "covid_death", covid_death_time, covid_death_indicator)
+
