@@ -751,6 +751,10 @@ adjusted_estimates <- function(data, subgroup, event_name, event_time, event_ind
     ) |>
     broom.helpers::tidy_plus_plus(tidy_fun = broom.helpers::tidy_parameters) |>
     filter(variable == subgroup) |>
+    # note: selecting the effect as above is the same as doing marginaleffects::avg_comparisons(model, type = "link", variables = subgroup, comparison = "difference"),
+    # as long as there are no interaction terms between subgroup and anything else
+    # we use broom.helpers because it gives us the really nice variable, label, reference_row etc formatting for the outputted tidy dataset
+    # if we want to use avg_comparisons in future, then attach the nicely formatted meta info onto a broom::tidy(avg_comparisons) object
     transmute(
       variable, label, reference_row,
       n_obs, n_event, exposure,
@@ -790,7 +794,7 @@ adjusted_estimates <- function(data, subgroup, event_name, event_time, event_ind
   return(data_estimates)
 }
 
-adjusted_estimates(data_combined, "ageband4", "admittes", covid_admitted_time, covid_admitted_indicator)
+# adjusted_estimates(data_combined, "ageband4", "admittes", covid_admitted_time, covid_admitted_indicator)
 
 
 get_all_estimates <- function(data, event_name, event_time, event_indicator) {
