@@ -324,7 +324,7 @@ count_products_cooccurrence_campaign <-
     count_onorafter20200101 = round_any(sum(vax_date >= as.Date("2020-01-01")), sdc_threshold),
     count_onorafter20201201 = round_any(sum(vax_date >= as.Date("2020-12-01")), sdc_threshold),
     earliest_date = min(vax_date, na.rm = TRUE),
-    count_on_earliest_date = vax_date %in% min(vax_date, na.rm = TRUE)
+    count_on_earliest_date = sum(vax_date %in% min(vax_date, na.rm = TRUE))
   ) |>
   as_tibble()
 
