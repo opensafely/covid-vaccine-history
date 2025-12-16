@@ -290,7 +290,11 @@ products_cooccurrence <-
   arrange(vax_product) |>
   group_by(patient_id, vax_date, campaign) |>
   summarise(
-    vax_product = flat_table_chr(vax_product, collapse = "  --AND-- "),
+    # vax_product = flat_table_chr(vax_product, collapse = " --AND-- "), # it's potentially slow to do this operation for each patient, so use paste0 only then turn into a table after grouping
+    vax_product = paste0(vax_product, collapse = " --- "),
+  ) |>
+  mutate(
+    vax_product = flat_table_chr(stringr::str_split_1(vax_product, " --- "), collapse = " --AND-- ")
   )
 
 # count overall
