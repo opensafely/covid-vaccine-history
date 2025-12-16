@@ -104,7 +104,6 @@ data_vax <-
     matches("registered_\\d+"),
     matches("deregistered_\\d+"),
     matches("age_\\d+"),
-    matches("ageband_\\d+"),
     matches("region_\\d+"),
     matches("stp_\\d+"),
     matches("imd_\\d+"),
@@ -147,7 +146,7 @@ data_vax <-
   # as_tibble() |> # insert this here to revert to standard dplyr as `cut` function doesn't work with dtplyr
   mutate(
     !!!standardise_demographic_characteristics,
-    #    !!!ckd_rrt_clasif,
+    # !!!ckd_rrt_classification,
     vax_campaign = cut(
       vax_date,
       breaks = c(campaign_info$campaign_start_date, study_dates$end_date),
