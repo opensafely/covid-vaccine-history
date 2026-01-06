@@ -75,3 +75,7 @@ The structure of the output directory (not tracked via git) is designed to match
 ## Adding variables
 
 To add a new variable for stratifying analyses, searching for the `--VARIABLES--` string in the codebase (ctrl+shift+F in RStudio on Windows) will indicate where changes may need to be made.
+
+## Outputs
+
+A draft version of the protocol is available as [a PDF file](./assets/ECHO WP1 protocol - Disparities in COVID-19 vaccine coverage and burden-draft-v1.0.pdf). 
