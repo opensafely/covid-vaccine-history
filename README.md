@@ -78,4 +78,4 @@ To add a new variable for stratifying analyses, searching for the `--VARIABLES--
 
 ## Outputs
 
-A draft version of the protocol is available as [a PDF file](./assets/ECHO-WP1-protocol-draft-v1.0). 
+A draft version of the protocol is available as [a PDF file](./assets/ECHO-WP1-protocol-draft-v1.0.pdf). 
