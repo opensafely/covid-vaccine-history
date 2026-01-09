@@ -108,8 +108,8 @@ The structure of the output directory (not tracked via git) is designed to match
 Examples of output files, using dummy data, are provided in [`assets/output-examples/`](./assets/output-examples) directory.
 
 The actual outputed files are available from the [project workspace page on the OpenSAFELY job server site](https://jobs.opensafely.org/echo-evaluation-of-covid-19-vaccine-histories-using-opensafely/covid-vaccine-history/).
-[`Released outputs'](https://jobs.opensafely.org/echo-evaluation-of-covid-19-vaccine-histories-using-opensafely/covid-vaccine-history/releases/) are visible to the project team, following strict output-checking processes.
-[`Published outputs'](https://jobs.opensafely.org/echo-evaluation-of-covid-19-vaccine-histories-using-opensafely/covid-vaccine-history/releases/) are visible to the public. Outputs can only be published following review by [OpenSAFELY's DATAPAST function](https://docs.opensafely.org/datapast/). 
+[`Released outputs`](https://jobs.opensafely.org/echo-evaluation-of-covid-19-vaccine-histories-using-opensafely/covid-vaccine-history/releases/) are visible to the project team, following strict output-checking processes.
+[`Published outputs`](https://jobs.opensafely.org/echo-evaluation-of-covid-19-vaccine-histories-using-opensafely/covid-vaccine-history/releases/) are visible to the public. Outputs can only be published following review by [OpenSAFELY's DATAPAST function](https://docs.opensafely.org/datapast/). 
 
 ## Adding variables
 
