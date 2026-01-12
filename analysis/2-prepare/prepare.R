@@ -127,6 +127,10 @@ data_vax <-
     #    matches("copd_\\d+"), # Chronic obstructive pulmonary disease
     #    matches("down_sydrome_\\d+"), # Down's syndrome
     #    matches("sickle_cell_\\d+"), # Sickle cell disease
+    #    matches("cirrhosis_\\d+"),          # Cirrhosis
+    #    matches("cochlear_implant_\\d+"),   # Cochlear implant
+    #    matches("cystic_fibrosis_\\d+"),    # Cystic fibrosis
+    #    matches("csfl_\\d+"),               # Cerebrospinal fluid leak
   ) |>
   pivot_longer(
     cols = -patient_id,
@@ -146,7 +150,7 @@ data_vax <-
   # as_tibble() |> # insert this here to revert to standard dplyr as `cut` function doesn't work with dtplyr
   mutate(
     !!!standardise_demographic_characteristics,
-    # !!!ckd_rrt_classification,
+    # !!!ckd_rrt,
     vax_campaign = cut(
       vax_date,
       breaks = c(campaign_info$campaign_start_date, study_dates$end_date),
@@ -242,7 +246,7 @@ data_vax_ELD <-
 count_product <-
   data_vax_ELD |>
   mutate(
-    adult = age >= 16,
+    adult = age >= 12,
     vax_date_onorafter20201201 = if_else(vax_date >= as.Date("2020-12-01"), vax_date, as.Date(NA))
   ) |>
   group_by(adult, vax_product) |>
@@ -263,7 +267,7 @@ write_csv(count_product, fs::path(output_dir, "count_product.csv"))
 count_product_campaign <-
   data_vax_ELD |>
   mutate(
-    adult = age >= 16
+    adult = age >= 12
   ) |>
   group_by(adult, campaign, vax_product) |>
   summarise(
@@ -285,7 +289,7 @@ flat_table_chr <- function(x, collapse = NULL) {
 
 products_cooccurrence <-
   data_vax_ELD |>
-  filter(age >= 16) |>
+  filter(age >= 12) |>
   arrange(vax_product) |>
   group_by(patient_id, vax_date, campaign) |>
   summarise(

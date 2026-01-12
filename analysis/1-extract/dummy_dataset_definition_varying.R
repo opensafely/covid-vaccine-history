@@ -154,13 +154,13 @@ known_variables <- c(
       covid_vax_product_15 = bn_node( ~ rcat(n = ..n, c("pfizer", "moderna"), c(0.5, 0.5)), needs = "covid_vax_15_day"),
       covid_vax_product_16 = bn_node( ~ rcat(n = ..n, c("pfizer", "moderna"), c(0.5, 0.5)), needs = "covid_vax_16_day"),
     )
-    
-    
+
+
     # define a function to create a sublist containing all demographic / clinical variables to extract for the nth vaccination event
     # function will be iterated over first second third ... Nth vaccines
     sim_list_varying_i <- function(i) {
       vax_variable <- glue("covid_vax_{i}_day")
-      
+
       lst(
         "deregistered_{i}_day" := bn_node(
           ~ as.integer(runif(n = ..n, index_day, index_day + 1200)),
@@ -237,6 +237,7 @@ known_variables <- c(
         "primis_atrisk_{i}" := bn_node( ~ rbernoulli(n = ..n, p = 0.02),
                                         needs = vax_variable),
         # clinically vulnerable
+        # TODO: CHECK IF MISSING SOMETHING HERE
         # extended subgroups
         "rrt_{i}" := bn_node(
           variable_formula = ~ rfactor(
@@ -248,25 +249,42 @@ known_variables <- c(
           ),
           needs = vax_variable
         ),
-        "creatinine_umol_{i}" := bn_node(
-          ~ as.numeric(runif(n = ..n, 20.0, 3000.0)),
-          missing_rate = ~ 0.60,
+        "ckd_stage_3to5_{i}" := bn_node(
+          variable_formula = ~ rfactor(
+            n = ..n,
+            levels = c("no ckd", "3", "4", "5", "ckd, without ckd3-5 code"),
+            p = c(0.90, 0.06, 0.02, 0.01, 0.01)
+          ),
           needs = vax_variable
         ),
-        "creatinine_age_{i}" := bn_node(
-          ~ as.integer(rnorm(n = ..n, mean = 60, sd = 14)),
-          needs = vax_variable
-        ),
+
+        # "creatinine_umol_{i}" := bn_node(
+        #   ~ as.numeric(runif(n = ..n, 20.0, 3000.0)),
+        #   missing_rate = ~ 0.60,
+        #   needs = vax_variable
+        # ),
+        # "creatinine_age_{i}" := bn_node(
+        #   ~ as.integer(rnorm(n = ..n, mean = 60, sd = 14)),
+        #   needs = vax_variable
+        # ),
         "copd_{i}" := bn_node( ~ rbernoulli(n = ..n, p = 0.02),
                                needs = vax_variable),
         "down_sydrome_{i}" := bn_node( ~ rbernoulli(n = ..n, p = 0.02),
                                        needs = vax_variable),
         "sickle_cell_{i}" := bn_node( ~ rbernoulli(n = ..n, p = 0.02),
                                       needs = vax_variable),
+        "cochlear_implant_{i}" := bn_node( ~ rbernoulli(n = ..n, p = 0.02),
+                                           needs = vax_variable),
+
+        "cystic_fibrosis_{i}" := bn_node( ~ rbernoulli(n = ..n, p = 0.02),
+                                          needs = vax_variable),
+
+        "csfl_{i}" := bn_node( ~ rbernoulli(n = ..n, p = 0.02),
+                              needs = vax_variable),
       )
     }
-    
-    
+
+
     # compose simulation list for all variables of interest for each vaccination event
     sim_list_varying <- splice(
       sim_list_varying_i(1),
@@ -286,31 +304,31 @@ known_variables <- c(
       sim_list_varying_i(15),
       sim_list_varying_i(16)
     )
-    
-    
+
+
     # put vax info and other info together in the same list
     sim_list <- splice(sim_list_vax_info,
                        sim_list_varying)
-    
+
     # check and create the simulation object, including all dependencies, topological orders, etc
     bn <- bn_create(sim_list, known_variables = known_variables)
-    
+
     # plot the network
     bn_plot(bn)
-    
+
     # plot the network (connected nodes only)
     bn_plot(bn, connected_only = TRUE)
-    
+
     # set the seed for the simulation
     set.seed(10)
-    
+
     # simulate the dataset
     dummydata <-
       bn_simulate(bn,
                   pop_size = population_size,
                   keep_all = FALSE,
                   .id = "patient_id")
-    
+
     # do some post simulation processing for features that are not easily handled by the simulation configuration
     dummydata_processed <- dummydata %>%
       # convert integer days to dates since index date and rename vars
@@ -325,10 +343,9 @@ known_variables <- c(
           labels = unname(vax_product_lookup)
         )
       ))
-    
+
     # save the datasetin arrow format
     write_feather(
       dummydata_processed,
       sink = here("analysis", "1-extract", "dummy-data", "dummy_varying.arrow")
     )
-    

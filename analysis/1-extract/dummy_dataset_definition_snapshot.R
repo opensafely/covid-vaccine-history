@@ -79,7 +79,7 @@ for (snapshot_date in all_snapshot_dates) {
       missing_rate = ~0.99
     ),
     age = bn_node(
-      ~ as.integer(rnormt(n = ..n, mean = 60, sd = 14, range=c(16,104)))
+      ~ as.integer(rnormt(n = ..n, mean = 60, sd = 14, range=c(12,104)))
     ),
     imd = bn_node(
       ~ as.integer(plyr::round_any(runif(n = ..n, 100, 32000), 100)),
@@ -149,13 +149,21 @@ for (snapshot_date in all_snapshot_dates) {
         "2 transplant"),
       p = c(0.98, 0.01, 0.01)
       )),
-    creatinine_umol = bn_node(
-      ~ as.numeric(runif(n = ..n, 20.0, 3000.0)),
-      missing_rate = ~0.60
-    ),
-    creatinine_age = bn_node(
-      ~ as.integer(rnorm(n = ..n, mean = 60, sd = 14))
-    ),
+    ckd_stage_3to5 = bn_node(
+      variable_formula = ~ rfactor(n = ..n, levels = c(
+        "no ckd",
+        "3",
+        "4",
+        "5",
+        "ckd, without ckd3-5 code"),
+      p = c(0.90, 0.06, 0.02, 0.01, 0.01)
+      )),
+    # creatinine_umol = bn_node(
+    #   ~ as.numeric(runif(n = ..n, 20.0, 3000.0)),
+    #   missing_rate = ~0.60
+    # ),
+    # creatinine_age = bn_node(
+    #   ~ as.integer(rnorm(n = ..n, mean = 60, sd = 14))
     copd = bn_node(
       ~ rbernoulli(n = ..n, p = 0.02),
     ),
@@ -166,6 +174,15 @@ for (snapshot_date in all_snapshot_dates) {
       ~ rbernoulli(n = ..n, p = 0.02),
     ),
     cirrhosis = bn_node(
+      ~ rbernoulli(n = ..n, p = 0.02),
+    ),
+    cochlear_implant = bn_node(
+      ~ rbernoulli(n = ..n, p = 0.02),
+    ),
+    cystic_fibrosis = bn_node(
+      ~ rbernoulli(n = ..n, p = 0.02),
+    ),
+    csfl = bn_node(
       ~ rbernoulli(n = ..n, p = 0.02),
     ),
     # covid vaccines

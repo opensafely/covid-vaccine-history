@@ -56,7 +56,7 @@ dataset.configure_dummy_data(population_size=1000)
 # define dataset poppulation
 dataset.define_population(
    covid_vaccinations.exists_for_patient()
-   & (patients.age_on(end_date) >=16) # only include people who are aged 16 or over during at least one season
+   & (patients.age_on(end_date) >=12) # only include people who are aged 2 or over during at least one season
 )
 
 

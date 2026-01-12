@@ -102,18 +102,19 @@ sdc_threshold <- 10
 # covid-19 vaccine campaign dates
 campaign_info <-
   tribble(
-    ~campaign_label,        ~campaign_start_date,      ~primary_milestone_date, ~age_date, ~age_threshold,
-    "Pre-2020-07-01", "1900-01-01", "1900-01-01", "1900-01-01", 16,
-    "Pre-roll-out",   as.character(study_dates$firstpossiblevax_date), as.character(study_dates$firstpossiblevax_date), as.character(study_dates$firstpossiblevax_date), 16,
-    "Primary series", "2020-12-07", "2021-06-30", "2021-03-31", 16,
-    "Autumn 2021",    "2021-09-06", "2022-02-28", "2021-08-31", 16,
-    "Spring 2022",    "2022-03-21", "2022-06-30", "2022-06-30", 75,
-    "Autumn 2022",    "2022-08-29", "2023-02-28", "2023-03-31", 50,
-    "Spring 2023",    "2023-04-03", "2023-06-30", "2023-06-30", 75,
-    "Autumn 2023",    "2023-08-28", "2024-02-28", "2024-03-31", 65,
-    "Spring 2024",    "2024-04-15", "2024-06-30", "2024-06-30", 75,
-    "Autumn 2024",    "2024-09-30", "2025-02-28", "2025-03-31", 65,
-    "Spring 2025",    "2025-03-31", "2025-06-30", "2025-06-30", 75,
+    ~campaign_label,        ~campaign_start_date,      ~primary_milestone_date, ~age_date, ~age_threshold, ~at_risk_crit,
+    "Pre-2020-07-01", "1900-01-01", "1900-01-01", "1900-01-01", 16, "all_risk_groups",
+    "Pre-roll-out",   as.character(study_dates$firstpossiblevax_date), as.character(study_dates$firstpossiblevax_date), as.character(study_dates$firstpossiblevax_date), 16, "all_risk_groups",
+    "Primary series", "2020-12-07", "2021-06-30", "2021-03-31", 16, "all_risk_groups",
+    "Autumn 2021",    "2021-09-06", "2022-02-28", "2021-08-31", 16, "all_risk_groups",
+    "Spring 2022",    "2022-03-21", "2022-06-30", "2022-06-30", 75, "immunosuppressed",
+    "Autumn 2022",    "2022-08-29", "2023-02-28", "2023-03-31", 50, "all_risk_groups",
+    "Spring 2023",    "2023-04-03", "2023-06-30", "2023-06-30", 75, "immunosuppressed",
+    "Autumn 2023",    "2023-08-28", "2024-02-28", "2024-03-31", 65, "all_risk_groups",
+    "Spring 2024",    "2024-04-15", "2024-06-30", "2024-06-30", 75, "immunosuppressed",
+    "Autumn 2024",    "2024-09-30", "2025-02-28", "2025-03-31", 65, "all_risk_groups",
+    "Spring 2025",    "2025-03-31", "2025-06-30", "2025-06-30", 75, "immunosuppressed",
+    "Autumn 2025",    "2025-09-30", "2026-02-28", "2026-03-31", 75, "all_risk_groups",
   ) |>
   mutate(
     across(c(campaign_start_date, primary_milestone_date, age_date), as.Date),
@@ -121,8 +122,8 @@ campaign_info <-
     final_milestone_date = lead(campaign_start_date, 1, as.Date("2030-01-01")) - 1
   )  |>
   mutate(
-    early_milestone_days = as.integer(primary_milestone_date - campaign_start_date) + 1L,
-    primary_milestone_days = as.integer(early_milestone_date - campaign_start_date) + 1L,
+    early_milestone_days = as.integer(early_milestone_date - campaign_start_date) + 1L,
+    primary_milestone_days = as.integer(primary_milestone_date - campaign_start_date) + 1L,
     final_milestone_days = as.integer(final_milestone_date - campaign_start_date) + 1L
   )
 
@@ -193,14 +194,14 @@ standardise_demographic_characteristics <-
     ## demographics
     ageband4 = cut(
       age,
-      breaks = c(-Inf, 16, 50, 65, 75, 105, Inf),
-      labels = c("under 16", "16-49", "50-64", "65-74", "75-104", "105+"), # under 16 and 105+ should be excluded in analysis but include here to ensure nobody slipped through the net
+      breaks = c(-Inf, 12, 50, 65, 75, 105, Inf),
+      labels = c("under 12", "12-49", "50-64", "65-74", "75-104", "105+"), # under 12 and 105+ should be excluded in analysis but include here to ensure nobody slipped through the net
       right = FALSE
     ),
     ageband13 = cut(
       age,
-      breaks = c(-Inf, 16, 20, 30, 40, 50, 55, 60, 65, 70, 75, 80, 85, 90, 105, Inf),
-      labels = c("under 16", "16-19", "20-29", "30-39", "40-49", "50-54", "55-59", "60-64", "65-69", "70-74", "75-79", "80-84", "85-89", "90-104", "105+"), # under 16 and 105+ should be excluded in analysis but include here to ensure nobody slipped through the net
+      breaks = c(-Inf, 12, 20, 30, 40, 50, 55, 60, 65, 70, 75, 80, 85, 90, 105, Inf),
+      labels = c("under 12", "12-17", "18-29", "30-39", "40-49", "50-54", "55-59", "60-64", "65-69", "70-74", "75-79", "80-84", "85-89", "90-104", "105+"), # under 16 and 105+ should be excluded in analysis but include here to ensure nobody slipped through the net
       right = FALSE
     ),
     region = fct_collapse(
@@ -225,49 +226,56 @@ standardise_demographic_characteristics <-
 ## CKD-RRT classification
 # adapted from https://github.com/opensafely/covid_mortality_over_time/blob/main/analysis/utils/kidney_functions.R
 
-egfr <- function(rrt_cat, sex, creatinine_umol, creatinine_age) {
-  # creatinine mg/dL from µmol/L
-  SCR_adj <- creatinine_umol / 88.4
+# egfr <- function(rrt_cat, sex, creatinine_umol, creatinine_age) {
+#   # creatinine mg/dL from µmol/L
+#   SCR_adj <- creatinine_umol / 88.4
 
-  # min/max creatinine
-  min_creat <- if_else(
-    sex == "male",
-    pmin(SCR_adj / 0.9, 1)^-0.411,
-    pmin(SCR_adj / 0.7, 1)^-0.329
-  )
-  max_creat <- if_else(
-    sex == "male",
-    pmax(SCR_adj / 0.9, 1)^-1.209,
-    pmax(SCR_adj / 0.7, 1)^-1.209
-  )
-  # eGFR (male/female)
-  egfr_male <- case_when(
-    is.na(creatinine_umol) ~ NA_real_,
-    is.na(creatinine_age) ~ NA_real_,
-    TRUE ~ (min_creat * max_creat * 141) * (0.993^creatinine_age)
-  )
-  egfr <- if_else(sex == "female", 1.018 * egfr_male, egfr_male)
+#   # min/max creatinine
+#   min_creat <- if_else(
+#     sex == "male",
+#     pmin(SCR_adj / 0.9, 1)^-0.411,
+#     pmin(SCR_adj / 0.7, 1)^-0.329
+#   )
+#   max_creat <- if_else(
+#     sex == "male",
+#     pmax(SCR_adj / 0.9, 1)^-1.209,
+#     pmax(SCR_adj / 0.7, 1)^-1.209
+#   )
+#   # eGFR (male/female)
+#   egfr_male <- case_when(
+#     is.na(creatinine_umol) ~ NA_real_,
+#     is.na(creatinine_age) ~ NA_real_,
+#     TRUE ~ (min_creat * max_creat * 141) * (0.993^creatinine_age)
+#   )
+#   egfr <- if_else(sex == "female", 1.018 * egfr_male, egfr_male)
 
-  return(egfr)
-}
+#   return(egfr)
+# }
 
-ckd_rrt_classification <-
+ckd_rrt <-
   rlang::quos(
-    egfr = egfr(sex, creatinine_umol, creatinine_age),
+  #  egfr = egfr(sex, creatinine_umol, creatinine_age),
     ckd_rrt = case_when(
       rrt_cat == "1 dialysis" ~ "RRT (dialysis)",
       rrt_cat == "2 transplant" ~ "RRT (transplant)",
-      (egfr >= 0 & egfr < 15) ~ "Stage 5",
-      (egfr >= 15 & egfr < 30) ~ "Stage 4",
-      (egfr >= 30 & egfr < 45) ~ "Stage 3b",
-      (egfr >= 45 & egfr < 60) ~ "Stage 3a",
-      ((is.na(egfr) | (egfr >= 60)) & rrt_cat == "0 no RRT") ~ "No CKD or RRT"
+      ckd_stage_3to5 == "5" ~ "Stage 5",
+      ckd_stage_3to5 == "4" ~ "Stage 4",
+      ckd_stage_3to5 == "3" ~ "Stage 3",
+      ckd_stage_3to5 == "ckd, without ckd3-5 code" ~ "ckd, without ckd3-5 code",
+      TRUE ~ "No CKD or RRT"
+      # (egfr >= 0 & egfr < 15) ~ "Stage 5",
+      # (egfr >= 15 & egfr < 30) ~ "Stage 4",
+      # (egfr >= 30 & egfr < 45) ~ "Stage 3b",
+      # (egfr >= 45 & egfr < 60) ~ "Stage 3a",
+      # ((is.na(egfr) | (egfr >= 60)) & rrt_cat == "0 no RRT") ~ "No CKD or RRT"
     ) |>
       factor(
         levels = c(
           "No CKD or RRT",
-          "Stage 3a",
-          "Stage 3b",
+          "ckd, without ckd3-5 code",
+          # "Stage 3a",
+          # "Stage 3b",
+          "Stage 3",
           "Stage 4",
           "Stage 5",
           "RRT (transplant)",
@@ -332,7 +340,8 @@ level1_group <- c(
   "cld",
   "cns_learndis",
   "diabetes",
-  "immunosuppressed_asplenia",
+  "immunosuppressed",
+  "asplenia",
   "severe_obesity",
   "smi"
 )
@@ -353,14 +362,19 @@ level2_group <- c(
   "cld",
   "cns_learndis",
   "diabetes",
-  "immunosuppressed_asplenia",
+  "immunosuppressed",
+  "asplenia",
   "severe_obesity",
   "smi",
   # Extended subgroups
-  "rrt_cat", # RRT - dialysis, transplant, niether
+  "ckd_rrt", # RRT - CKD3-5
   "copd", # Chronic obstructive pulmonary disease
   "down_sydrome", # Down's syndrome
-  "sickle_cell" # Sickle Cell
+  "sickle_cell", # Sickle Cell
+  "cirrhosis",          # Cirrhosis
+  "cochlear_implant",   # Cochlear implant
+  "cystic_fibrosis",    # Cystic fibrosis
+  "csfl"               # Cerebrospinal fluid leak
 )
 
 level_combos <- expand_grid(group1 = level1_group, group2 = level2_group) |>

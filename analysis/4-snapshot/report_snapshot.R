@@ -25,7 +25,7 @@ args <- commandArgs(trailingOnly = TRUE)
 if (length(args) == 0) {
   # use for interactive testing
   # removeobjects <- FALSE
-  snapshot_date <- as.Date("20210906", format = "%Y%m%d")
+  snapshot_date <- as.Date("20220321", format = "%Y%m%d")
 } else {
   # removeobjects <- TRUE
   snapshot_date <- as.Date(args[[1]], format = "%Y%m%d")
@@ -86,17 +86,26 @@ data_combined <-
   mutate(
     all = "All",
     !!!standardise_demographic_characteristics,
-    # !!!ckd_rrt_classification,
+    !!!ckd_rrt,
     cns_learndis = (cns | learndis),
-    immunosuppressed_asplenia = (immunosuppressed | asplenia),
+    # immunosuppressed_asplenia = (immunosuppressed | asplenia),
 
     # should be the same as primis_atrisk
-    # cv = (crd | chd |  ckd | cld | cns_learndis | diabetes | immunosuppressed_asplenia | severe_obesity | smi),
-
+    # cv = (crd | chd |  ckd | cld | cns_learndis | diabetes | immunosuppressed | asplenia | severe_obesity | smi),
     age_above_eligiblity_threshold = (age >= campaign_info$age_threshold),
-    primis_atrisk_only = primis_atrisk & !age_above_eligiblity_threshold,
+    primis_or_immunosup = if (campaign_info$at_risk_crit == "all_risk_groups") { # used to chose if the at risk group is all clinical risk variables or just immunosuppressed people
+      primis_atrisk
+    } else if (campaign_info$at_risk_crit == "immunosuppressed") {
+      immunosuppressed
+    } else {
+      NA
+    },
 
-    any_eligibility = age_above_eligiblity_threshold | primis_atrisk | carehome_status,
+    primis_atrisk_only = primis_or_immunosup & !age_above_eligiblity_threshold,
+
+
+
+    any_eligibility = age_above_eligiblity_threshold | primis_or_immunosup | carehome_status,
 
     # previous vaccine summary
     # add more variables here based on covid_vax_prior_1_date, covid_vax_prior_2_date,... etc if needed
@@ -288,16 +297,21 @@ plot_date_of_last_dose(cld) # chronic liver disease
 plot_date_of_last_dose(cns) # chronic neurological
 plot_date_of_last_dose(cns_learndis) # chronic neurological or learning disability
 plot_date_of_last_dose(diabetes) # diabetes
-plot_date_of_last_dose(immunosuppressed_asplenia) # immunosuppressed or asplenia
+plot_date_of_last_dose(immunosuppressed) # immunosuppressed
+plot_date_of_last_dose(asplenia) # asplenia
 plot_date_of_last_dose(severe_obesity) # obesity
 plot_date_of_last_dose(smi) # severe mental illness
 plot_date_of_last_dose(primis_atrisk) # clinically vulnerable
 
 # Extended subgroups
-plot_date_of_last_dose(rrt_cat) # Chronic kidney disease classification
+plot_date_of_last_dose(ckd_rrt) # Chronic kidney disease classification
 plot_date_of_last_dose(copd) # Chronic obstructive pulmonary disease
-plot_date_of_last_dose(down_sydrome)
-plot_date_of_last_dose(sickle_cell)
+plot_date_of_last_dose(down_sydrome)   # Down's syndrome
+plot_date_of_last_dose(sickle_cell)    # Sickle cell disease
+plot_date_of_last_dose(cirrhosis)      # Cirrhosis
+plot_date_of_last_dose(cochlear_implant) # Cochlear implant
+plot_date_of_last_dose(cystic_fibrosis)  # Cystic fibrosis
+plot_date_of_last_dose(csfl)           # Cerebrospinal fluid leak
 
 ## _______________________________________________________________________________________
 ## Report info on prior dose count and product type
@@ -390,17 +404,22 @@ plot_vax_count(ckd) # chronic kidney disease
 plot_vax_count(cld) # chronic liver disease
 plot_vax_count(cns_learndis) # chronic neurological disease or learning disability
 plot_vax_count(diabetes) # diabetes
-plot_vax_count(immunosuppressed_asplenia) # immunosuppressed or asplenia
+plot_vax_count(immunosuppressed) # immunosuppressed
+plot_vax_count(asplenia) # asplenia
 plot_vax_count(severe_obesity) # obesity
 plot_vax_count(smi) # severe mental illness
 plot_vax_count(primis_atrisk) # clinically vulnerable
 
 # Extended subgroups
 
-plot_vax_count(rrt_cat) # Chronic kidney disease classification
-plot_vax_count(copd) # Chronic obstructive pulmonary disease
-plot_vax_count(down_sydrome)
-plot_vax_count(sickle_cell)
+plot_vax_count(ckd_rrt)        # Chronic kidney disease classification
+plot_vax_count(copd)           # Chronic obstructive pulmonary disease
+plot_vax_count(down_sydrome)   # Down's syndrome
+plot_vax_count(sickle_cell)    # Sickle cell disease
+plot_vax_count(cirrhosis)      # Cirrhosis
+plot_vax_count(cochlear_implant) # Cochlear implant
+plot_vax_count(cystic_fibrosis)  # Cystic fibrosis
+plot_vax_count(csfl)           # Cerebrospinal fluid leak
 
 ## _______________________________________________________________________________________
 ## Report info in a standardised table

@@ -71,7 +71,7 @@ dataset.define_population(
   registered 
   & (registered_start_date <= (snapshot_date - weeks(12)))
   & alive
-  & (age >= 16) & (age <= 104)
+  & (age >= 12) & (age <= 104)
   & (patients.sex.is_in(["male", "female"]))
 )
 

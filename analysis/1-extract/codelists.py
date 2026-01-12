@@ -82,6 +82,14 @@ ckd35 = codelist_from_csv(
   "codelists/primis-covid19-vacc-uptake-ckd35.csv",
   column="code",
 )
+ ### Subsets ckd35 by stages 3-5
+ckd3_snomed = ["129171000119106","140121000119100","284991000119104","285871000119106","324251000000105","324281000000104","324311000000101","324341000000100","324371000000106","324411000000105","368441000119102","433144002","691421000119108","700378005","700379002","731000119105","90741000119107","949881000000106","949901000000109","949921000000100","950061000000103","950081000000107","950101000000101","96731000119100"]
+
+ckd4_snomed = ["129151000119102","140111000119107","285001000119105","285881000119109","324441000000106","324471000000100","368451000119100","431857002","721000119107","90751000119109","950181000000106","950211000000107","950231000000104","96721000119103"]
+
+ckd5_snomed = ["129161000119100","140101000119109","153851000119106","285011000119108","324501000000107","324541000000105","368461000119103","433146000","711000119100","714152005","714153000","90761000119106","950251000000106","950291000000103","950311000000102","96711000119105"]
+
+
 
 # Chronic Liver disease codes
 cld = codelist_from_csv(
@@ -295,3 +303,36 @@ cirrhosis = codelist_from_csv(
     "codelists/nhsd-primary-care-domain-refsets-cirrhosis_cod.csv", 
     column="code",
 )
+
+#---
+cochlear_implant = codelist_from_csv(
+    "codelists/nhsd-primary-care-domain-refsets-cocimpatrisk1_cod.csv", 
+    column="code",
+)
+
+remove_cochlear_implant = codelist_from_csv(
+    "codelists/nhsd-primary-care-domain-refsets-cocimprematrisk1_cod.csv", 
+    column="code",
+)
+
+cystic_fibrosis = codelist_from_csv(
+    "codelists/opensafely-cystic-fibrosis-snomed.csv", 
+    column="code",
+)
+
+csfl = codelist_from_csv(
+    "codelists/nhsd-primary-care-domain-refsets-csflatrisk1_cod.csv", 
+    column="code",
+)
+
+homeless = codelist_from_csv(
+    "codelists/primis-covid19-vacc-uptake-homeless_cod.csv", 
+    column="code",
+)
+
+reside_code = codelist_from_csv(
+    "codelists/primis-covid19-vacc-uptake-reside_cod.csv", 
+    column="code",
+)
+
+homeless_codes = homeless + reside_code
