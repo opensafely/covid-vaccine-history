@@ -369,7 +369,7 @@ level2_group <- c(
   # Extended subgroups
   "ckd_rrt", # RRT - CKD3-5
   "copd", # Chronic obstructive pulmonary disease
-  "down_sydrome", # Down's syndrome
+  "learndis_cat", # Learning disabilities categories
   "sickle_cell", # Sickle Cell
   "cirrhosis",          # Cirrhosis
   "cochlear_implant",   # Cochlear implant

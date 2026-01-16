@@ -255,8 +255,7 @@ known_variables <- c(
             levels = c("no ckd", "3", "4", "5", "ckd, without ckd3-5 code"),
             p = c(0.90, 0.06, 0.02, 0.01, 0.01)
           ),
-          needs = vax_variable
-        ),
+          needs = vax_variable),
 
         # "creatinine_umol_{i}" := bn_node(
         #   ~ as.numeric(runif(n = ..n, 20.0, 3000.0)),
@@ -269,8 +268,12 @@ known_variables <- c(
         # ),
         "copd_{i}" := bn_node( ~ rbernoulli(n = ..n, p = 0.02),
                                needs = vax_variable),
-        "down_sydrome_{i}" := bn_node( ~ rbernoulli(n = ..n, p = 0.02),
-                                       needs = vax_variable),
+        "learndis_cat_{i}" := bn_node(
+          variable_formula = ~ rfactor(
+            n = ..n,
+            levels = c("No learning disability", "Down’s syndrome", "Other learning disability", "Learning disability register"),
+            p =c(0.80, 0.05, 0.10, 0.05)),
+            needs = vax_variable),
         "sickle_cell_{i}" := bn_node( ~ rbernoulli(n = ..n, p = 0.02),
                                       needs = vax_variable),
         "cochlear_implant_{i}" := bn_node( ~ rbernoulli(n = ..n, p = 0.02),

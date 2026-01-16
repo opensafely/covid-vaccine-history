@@ -437,6 +437,32 @@ def last_creatinine_event(index_date):
     )
     return creatinine_event
 
+def learndis_cat(index_date): 
+    # learn dis ---------------------------------------------- 
+    down_syndrome = has_prior_event(codelists.down_syndrome, index_date)
+    learndis     = has_prior_event(codelists.learndis, index_date)
+    learndis_register     = has_prior_event(codelists.learndis_register, index_date)
+    other_learndis = learndis.is_not_null() & learndis_register.is_null()
+
+    # categories
+    learndis_cat = case(
+        when(
+            down_syndrome.is_null()
+            & learndis.is_null()
+        ).then("No learning disability"),
+
+        when(down_syndrome.is_not_null()).then("Down’s syndrome"),
+
+        when(other_learndis).then("Other learning disability"),
+        
+        when(
+            learndis_register.is_not_null()
+            & down_syndrome.is_null()
+            & ~other_learndis 
+        ).then("Learning disability register")
+    )
+    return learndis_cat
+
 def extended_subgroups(dataset, index_date, var_name_suffix=""):
     ## extended subgroups
     dataset.add_column(f"rrt_cat{var_name_suffix}", rrt_cat(index_date)) # rrt
@@ -444,10 +470,9 @@ def extended_subgroups(dataset, index_date, var_name_suffix=""):
     # dataset.add_column(f"creatinine_umol{var_name_suffix}", last_creatinine_event(index_date).numeric_value)
     # dataset.add_column(f"creatinine_age{var_name_suffix}", patients.age_on(last_creatinine_event(index_date).date))
     dataset.add_column(f"copd{var_name_suffix}", has_prior_event(codelists.copd, index_date)) # Chronic obstructive pulmonary disease
-    # TODO: CHECK FINAL LEARNING DISABILITIES DEF
-    dataset.add_column(f"down_sydrome{var_name_suffix}", has_prior_event(codelists.down_sydrome, index_date)) #Down's sydrome
+    dataset.add_column(f"learndis_cat{var_name_suffix}", learndis_cat(index_date)) # Learning disabilities categories
     dataset.add_column(f"sickle_cell{var_name_suffix}", has_prior_event(codelists.sickle_cell, index_date)) # Sickle cell anaemia
-    dataset.add_column(f"cirrhosis{var_name_suffix}", has_prior_event(codelists.cirrhosis, index_date)) #Down's sydrome 
+    dataset.add_column(f"cirrhosis{var_name_suffix}", has_prior_event(codelists.cirrhosis, index_date)) # cirrhosis 
     dataset.add_column(f"cochlear_implant{var_name_suffix}", has_cochlear_implant(index_date)) # cochlear implant
     dataset.add_column(f"cystic_fibrosis{var_name_suffix}", has_prior_event(codelists.cystic_fibrosis, index_date)) # cystic fibrosis
     dataset.add_column(f"csfl{var_name_suffix}", has_prior_event(codelists.csfl, index_date)) # Cerebrospinal fluid leak

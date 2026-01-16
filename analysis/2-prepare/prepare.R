@@ -125,7 +125,7 @@ data_vax <-
     # Extended subgroups
     #    matches("ckd_rrt_\\d+"), # CKD/RRT
     #    matches("copd_\\d+"), # Chronic obstructive pulmonary disease
-    #    matches("down_sydrome_\\d+"), # Down's syndrome
+    #    matches("learndis_cat_\\d+"), # Learning disability categories
     #    matches("sickle_cell_\\d+"), # Sickle cell disease
     #    matches("cirrhosis_\\d+"),          # Cirrhosis
     #    matches("cochlear_implant_\\d+"),   # Cochlear implant

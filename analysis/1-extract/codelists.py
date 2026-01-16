@@ -289,10 +289,12 @@ copd = codelist_from_csv(
     column="code",
 )
 
-down_sydrome = codelist_from_csv(
+down_syndrome = codelist_from_csv(
     "codelists/nhsd-primary-care-domain-refsets-ds_cod.csv", 
     column="code",
 )
+
+learndis_register = ["416075005"]
 
 sickle_cell = codelist_from_csv(
     "codelists/nhsd-sickle-spl-atriskv4-snomed-ct.csv", 
@@ -304,7 +306,7 @@ cirrhosis = codelist_from_csv(
     column="code",
 )
 
-#---
+
 cochlear_implant = codelist_from_csv(
     "codelists/nhsd-primary-care-domain-refsets-cocimpatrisk1_cod.csv", 
     column="code",
