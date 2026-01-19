@@ -168,11 +168,10 @@ for (snapshot_date in all_snapshot_dates) {
     copd = bn_node(
       ~ rbernoulli(n = ..n, p = 0.02),
     ),
-    # TODO
     learndis_cat = bn_node(
       variable_formula = ~ rfactor(n = ..n, levels = c(
         "No learning disability",
-        "Down’s syndrome",
+        "Down's syndrome",
         "Other learning disability",
         "Learning disability register"),
       p = c(0.80, 0.05, 0.1, 0.05)

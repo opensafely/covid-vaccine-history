@@ -215,6 +215,12 @@ factor_levels <-
       "Other Ethnic Groups - Any other ethnic group"
     ),
 
+    learndis_cat = c(
+      "No Learning disability",
+      "Down's syndrome",
+      "Other learning disability",
+      "Learning disability register"
+    ),
     ckd_stage_3to5 = c(
       "no ckd",
       "3",
@@ -231,6 +237,7 @@ factor_levels <-
       "Stage 5",
       "CKD, without stage 3-5 code"
     )
+
   )
 
 
@@ -313,6 +320,8 @@ standardise_primis_and_extended_characteristics <-
       ckd_stage_3to5 == "ckd, without stage 3-5 code" ~ "CKD, without stage 3-5 code",
       TRUE ~ "No CKD or RRT"
     ) |> factor(levels = factor_levels$ckd_rrt),
+
+    learndis_cat = factor(learndis_cat,  levels = factor_levels$learndis_cat)
   )
 
 
