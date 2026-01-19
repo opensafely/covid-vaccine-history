@@ -440,7 +440,7 @@ def last_creatinine_event(index_date):
 # learning disability cateogry
 def learndis_cat(index_date): 
     
-    #learndis = has_prior_event(codelists.learndis, index_date)
+    learndis = has_prior_event(codelists.learndis, index_date)
     down_syndrome = has_prior_event(codelists.down_syndrome, index_date)
     learndis_register = has_prior_event(codelists.learndis_register, index_date)
     other_learndis = learndis.is_not_null() & learndis_register.is_null()
