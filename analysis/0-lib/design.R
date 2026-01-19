@@ -102,19 +102,19 @@ sdc_threshold <- 10
 # covid-19 vaccine campaign dates
 campaign_info <-
   tribble(
-    ~campaign_label,        ~campaign_start_date,      ~primary_milestone_date, ~age_date, ~age_threshold, ~at_risk_crit,
-    "Pre-2020-07-01", "1900-01-01", "1900-01-01", "1900-01-01", 16, "all_risk_groups",
-    "Pre-roll-out",   as.character(study_dates$firstpossiblevax_date), as.character(study_dates$firstpossiblevax_date), as.character(study_dates$firstpossiblevax_date), 16, "all_risk_groups",
-    "Primary series", "2020-12-07", "2021-06-30", "2021-03-31", 16, "all_risk_groups",
-    "Autumn 2021",    "2021-09-06", "2022-02-28", "2021-08-31", 16, "all_risk_groups",
+    ~campaign_label,        ~campaign_start_date,      ~primary_milestone_date, ~age_date, ~age_threshold, ~clinical_priority,
+    "Pre-2020-07-01", "1900-01-01", "1900-01-01", "1900-01-01", 16, "primis_atrisk",
+    "Pre-roll-out",   as.character(study_dates$firstpossiblevax_date), as.character(study_dates$firstpossiblevax_date), as.character(study_dates$firstpossiblevax_date), 16, "primis_atrisk",
+    "Primary series", "2020-12-07", "2021-06-30", "2021-03-31", 16, "primis_atrisk",
+    "Autumn 2021",    "2021-09-06", "2022-02-28", "2021-08-31", 16, "primis_atrisk",
     "Spring 2022",    "2022-03-21", "2022-06-30", "2022-06-30", 75, "immunosuppressed",
-    "Autumn 2022",    "2022-08-29", "2023-02-28", "2023-03-31", 50, "all_risk_groups",
+    "Autumn 2022",    "2022-08-29", "2023-02-28", "2023-03-31", 50, "primis_atrisk",
     "Spring 2023",    "2023-04-03", "2023-06-30", "2023-06-30", 75, "immunosuppressed",
-    "Autumn 2023",    "2023-08-28", "2024-02-28", "2024-03-31", 65, "all_risk_groups",
+    "Autumn 2023",    "2023-08-28", "2024-02-28", "2024-03-31", 65, "primis_atrisk",
     "Spring 2024",    "2024-04-15", "2024-06-30", "2024-06-30", 75, "immunosuppressed",
-    "Autumn 2024",    "2024-09-30", "2025-02-28", "2025-03-31", 65, "all_risk_groups",
+    "Autumn 2024",    "2024-09-30", "2025-02-28", "2025-03-31", 65, "primis_atrisk",
     "Spring 2025",    "2025-03-31", "2025-06-30", "2025-06-30", 75, "immunosuppressed",
-    "Autumn 2025",    "2025-09-29", "2026-02-28", "2026-03-31", 75, "all_risk_groups",
+    "Autumn 2025",    "2025-09-29", "2026-02-28", "2026-03-31", 75, "primis_atrisk",
   ) |>
   mutate(
     across(c(campaign_start_date, primary_milestone_date, age_date), as.Date),
@@ -390,7 +390,7 @@ level2_group <- c(
   "cochlear_implant",   # Cochlear implant
   "cystic_fibrosis",    # Cystic fibrosis
   "csfl",               # Cerebrospinal fluid leak
-  "homeless",           # Homeless
+  "homeless"           # Homeless
 )
 
 level_combos <- expand_grid(group1 = level1_group, group2 = level2_group) |>

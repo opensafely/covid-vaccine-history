@@ -88,22 +88,17 @@ data_combined <-
     !!!standardise_demographic_characteristics,
     !!!standardise_primis_and_extended_characteristics,
 
-    # should be the same as primis_atrisk
-    # cv = (crd | chd |  ckd | cld | cns_learndis | diabetes | immunosuppressed | asplenia | severe_obesity | smi),
     age_above_eligiblity_threshold = (age >= campaign_info$age_threshold),
-    primis_or_immunosup = if (campaign_info$at_risk_crit == "all_risk_groups") { # used to chose if the at risk group is all clinical risk variables or just immunosuppressed people
-      primis_atrisk
-    } else if (campaign_info$at_risk_crit == "immunosuppressed") {
-      immunosuppressed
-    } else {
-      NA
-    },
 
-    primis_atrisk_only = primis_or_immunosup & !age_above_eligiblity_threshold,
+    clinical_priority = case_when( # used to chose if the at risk group is all clinical risk variables or just immunosuppressed people
+      campaign_info$clinical_priority == "primis_atrisk" ~ primis_atrisk,
+      campaign_info$clinical_priority == "immunosuppressed" ~ immunosuppressed,
+      .default ~ FALSE
+    ),
 
+    clinical_priority_only = clinical_priority & !age_above_eligiblity_threshold,
 
-
-    any_eligibility = age_above_eligiblity_threshold | primis_or_immunosup | carehome_status,
+    any_eligibility = age_above_eligiblity_threshold | clinical_priority | carehome_status,
 
     # previous vaccine summary
     # add more variables here based on covid_vax_prior_1_date, covid_vax_prior_2_date,... etc if needed
@@ -729,7 +724,6 @@ iwalk(
 
 # Function to output HRs and IRRs for disease  burden comparing different subgroups
 adjusted_estimates <- function(data, subgroup, event_name, event_time, event_indicator) {
-
   # use age-splines unless age is the subgroup of interest
 
   poisson_formula <- as.formula(glue("event_indicator ~ {subgroup} + sex + ns(age, 3)"))
@@ -807,7 +801,7 @@ adjusted_estimates <- function(data, subgroup, event_name, event_time, event_ind
 
   data_estimates <-
     data_poisson #|>
-    #left_join(data_cox, by = c("variable", "label", "reference_row"))
+  # left_join(data_cox, by = c("variable", "label", "reference_row"))
 
   # write_csv(data_cox, fs::path(output_dir, glue("cox_{event_name}_{subgroup}.csv")))
   return(data_estimates)
@@ -878,4 +872,3 @@ get_all_estimates(
 get_all_estimates(data_combined, "covid_admitted", covid_admitted_time, covid_admitted_indicator)
 get_all_estimates(data_combined, "covid_critcare", covid_critcare_time, covid_critcare_indicator)
 get_all_estimates(data_combined, "covid_death", covid_death_time, covid_death_indicator)
-
