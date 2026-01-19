@@ -114,12 +114,12 @@ campaign_info <-
     "Spring 2024",    "2024-04-15", "2024-06-30", "2024-06-30", 75, "immunosuppressed",
     "Autumn 2024",    "2024-09-30", "2025-02-28", "2025-03-31", 65, "all_risk_groups",
     "Spring 2025",    "2025-03-31", "2025-06-30", "2025-06-30", 75, "immunosuppressed",
-    "Autumn 2025",    "2025-09-30", "2026-02-28", "2026-03-31", 75, "all_risk_groups",
+    "Autumn 2025",    "2025-09-29", "2026-02-28", "2026-03-31", 75, "all_risk_groups",
   ) |>
   mutate(
     across(c(campaign_start_date, primary_milestone_date, age_date), as.Date),
-    early_milestone_date = campaign_start_date + (7 * 8) - 1,
-    final_milestone_date = lead(campaign_start_date, 1, as.Date("2030-01-01")) - 1
+    early_milestone_date = campaign_start_date + (7 * 8) - 1, # end of eighth week after campaign_start_date
+    final_milestone_date = lead(campaign_start_date, 1, as.Date("2030-01-01")) - 1 # day before next campaign date (or some arbitrary future date if last campaign)
   )  |>
   mutate(
     early_milestone_days = as.integer(early_milestone_date - campaign_start_date) + 1L,
@@ -130,7 +130,7 @@ campaign_info <-
 # output from https://jobs.opensafely.org/opensafely-internal/tpp-vaccination-names/ workspace
 # shows all possible covid vaccination names in TPP
 
-# lookup to rename TPP product names to coding-friendly porduct names
+# lookup to rename TPP product names to coding-friendly product names
 vax_product_lookup <- c(
   "pfizer" = "COVID-19 mRNA Vaccine Comirnaty 30micrograms/0.3ml dose conc for susp for inj MDV (Pfizer)",
   "pfizerBA1" = "Comirnaty Original/Omicron BA.1 COVID-19 Vacc md vials",

@@ -137,22 +137,22 @@
     "age_threshold": 75,
     "at_risk_crit": "immunosuppressed",
     "early_milestone_date": "2025-05-25",
-    "final_milestone_date": "2025-09-29",
+    "final_milestone_date": "2025-09-28",
     "early_milestone_days": 56,
     "primary_milestone_days": 92,
-    "final_milestone_days": 183
+    "final_milestone_days": 182
   },
-  "2025-09-30": {
+  "2025-09-29": {
     "campaign_label": "Autumn 2025",
-    "campaign_start_date": "2025-09-30",
+    "campaign_start_date": "2025-09-29",
     "primary_milestone_date": "2026-02-28",
     "age_date": "2026-03-31",
     "age_threshold": 75,
     "at_risk_crit": "all_risk_groups",
-    "early_milestone_date": "2025-11-24",
+    "early_milestone_date": "2025-11-23",
     "final_milestone_date": "2029-12-31",
     "early_milestone_days": 56,
-    "primary_milestone_days": 152,
-    "final_milestone_days": 1554
+    "primary_milestone_days": 153,
+    "final_milestone_days": 1555
   }
 }

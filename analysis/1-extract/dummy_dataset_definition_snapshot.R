@@ -51,6 +51,7 @@ all_snapshot_dates <- campaign_info |>
   pull(campaign_start_date)
 
 for (snapshot_date in all_snapshot_dates) {
+  # use these if selecting a specific date to run
   # snapshot_date <- as.Date("2020-12-07")
   # snapshot_date <- campaign_info |>  filter(campaign_label == "Spring 2025") |> pull(campaign_start_date)
 
