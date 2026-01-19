@@ -486,7 +486,7 @@ def extended_subgroups(dataset, index_date, var_name_suffix=""):
     # dataset.add_column(f"creatinine_age{var_name_suffix}", patients.age_on(last_creatinine_event(index_date).date))
     dataset.add_column(f"copd{var_name_suffix}", has_prior_event(codelists.copd, index_date)) # Chronic obstructive pulmonary disease
     dataset.add_column(f"learndis_cat{var_name_suffix}", learndis_cat(index_date)) # Learning disabilities categories
-    dataset.add_column(f"sickle_cell{var_name_suffix}", has_prior_event(codelists.sickle_cell, index_date)) # Sickle cell anaemia
+    dataset.add_column(f"sickle_cell_asplenia{var_name_suffix}", has_prior_event(codelists.sickle_cell + codelists.asplenia, index_date)) # Sickle cell anaemia or asplenia
     dataset.add_column(f"cirrhosis{var_name_suffix}", has_prior_event(codelists.cirrhosis, index_date)) # cirrhosis 
     dataset.add_column(f"cochlear_implant{var_name_suffix}", has_cochlear_implant(index_date)) # cochlear implant
     dataset.add_column(f"cystic_fibrosis{var_name_suffix}", has_prior_event(codelists.cystic_fibrosis, index_date)) # cystic fibrosis

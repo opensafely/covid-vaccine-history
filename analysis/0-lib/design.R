@@ -372,7 +372,7 @@ level2_group <- c(
   "ckd_rrt", # RRT - CKD3-5
   "copd", # Chronic obstructive pulmonary disease
   "learndis_cat", # Learning disabilities categories
-  "sickle_cell", # Sickle Cell
+  "sickle_cell_asplenia", # Sickle Cell or asplenia
   "cirrhosis",          # Cirrhosis
   "cochlear_implant",   # Cochlear implant
   "cystic_fibrosis",    # Cystic fibrosis

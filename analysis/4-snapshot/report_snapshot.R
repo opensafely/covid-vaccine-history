@@ -307,7 +307,7 @@ plot_date_of_last_dose(primis_atrisk) # clinically vulnerable
 plot_date_of_last_dose(ckd_rrt) # Chronic kidney disease classification
 plot_date_of_last_dose(copd) # Chronic obstructive pulmonary disease
 plot_date_of_last_dose(learndis_cat)   # Learning disability categories
-plot_date_of_last_dose(sickle_cell)    # Sickle cell disease
+plot_date_of_last_dose(sickle_cell_asplenia)    # Sickle cell disease or asplenia
 plot_date_of_last_dose(cirrhosis)      # Cirrhosis
 plot_date_of_last_dose(cochlear_implant) # Cochlear implant
 plot_date_of_last_dose(cystic_fibrosis)  # Cystic fibrosis
@@ -416,7 +416,7 @@ plot_vax_count(primis_atrisk) # clinically vulnerable
 plot_vax_count(ckd_rrt)        # Chronic kidney disease classification
 plot_vax_count(copd)           # Chronic obstructive pulmonary disease
 plot_vax_count(learndis_cat)   # Learning disability categories
-plot_vax_count(sickle_cell)    # Sickle cell disease
+plot_vax_count(sickle_cell_asplenia)    # Sickle cell disease or asplenia
 plot_vax_count(cirrhosis)      # Cirrhosis
 plot_vax_count(cochlear_implant) # Cochlear implant
 plot_vax_count(cystic_fibrosis)  # Cystic fibrosis
