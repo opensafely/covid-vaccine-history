@@ -86,7 +86,7 @@ data_combined <-
   mutate(
     all = "All",
     !!!standardise_demographic_characteristics,
-    !!!ckd_rrt,
+    !!!standardise_primis_and_extended_characteristics,
     cns_learndis = (cns | learndis),
     # immunosuppressed_asplenia = (immunosuppressed | asplenia),
 

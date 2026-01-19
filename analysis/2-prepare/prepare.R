@@ -108,29 +108,6 @@ data_vax <-
     matches("stp_\\d+"),
     matches("imd_\\d+"),
     matches("imd_quintile_\\d+"),
-
-    # PRIMIS variables
-    #    matches("primis_atrisk_\\d+") #, # Clinically vulnerable
-    #    matches("crd_\\d+"), # chronic respiratory disease
-    #    matches("chd_\\d+"), # chronic heart disease
-    #    matches("ckd_\\d+"), # chronic kidney disease
-    #    matches("cld_\\d+"), # chronic liver disease
-    #    matches("cns_\\d+"), # chronic neurological disease
-    #    matches("learndis_\\d+"), # learning Disability
-    #    matches("diabetes_\\d+"), # diabetes
-    #    matches("immunosuppressed_\\d+"), # immunosuppressed
-    #    matches("asplenia_\\d+"), # asplenia or dysfunction of the spleen
-    #    matches("severe_obesity_\\d+"), # obesity
-    #    matches("smi_\\d+"), #severe mental illness
-    # Extended subgroups
-    #    matches("ckd_rrt_\\d+"), # CKD/RRT
-    #    matches("copd_\\d+"), # Chronic obstructive pulmonary disease
-    #    matches("learndis_cat_\\d+"), # Learning disability categories
-    #    matches("sickle_cell_\\d+"), # Sickle cell disease
-    #    matches("cirrhosis_\\d+"),          # Cirrhosis
-    #    matches("cochlear_implant_\\d+"),   # Cochlear implant
-    #    matches("cystic_fibrosis_\\d+"),    # Cystic fibrosis
-    #    matches("csfl_\\d+"),               # Cerebrospinal fluid leak
   ) |>
   pivot_longer(
     cols = -patient_id,
@@ -150,7 +127,7 @@ data_vax <-
   # as_tibble() |> # insert this here to revert to standard dplyr as `cut` function doesn't work with dtplyr
   mutate(
     !!!standardise_demographic_characteristics,
-    # !!!ckd_rrt,
+    !!!standardise_primis_and_extended_characteristics,
     vax_campaign = cut(
       vax_date,
       breaks = c(campaign_info$campaign_start_date, study_dates$end_date),

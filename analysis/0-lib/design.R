@@ -215,6 +215,22 @@ factor_levels <-
       "Other Ethnic Groups - Any other ethnic group"
     ),
 
+    ckd_stage_3to5 = c(
+      "no ckd",
+      "3",
+      "4",
+      "5",
+      "ckd, without ckd3-5 code"
+    ),
+    ckd_rrt = c(
+      "No CKD or RRT",
+      "RRT (transplant)",
+      "RRT (dialysis)",
+      "Stage 3",
+      "Stage 4",
+      "Stage 5",
+      "CKD, without stage 3-5 code"
+    )
   )
 
 
@@ -285,36 +301,18 @@ standardise_demographic_characteristics <-
 #   return(egfr)
 # }
 
-ckd_rrt <-
+standardise_primis_and_extended_characteristics <-
   rlang::quos(
-  #  egfr = egfr(sex, creatinine_umol, creatinine_age),
+
     ckd_rrt = case_when(
       rrt_cat == "1 dialysis" ~ "RRT (dialysis)",
       rrt_cat == "2 transplant" ~ "RRT (transplant)",
       ckd_stage_3to5 == "5" ~ "Stage 5",
       ckd_stage_3to5 == "4" ~ "Stage 4",
       ckd_stage_3to5 == "3" ~ "Stage 3",
-      ckd_stage_3to5 == "ckd, without ckd3-5 code" ~ "ckd, without ckd3-5 code",
+      ckd_stage_3to5 == "ckd, without stage 3-5 code" ~ "CKD, without stage 3-5 code",
       TRUE ~ "No CKD or RRT"
-      # (egfr >= 0 & egfr < 15) ~ "Stage 5",
-      # (egfr >= 15 & egfr < 30) ~ "Stage 4",
-      # (egfr >= 30 & egfr < 45) ~ "Stage 3b",
-      # (egfr >= 45 & egfr < 60) ~ "Stage 3a",
-      # ((is.na(egfr) | (egfr >= 60)) & rrt_cat == "0 no RRT") ~ "No CKD or RRT"
-    ) |>
-      factor(
-        levels = c(
-          "No CKD or RRT",
-          "ckd, without ckd3-5 code",
-          # "Stage 3a",
-          # "Stage 3b",
-          "Stage 3",
-          "Stage 4",
-          "Stage 5",
-          "RRT (transplant)",
-          "RRT (dialysis)"
-        )
-      )
+    ) |> factor(levels = factor_levels$ckd_rrt),
   )
 
 

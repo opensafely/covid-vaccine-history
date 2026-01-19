@@ -152,11 +152,11 @@ for (snapshot_date in all_snapshot_dates) {
       )),
     ckd_stage_3to5 = bn_node(
       variable_formula = ~ rfactor(n = ..n, levels = c(
-        "no ckd",
+        "no CKD",
         "3",
         "4",
         "5",
-        "ckd, without ckd3-5 code"),
+        "CKD, without stage 3-5 code"),
       p = c(0.90, 0.06, 0.02, 0.01, 0.01)
       )),
     # creatinine_umol = bn_node(

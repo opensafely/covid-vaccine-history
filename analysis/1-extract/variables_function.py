@@ -387,7 +387,7 @@ def ckd_stage_3to5(index_date):
 
     stage = case(
         # no CKD
-        when(~ckd).then("no ckd"),
+        when(~ckd).then("no CKD"),
 
         # latest CKD stage
         when(
@@ -409,11 +409,11 @@ def ckd_stage_3to5(index_date):
         ).then("3"),
 
         # ckd, without ckd3-5 code
-        otherwise="ckd, without ckd3-5 code"
+        otherwise="CKD, without stage 3-5 code"
     )
     return stage
 
-#Creatinine event
+# Creatinine event
 def last_creatinine_event(index_date):
     creatinine_event = (
         clinical_events_ranges
