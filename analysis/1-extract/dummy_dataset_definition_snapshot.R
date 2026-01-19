@@ -192,6 +192,9 @@ for (snapshot_date in all_snapshot_dates) {
     csfl = bn_node(
       ~ rbernoulli(n = ..n, p = 0.02),
     ),
+    homeless = bn_node(
+      ~ rbernoulli(n = ..n, p = 0.02),
+    ),
     # covid vaccines
     covid_vax_1_day = bn_node(
       ~ runif(n = ..n, snapshot_day, snapshot_day + 200),

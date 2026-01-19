@@ -491,6 +491,7 @@ def extended_subgroups(dataset, index_date, var_name_suffix=""):
     dataset.add_column(f"cochlear_implant{var_name_suffix}", has_cochlear_implant(index_date)) # cochlear implant
     dataset.add_column(f"cystic_fibrosis{var_name_suffix}", has_prior_event(codelists.cystic_fibrosis, index_date)) # cystic fibrosis
     dataset.add_column(f"csfl{var_name_suffix}", has_prior_event(codelists.csfl, index_date)) # Cerebrospinal fluid leak
+    dataset.add_column(f"homeless{var_name_suffix}", homeless(index_date)) # Homeless
     
 
 # def other_cx_variables(dataset, index_date, var_name_suffix=""):
