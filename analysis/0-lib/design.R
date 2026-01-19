@@ -185,6 +185,39 @@ vax_shortname_lookup <- c(
 # }
 
 
+## factor levels provided in a sensible order, as this won't happen directly from opensafely ----
+
+factor_levels <-
+  lst(
+    ethnicity5 = c(
+      "White",
+      "Mixed",
+      "Asian or Asian British",
+      "Black or Black British",
+      "Chinese or Other Ethnic Groups"
+    ),
+    ethnicity16 = c(
+      "White - British",
+      "White - Irish",
+      "White - Any other White background",
+      "Mixed - White and Black Caribbean",
+      "Mixed - White and Black African",
+      "Mixed - White and Asian",
+      "Mixed - Any other mixed background",
+      "Asian or Asian British - Indian",
+      "Asian or Asian British - Pakistani",
+      "Asian or Asian British - Bangladeshi",
+      "Asian or Asian British - Any other Asian background",
+      "Black or Black British - Caribbean",
+      "Black or Black British - African",
+      "Black or Black British - Any other Black background",
+      "Other Ethnic Groups - Chinese",
+      "Other Ethnic Groups - Any other ethnic group"
+    ),
+
+  )
+
+
 # template for standardising demographic characteristics that are extracted multiple times
 # using this in mutate like this: `mutate(!!!standardise_demographic_characteristics)`
 standardise_demographic_characteristics <-
@@ -284,36 +317,7 @@ ckd_rrt <-
       )
   )
 
-## factor levels provided in a sensible order, as this won't happen directly from opensafely ----
 
-factor_levels <-
-  lst(
-    ethnicity5 = c(
-      "White",
-      "Mixed",
-      "Asian or Asian British",
-      "Black or Black British",
-      "Chinese or Other Ethnic Groups"
-    ),
-    ethnicity16 = c(
-      "White - British",
-      "White - Irish",
-      "White - Any other White background",
-      "Mixed - White and Black Caribbean",
-      "Mixed - White and Black African",
-      "Mixed - White and Asian",
-      "Mixed - Any other mixed background",
-      "Asian or Asian British - Indian",
-      "Asian or Asian British - Pakistani",
-      "Asian or Asian British - Bangladeshi",
-      "Asian or Asian British - Any other Asian background",
-      "Black or Black British - Caribbean",
-      "Black or Black British - African",
-      "Black or Black British - Any other Black background",
-      "Other Ethnic Groups - Chinese",
-      "Other Ethnic Groups - Any other ethnic group"
-    )
-  )
 
 # function to convert ethnicity 16 group into 5 group
 ethnicity_16_to_5 <- function(x) {
