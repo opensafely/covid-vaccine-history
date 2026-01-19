@@ -86,6 +86,7 @@ demographic_variables(dataset = dataset, index_date = snapshot_date)
 primis_variables(dataset = dataset, index_date = snapshot_date)
 
 ## extended subgroups ----
+
 extended_subgroups(dataset = dataset, index_date = snapshot_date)
 
 # other_cx_variables(dataset = dataset, index_date = snapshot_date)

@@ -66,7 +66,7 @@ dataset.configure_dummy_data(population_size=1000)
 # define dataset poppulation
 dataset.define_population(
   registered_at_any_time_in_observation_period.exists_for_patient()
-  & (patients.age_on(end_date) >=12) # only include people who are aged 12 or over during at least one season
+  & (patients.age_on(end_date) >= 12) # only include people who are aged 12 or over during at least one season
 )
 
 # patient sex

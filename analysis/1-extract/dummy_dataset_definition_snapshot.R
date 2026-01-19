@@ -80,7 +80,7 @@ for (snapshot_date in all_snapshot_dates) {
       missing_rate = ~0.99
     ),
     age = bn_node(
-      ~ as.integer(rnormt(n = ..n, mean = 60, sd = 14, range=c(12,104)))
+      ~ as.integer(rnormt(n = ..n, mean = 60, sd = 14, range = c(12, 104)))
     ),
     imd = bn_node(
       ~ as.integer(plyr::round_any(runif(n = ..n, 100, 32000), 100)),
