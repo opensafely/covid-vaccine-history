@@ -200,7 +200,7 @@ standardise_demographic_characteristics <-
     ),
     ageband13 = cut(
       age,
-      breaks = c(-Inf, 12, 20, 30, 40, 50, 55, 60, 65, 70, 75, 80, 85, 90, 105, Inf),
+      breaks = c(-Inf, 12, 18, 30, 40, 50, 55, 60, 65, 70, 75, 80, 85, 90, 105, Inf),
       labels = c("under 12", "12-17", "18-29", "30-39", "40-49", "50-54", "55-59", "60-64", "65-69", "70-74", "75-79", "80-84", "85-89", "90-104", "105+"), # under 16 and 105+ should be excluded in analysis but include here to ensure nobody slipped through the net
       right = FALSE
     ),
