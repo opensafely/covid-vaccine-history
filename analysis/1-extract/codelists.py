@@ -337,4 +337,3 @@ reside_code = codelist_from_csv(
     column="code",
 )
 
-homeless_codes = homeless + reside_code

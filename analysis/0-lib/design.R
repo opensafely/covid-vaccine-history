@@ -374,7 +374,8 @@ level2_group <- c(
   "cirrhosis",          # Cirrhosis
   "cochlear_implant",   # Cochlear implant
   "cystic_fibrosis",    # Cystic fibrosis
-  "csfl"               # Cerebrospinal fluid leak
+  "csfl",               # Cerebrospinal fluid leak
+  "homeless",           # Homeless
 )
 
 level_combos <- expand_grid(group1 = level1_group, group2 = level2_group) |>

@@ -312,6 +312,7 @@ plot_date_of_last_dose(cirrhosis)      # Cirrhosis
 plot_date_of_last_dose(cochlear_implant) # Cochlear implant
 plot_date_of_last_dose(cystic_fibrosis)  # Cystic fibrosis
 plot_date_of_last_dose(csfl)           # Cerebrospinal fluid leak
+plot_date_of_last_dose(homeless)           # homeless
 
 ## _______________________________________________________________________________________
 ## Report info on prior dose count and product type
@@ -420,6 +421,7 @@ plot_vax_count(cirrhosis)      # Cirrhosis
 plot_vax_count(cochlear_implant) # Cochlear implant
 plot_vax_count(cystic_fibrosis)  # Cystic fibrosis
 plot_vax_count(csfl)           # Cerebrospinal fluid leak
+plot_vax_count(homeless)           # Homeless
 
 ## _______________________________________________________________________________________
 ## Report info in a standardised table

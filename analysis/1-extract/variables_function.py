@@ -463,6 +463,21 @@ def learndis_cat(index_date):
     )
     return learndis_cat
 
+# Homelessness
+def homeless(index_date, where=True):
+    # homeless date
+    date_homeless = last_prior_event(codelists.homeless, index_date).date
+    # Residence code  date indicating no longer homeless
+    date_reside = last_prior_event(codelists.reside, index_date).date
+    # homelessness
+    homeless = case(
+        when(date_homeless.is_null()).then(False),
+        when(date_homeless.is_not_null() & ((date_reside.is_not_null() & (date_reside < date_homeless)) | date_reside.is_null())).then(True),
+        otherwise = False
+    )
+    return homeless
+
+
 def extended_subgroups(dataset, index_date, var_name_suffix=""):
     ## extended subgroups
     dataset.add_column(f"rrt_cat{var_name_suffix}", rrt_cat(index_date)) # rrt
