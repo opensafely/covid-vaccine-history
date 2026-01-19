@@ -87,8 +87,6 @@ data_combined <-
     all = "All",
     !!!standardise_demographic_characteristics,
     !!!standardise_primis_and_extended_characteristics,
-    cns_learndis = (cns | learndis),
-    # immunosuppressed_asplenia = (immunosuppressed | asplenia),
 
     # should be the same as primis_atrisk
     # cv = (crd | chd |  ckd | cld | cns_learndis | diabetes | immunosuppressed | asplenia | severe_obesity | smi),

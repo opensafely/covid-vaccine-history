@@ -321,7 +321,11 @@ standardise_primis_and_extended_characteristics <-
       TRUE ~ "No CKD or RRT"
     ) |> factor(levels = factor_levels$ckd_rrt),
 
-    learndis_cat = factor(learndis_cat,  levels = factor_levels$learndis_cat)
+    learndis_cat = factor(learndis_cat,  levels = factor_levels$learndis_cat),
+
+    cns_learndis = (cns | learndis),
+
+    sickle_cell_asplenia = (sickle_cell | asplenia)
   )
 
 

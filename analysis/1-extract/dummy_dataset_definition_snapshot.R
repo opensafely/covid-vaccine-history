@@ -176,7 +176,7 @@ for (snapshot_date in all_snapshot_dates) {
         "Learning disability register"),
       p = c(0.80, 0.05, 0.1, 0.05)
       )),
-    sickle_cell_splenia = bn_node(
+    sickle_cell = bn_node(
       ~ rbernoulli(n = ..n, p = 0.02),
     ),
     cirrhosis = bn_node(
