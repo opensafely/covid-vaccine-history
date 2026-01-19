@@ -332,7 +332,7 @@ homeless = codelist_from_csv(
     column="code",
 )
 
-reside_code = codelist_from_csv(
+reside = codelist_from_csv(
     "codelists/primis-covid19-vacc-uptake-reside_cod.csv", 
     column="code",
 )

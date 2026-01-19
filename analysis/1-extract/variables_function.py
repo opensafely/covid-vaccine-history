@@ -450,7 +450,7 @@ def learndis_cat(index_date):
         when(down_syndrome).then("Down's syndrome"),
         when(other_learndis).then("Other learning disability"),
         when(learndis_register).then("Learning disability register"),
-        otherwise = "No Learning disability"
+        otherwise = "No learning disability"
     )
     
     return learndis_cat

@@ -90,11 +90,8 @@ data_combined <-
 
     age_above_eligiblity_threshold = (age >= campaign_info$age_threshold),
 
-    clinical_priority = case_when( # used to chose if the at risk group is all clinical risk variables or just immunosuppressed people
-      campaign_info$clinical_priority == "primis_atrisk" ~ primis_atrisk,
-      campaign_info$clinical_priority == "immunosuppressed" ~ immunosuppressed,
-      .default ~ FALSE
-    ),
+    # used to chose if the at risk group is all clinical risk variables or just immunosuppressed people
+    clinical_priority = .data[[campaign_info$clinical_priority]],
 
     clinical_priority_only = clinical_priority & !age_above_eligiblity_threshold,
 
