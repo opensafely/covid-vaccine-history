@@ -31,10 +31,6 @@ data_varying_clean <- read_feather(here("output", "2-prepare", "prepare", "data_
 
 ## add time-invariant info from the fixed dataset to vaccine data and format variables for printing / plots ----
 
-# only use first 8 vaccines in look up list
-vax_shortname_8 <- vax_shortname_lookup[c(1:8)] # , length(vax_shortname_lookup))]
-# vax_shortname_2 <- vax_shortname_lookup[c(1:2)]#, length(vax_shortname_lookup))]
-
 data_vax <-
   left_join(
     lazy_dt(data_varying),
@@ -44,7 +40,7 @@ data_vax <-
   mutate(
     vax_dosenumber = factor(vax_index, levels = sort(unique(vax_index)), labels = paste("Dose", sort(unique(vax_index)))),
     vax_week = floor_date(vax_date, unit = "week", week_start = 1),
-    vax_product8 = fct_collapse(vax_product, !!!vax_shortname_8, other_level = "Other"),
+    vax_product_core = fct_collapse(vax_product, !!!vax_shortname_8, other_level = "Other"),
     all = ""
   ) |>
   as_tibble()
@@ -58,7 +54,7 @@ data_vax_clean <-
   mutate(
     vax_dosenumber = factor(vax_index, levels = sort(unique(vax_index)), labels = paste("Dose", sort(unique(vax_index)))),
     vax_week = floor_date(vax_date, unit = "week", week_start = 1),
-    vax_product8 = fct_collapse(vax_product, !!!vax_shortname_8, other_level = "Other"),
+    vax_product_core = fct_other(vax_product, vax_product_core_levels, other_level = "other"),
     all = "",
     all2 = ""
   ) |>
@@ -98,7 +94,7 @@ write_csv(summary_validation, fs::path(output_dir, "validation.csv"))
 summary_validation_stratified <-
   data_vax |>
   group_by(
-    vax_dosenumber, vax_product8
+    vax_dosenumber, vax_product_core
   ) |>
   summarise(
     n = round_any(n(), sdc_threshold),
@@ -174,7 +170,7 @@ write_csv(summary_vax_product_dosenumber, fs::path(output_dir, "vax_counts_produ
 summary_stratified <-
   data_vax |>
   group_by(
-    vax_dosenumber, vax_product8, vax_campaign,
+    vax_dosenumber, vax_product_core, vax_campaign,
     sex, ageband4, ethnicity5, region, imd_quintile,
     # PRIMIS
     #   crd, chd, ckd, cld, cns, learndis, diabetes, immunosuppressed, asplenia, severe_obesity, smi,
@@ -197,7 +193,7 @@ write_csv(summary_stratified, fs::path(output_dir, "vax_counts_stratified.csv"))
 
 plot_vax_dates <- function(rows, cols) {
   summary_by <- data_vax_clean |>
-    group_by(vax_product8, vax_week) |>
+    group_by(vax_product_core, vax_week) |>
     group_by({{ rows }}, {{ cols }}, .add = TRUE) |>
     summarise(
       n = round_any(n(), sdc_threshold)
@@ -206,7 +202,7 @@ plot_vax_dates <- function(rows, cols) {
   temp_plot <-
     ggplot(summary_by) +
     geom_col(
-      aes(x = vax_week, y = n, fill = vax_product8, group = vax_product8),
+      aes(x = vax_week, y = n, fill = vax_product_core, group = vax_product_core),
       alpha = 0.5,
       position = position_stack(reverse = TRUE),
       # position=position_identity(),
@@ -317,7 +313,7 @@ plot_vax_intervals <- function(rows, cols) {
       vax_interval = roundmid_any(vax_interval + 1, 7), # to split into 0-6, 7-13, 14-20, 21-28, ....
       vax_dosenumber = factor(vax_index, levels = sort(unique(vax_index)), labels = paste("Dose ", sort(unique(vax_index)) - 1, "-", sort(unique(vax_index)))),
     ) |>
-    group_by(vax_dosenumber, vax_product8, vax_interval) |>
+    group_by(vax_dosenumber, vax_product_core, vax_interval) |>
     group_by({{ rows }}, {{ cols }}, .add = TRUE) |>
     summarise(
       n = round_any(n(), sdc_threshold),
@@ -326,7 +322,7 @@ plot_vax_intervals <- function(rows, cols) {
   temp_plot <-
     ggplot(summary_by) +
     geom_col(
-      aes(x = vax_interval, y = n, fill = vax_product8, group = vax_product8),
+      aes(x = vax_interval, y = n, fill = vax_product_core, group = vax_product_core),
       alpha = 0.5,
       position = position_stack(reverse = TRUE),
       # position=position_identity(),
