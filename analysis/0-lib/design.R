@@ -415,13 +415,21 @@ ethnicity_16_to_5 <- function(x) {
 ## --VARIABLES--
 
 level1_group <- c(
+
+  # Level 1A (all)
   "all",
+
+  # level 1B (age)
+  "ageband4",
+
+  # Level 1C (eligibility)
   "any_eligibility",
   "age_above_eligiblity_threshold",
   "clinical_priority",
   "clinical_priority_only",
   "carehome_status",
-  "ageband4",
+
+  # Level 1D(clinical risk)
   "primis_atrisk",
   "crd",
   "chd",
@@ -430,20 +438,25 @@ level1_group <- c(
   "cns_learndis",
   "diabetes",
   "immunosuppressed",
-  "asplenia",
+  # "asplenia",
   "severe_obesity",
   "smi"
 )
 
 level2_group <- c(
   "all",
-  "sex",
+
+  # sociodemographic subgroups
   "ageband4",
   "ageband13",
+  "sex",
   "ethnicity5",
+  # "ethnicity16",
   "region",
   "imd_quintile",
   "carehome_status",
+
+  # Core clinical risk subgroups
   "primis_atrisk",
   "crd",
   "chd",
@@ -455,6 +468,7 @@ level2_group <- c(
   "asplenia",
   "severe_obesity",
   "smi",
+
   # Extended subgroups
   "ckd_rrt", # RRT - CKD3-5
   "copd", # Chronic obstructive pulmonary disease
