@@ -69,8 +69,6 @@ for i in range(1, 16+1):
 
     suffix = f"_{i}"
 
-    ## --VARIABLES--
-    
     # vaccine variables
     current_vax = covid_vaccinations.where(covid_vaccinations.date>previous_vax_date).first_for_patient()
     dataset.add_column(f"covid_vax_{i}_date", current_vax.date)

@@ -72,9 +72,16 @@ def last_prior_meds(codelist, index_date, where=True):
     )
 
 
+
+
+# --VARIABLES--
+
 #######################################################
 # PRIMIS
 #######################################################
+
+
+
 
 # Asthma
 def has_asthma(index_date):

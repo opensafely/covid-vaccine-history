@@ -633,7 +633,7 @@ km_estimates_all <-
   select(group1, group1_value, group2, group2_value, everything()) |>
   mutate(
     early_milestone = (time == campaign_info$early_milestone_days) * 1L,
-    primary_milestone = (time == campaign_info$primary_milestone_days) * 1L, # TODO this doesn't work as we're reporting weekly but we the primary milestone is not always the same day of the week - to fix
+    primary_milestone = (time == campaign_info$primary_milestone_days) * 1L,
     final_milestone = (time == campaign_info$final_milestone_days) * 1L,
   )
 

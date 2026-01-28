@@ -73,18 +73,17 @@ The analysis scripts in the [`analysis/`](./analysis) directory are organised in
 The structure of the output directory (not tracked via git) is designed to match the structure of the [analysis directory](./analysis). For example, all files created by the action `report_snapshot_20210906`, which runs the [`./output/4-snapshot/report_snapshot.R`](./analysis/4-snapshot/report_snapshot.R) script for `snapshot_date=20210906`, will be saved in the `./output/4-snapshot/report_snapshot_20210906/` directory. 
 
 
-- `2-prepare/` - this directory contains outputs from the preparation script, which performs some data cleaning, data validation checks, and outputs processed data for analysis:
-  - `prepare/count_product.csv` reports the count of each vaccine product, and the earliest date that this product was given, across the entire history of the Covid-19 vaccination programme. Counts are stratified by adults / children. 
-  - `prepare/count_product_campaign.csv` reports the count of each vaccine product, and the earliest date that this product was given, for each vaccination campaign separately.
-  - `prepare/count_product_cooccurrrence.csv` reports the number of times that a person was recorded as being vaccinated with a particular combination of Covid-19 vaccines on the same day. For instance, "1x pfizer" or "2x Pfizer" or "1x pfizer AND 2x az" on the same day. Co-occurrence of two or more vaccines is almost certainly due to data quality issues, and this table helps determine how best to deal with these issues.
-  - `prepare/count_product_cooccurrrence_campaign.csv` as above, for each vaccination campaign separately.
+- `2-prepare/` - this directory contains outputs from the preparation scripts, which performs some data cleaning, data validation checks, and outputs processed data for analysis:
+  - `vax_data_quality/count_product.csv` reports the count of each vaccine product, and the earliest date that this product was given, across the entire history of the Covid-19 vaccination programme. Counts are stratified by adults / children. 
+  - `vax_data_quality/count_product_campaign.csv` reports the count of each vaccine product, and the earliest date that this product was given, for each vaccination campaign separately.
+  - `vax_data_quality/count_product_cooccurrrence.csv` reports the number of times that a person was recorded as being vaccinated with a particular combination of Covid-19 vaccines on the same day. For instance, "1x pfizer_original" or or "1x pfizer_original AND 2x az_original" on the same day. Co-occurrence of two or more vaccines is almost certainly due to data quality issues, and this table helps determine how best to deal with these issues.
+  - `vax_data_quality/count_product_cooccurrrence_campaign.csv` as above, for each vaccination campaign separately.
   - `prepare/data_extract_fixed_skim.csv` a summary of the `extract_fixed.arrow` dataset, created by the [`dataset_definition_fixed.py`](./analysis/1-extract/dataset_definition_fixed.py) script and imported into R.
   - `prepare/data_processed_fixed_skim.csv` a summary of the post-processed `extract_fixed` dataset.
   - `prepare/data_vax_ELD_skim.csv` a summary of the dataset of patients' Covid-19 vaccination history, as contained in the `vaccinations.arrow` dataset created by the [`dataset_definition_varying.py`](./analysis/1-extract/dataset_definition_varying.py) script and imported into R, with some processing, to compare event-level data extract with patient-level data extract.
   - `prepare/data_vax_PLD_skim.csv` a summary of the dataset of patients' Covid-19 vaccination history, as contained in the `extract_varying.arrow` dataset created by the [`dataset_definition_varying.py`](./analysis/1-extract/dataset_definition_varying.py) script and imported into R, with some processing, to compare event-level data extract with patient-level data extract..
   - `prepare/data_vax_clean_skim.csv` a summary of the dataset of patients' Covid-19 vaccination history, as contained in the `extract_varying.arrow` dataset created by the [`dataset_definition_varying.py`](./analysis/1-extract/dataset_definition_varying.py) script and imported into R, with some processing and additional cleaning.
   - `prepare/data_vax_skim.csv` a summary of the dataset of patients' Covid-19 vaccination history, as contained in the `extract_varying.arrow` dataset created by the [`dataset_definition_varying.py`](./analysis/1-extract/dataset_definition_varying.py) script and imported into R, with some processing and without additional cleaning.
-  - `prepare/vax_product_count.csv` reports the count of each vaccine product, with no additional breakdown.
 - `3-history/` - this directory contains outputs from the vaccine history script, which summarises Covid-19 vaccination history across all campaigns. This is mostly useful for a high-level overview of vaccine events and products over time.
   - `report_history/validation.csv` reports basic data quality information about overall vaccination dates. Total recorded vaccinations, number of missing vaccination dates, number of dates that are inaccurate due to preceding the pandemic, etc.
   - `report_history/validation_stratified.csv` as above, stratified by product type.
@@ -113,8 +112,8 @@ The actual outputed files are available from the [project workspace page on the 
 
 ## Adding variables
 
-To add a new variable for stratifying analyses, searching for the `--VARIABLES--` string in the codebase (ctrl+shift+F in RStudio on Windows) will indicate where changes may need to be made.
+To add a new variable for stratifying analyses, searching for the `--VARIABLES--` string in the codebase (ctrl+shift+F in RStudio on Windows) will indicate where any changes may need to be made.
 
 ## Outputs
 
-A draft version of the protocol is available as [a PDF file](./assets/ECHO-WP1-protocol-draft-v1.0.pdf). 
+A draft version of the protocol is available as [a PDF file](./assets/ECHO-WP1-protocol-draft-v1.1.pdf). 

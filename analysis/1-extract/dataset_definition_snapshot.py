@@ -75,8 +75,6 @@ dataset.define_population(
   & (patients.sex.is_in(["male", "female"]))
 )
 
-# --VARIABLES--
-
 ## demographic variables ----
 
 demographic_variables(dataset = dataset, index_date = snapshot_date)
