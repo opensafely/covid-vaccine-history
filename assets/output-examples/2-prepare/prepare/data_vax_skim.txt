@@ -1,7 +1,7 @@
 ── Data Summary ────────────────────────
                            Values  
 Name                       data_vax
-Number of rows             3086    
+Number of rows             3068    
 Number of columns          16      
 _______________________            
 Column type frequency:             
@@ -16,30 +16,30 @@ Group variables            None
 ── Variable type: character ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
   skim_variable   n_missing complete_rate min max empty n_unique whitespace
 1 stp                     0         1       9   9     0      100          0
-2 vax_product_raw         5         0.998   0  15   182     2341          0
+2 vax_product_raw         5         0.998   0  15   177     2327          0
 
 ── Variable type: Date ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
   skim_variable n_missing complete_rate min        max        median     n_unique
-1 vax_date              0             1 1901-10-17 2025-12-29 1981-10-23     2965
-2 deregistered       3086             0 Inf        -Inf       NA                0
+1 vax_date              0             1 1901-10-18 2026-01-20 1983-09-24     2944
+2 deregistered       3068             0 Inf        -Inf       NA                0
 
 ── Variable type: factor ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
   skim_variable n_missing complete_rate ordered n_unique top_counts                             
-1 vax_product           0         1     FALSE          1 oth: 3086, pfi: 0, pfi: 0, pfi: 0      
-2 region              699         0.773 FALSE          7 Mid: 617, Nor: 585, Sou: 366, Lon: 305 
-3 ageband4              0         1     FALSE          5 und: 1582, 16-: 1168, 50-: 200, 65-: 73
-4 ageband13             0         1     FALSE         14 und: 1582, 20-: 440, 30-: 295, 16-: 224
-5 imd_quintile       1912         0.380 FALSE          5 3: 309, 2: 232, 4: 215, 5 (: 211       
-6 vax_campaign          0         1     FALSE         11 Pre: 2929, Pri: 24, Aut: 24, Spr: 24   
+1 vax_product           0         1     FALSE          1 UNM: 3068, pfi: 0, pfi: 0, pfi: 0      
+2 region              719         0.766 FALSE          7 Mid: 668, Nor: 522, Sou: 358, Lon: 229 
+3 ageband4              0         1     FALSE          5 12-: 1406, und: 1333, 50-: 196, 65-: 71
+4 ageband13             0         1     FALSE         14 und: 1333, 18-: 556, 12-: 362, 30-: 287
+5 imd_quintile       1890         0.384 FALSE          5 3: 284, 4: 254, 1 (: 226, 5 (: 209     
+6 vax_campaign          0         1     FALSE         12 Pre: 2850, Pri: 33, Aut: 24, Aut: 21   
 
 ── Variable type: logical ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
   skim_variable n_missing complete_rate mean count    
-1 registered            0             1    1 TRU: 3086
+1 registered            0             1    1 TRU: 3068
 
 ── Variable type: numeric ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-  skim_variable n_missing complete_rate     mean      sd p0  p25    p50    p75  p100
-1 patient_id            0         1       879.    527.    1  383   906   1347   1800
-2 vax_index             0         1         3.03    2.39  1    1     2      4     16
-3 age                   0         1        21.1    19.9   0    5    15     32     99
-4 imd                1912         0.380 16362.   8960.    0 9300 16100  23900  32800
-5 vax_interval       1000         0.676  2628.   3309.    1  426  1456.  3454. 24940
+  skim_variable n_missing complete_rate     mean      sd  p0   p25    p50    p75  p100
+1 patient_id            0         1       919.    543.     1  413    932   1402.  1865
+2 vax_index             0         1         3.00    2.34   1    1      2      4     16
+3 age                   0         1        20.7    20.0    0    5     14     31     99
+4 imd                1890         0.384 16508.   9171.   100 9100  16500  23900  32800
+5 vax_interval       1000         0.674  2593.   3312.     1  430.  1404.  3447. 24961
