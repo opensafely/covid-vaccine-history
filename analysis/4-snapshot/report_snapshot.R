@@ -830,3 +830,82 @@ get_all_estimates(data_combined, "covid_critcare", "covid_critcare_time", "covid
 get_all_estimates(data_combined, "covid_death", "covid_death_time", "covid_death_indicator")
 
 
+# Function to output length of stay quantiles for different subgroups
+los_estimates <- function(data, subgroup, event_los) {
+
+  subgroup_name <- deparse(substitute(subgroup))
+
+  # prepare dataset
+  data_outcome <-
+    data |>
+    mutate(
+      event_los = .data[[event_los]]
+    ) |>
+    select(
+      all_of(subgroup),
+      event_los
+    )
+
+  # LoS summary stats
+
+  data_los <-
+    data_outcome |>
+    mutate(
+      variable = subgroup,
+      label = .data[[subgroup]],
+    ) |>
+    summarise(
+      n = n(),
+      n_at_least_1_event = sum(!is.na(event_los)),
+      median_los = quantile(event_los, 0.5, na.rm = TRUE),
+      p10 = quantile(event_los, 0.1, na.rm = TRUE),
+      p25 = quantile(event_los, 0.25, na.rm = TRUE),
+      p75 = quantile(event_los, 0.75, na.rm = TRUE),
+      p90 = quantile(event_los, 0.9, na.rm = TRUE),
+
+      .by = c(variable, label)
+    )
+
+  return(data_los)
+}
+
+
+los_estimates(data_combined, "sex", "covid_admitted_los")
+
+# for a given los outcome, loop over all groups combinations, obtaining los summaries for each using los_estimates function, and combining into one file
+get_all_los_estimates <- function(data, event_name, event_los) {
+
+  estimates_list <-
+    level_combos |>
+    mutate(
+      estimates = map2(
+        group1, group2,
+        \(group1, group2) {
+
+          data |>
+            mutate(
+              label1 = data[[group1]],
+            ) |>
+            nest(.by = c(label1), .key = "group1_subset") |>
+            mutate(
+              estimates = map(group1_subset, \(group1_subset) {
+                los_estimates(group1_subset, group2, event_los)
+              })
+            ) |>
+            select(-group1_subset) |>
+            unnest(estimates) |>
+            select(-variable) |>
+            rename(label2 = label) |>
+            mutate(
+              across(c(label1, label2), as.character)
+            )
+        }
+      )
+    ) |>
+    unnest(estimates)
+
+  write_csv(estimates_list, fs::path(output_dir, glue("los_{event_name}.csv")))
+
+}
+
+get_all_los_estimates(data_combined, "covid_admitted", "covid_admitted_los")
