@@ -129,6 +129,10 @@ data_combined <-
     covid_admitted_time = as.integer(pmin(covid_admitted_date, death_date, censor_date, na.rm = TRUE) - snapshot_date) + 1L,
     covid_admitted_indicator = (covid_admitted_date <= pmin(censor_date, death_date, na.rm = TRUE)) & !is.na(covid_admitted_date),
 
+    # time from snapshot date until covid (primary position only) hospital admission
+    covid_admitted_primary_time = as.integer(pmin(covid_admitted_primary_date, death_date, censor_date, na.rm = TRUE) - snapshot_date) + 1L,
+    covid_admitted_primary_indicator = (covid_admitted_primary_date <= pmin(censor_date, death_date, na.rm = TRUE)) & !is.na(covid_admitted_primary_date),
+
     # time from snapshot date until covid critical care admission
     covid_critcare_time = as.integer(pmin(covid_critcare_date, death_date, censor_date, na.rm = TRUE) - snapshot_date) + 1L,
     covid_critcare_indicator = (covid_critcare_date <= pmin(censor_date, death_date, na.rm = TRUE)) & !is.na(covid_critcare_date),
@@ -188,8 +192,11 @@ plot_date_of_last_dose <- function(subgroup) {
 
   summary_by <-
     data_combined |>
+    mutate(
+      subgroup = .data[[subgroup]]
+    ) |>
     lazy_dt() |>
-    group_by({{ subgroup }}, last_vax_product, last_vax_period) |>
+    group_by(subgroup, last_vax_product, last_vax_period) |>
     summarise(
       n = round_any(n(), sdc_threshold)
     ) |>
@@ -204,7 +211,7 @@ plot_date_of_last_dose <- function(subgroup) {
     ) |>
     as_tibble() |>
     complete(
-      {{ subgroup }}, last_vax_product, last_vax_period,
+      subgroup, last_vax_product, last_vax_period,
       fill = list(n = 0)
     )
 
@@ -221,7 +228,7 @@ plot_date_of_last_dose <- function(subgroup) {
       width = temporal_resolution_history
     ) +
     facet_grid(
-      rows = vars({{ subgroup }}),
+      rows = vars(subgroup),
       switch = "y",
       space = "free_x",
       scales = "free_x"
@@ -258,71 +265,39 @@ plot_date_of_last_dose <- function(subgroup) {
 
   # print(temp_plot)
 
-  subgroup_name <- deparse(substitute(subgroup))
-  # col_name = deparse(substitute(cols))
-
-  ggsave(fs::path(output_dir, glue("last_vax_date_{subgroup_name}.png")), plot = temp_plot)
+  ggsave(fs::path(output_dir, glue("last_vax_date_{subgroup}.png")), plot = temp_plot)
 
   # write tables that capture underlying plotting data
-  # write_csv(summary_by, fs::path(output_dir, glue("last_vax_date_{subgroup_name}.csv")))
+  # write_csv(summary_by, fs::path(output_dir, glue("last_vax_date_{subgroup}.csv")))
 }
 
-
-## --VARIABLES--
-
-# Demographic
-plot_date_of_last_dose(all)
-plot_date_of_last_dose(sex)
-plot_date_of_last_dose(ageband4)
-plot_date_of_last_dose(ethnicity5)
-plot_date_of_last_dose(region)
-plot_date_of_last_dose(imd_quintile)
-plot_date_of_last_dose(carehome_status)
-
-# PRIMIS
-plot_date_of_last_dose(crd) # chronic respiratory disease
-plot_date_of_last_dose(chd) # chronic heart disease
-plot_date_of_last_dose(ckd) # chronic kidney disease
-plot_date_of_last_dose(cld) # chronic liver disease
-plot_date_of_last_dose(cns) # chronic neurological
-plot_date_of_last_dose(cns_learndis) # chronic neurological or learning disability
-plot_date_of_last_dose(diabetes) # diabetes
-plot_date_of_last_dose(immunosuppressed) # immunosuppressed
-plot_date_of_last_dose(asplenia) # asplenia
-plot_date_of_last_dose(severe_obesity) # obesity
-plot_date_of_last_dose(smi) # severe mental illness
-plot_date_of_last_dose(primis_atrisk) # clinically vulnerable
-
-# Extended subgroups
-plot_date_of_last_dose(ckd_rrt) # Chronic kidney disease classification
-plot_date_of_last_dose(copd) # Chronic obstructive pulmonary disease
-plot_date_of_last_dose(learndis_cat)   # Learning disability categories
-plot_date_of_last_dose(sickle_cell_asplenia)    # Sickle cell disease or asplenia
-plot_date_of_last_dose(cirrhosis)      # Cirrhosis
-plot_date_of_last_dose(cochlear_implant) # Cochlear implant
-plot_date_of_last_dose(cystic_fibrosis)  # Cystic fibrosis
-plot_date_of_last_dose(csfl)           # Cerebrospinal fluid leak
-plot_date_of_last_dose(homeless)           # homeless
+for (group in level1_group) {
+  plot_date_of_last_dose(group)
+}
 
 ## _______________________________________________________________________________________
 ## Report info on prior dose count and product type
 ## _______________________________________________________________________________________
 
 plot_vax_count <- function(subgroup) {
+
   summary_by <-
     data_combined |>
+    mutate(
+      subgroup = .data[[subgroup]]
+    ) |>
     lazy_dt() |>
-    group_by({{ subgroup }}, vax_count_group) |>
+    group_by(subgroup, vax_count_group) |>
     summarise(
       n = round_any(n(), sdc_threshold),
     ) |>
     ungroup() |>
     as_tibble() |>
     complete(
-      {{ subgroup }}, vax_count_group,
+      subgroup, vax_count_group,
       fill = list(n = 0)
     ) |>
-    group_by({{ subgroup }}) |>
+    group_by(subgroup) |>
     mutate(
       row_total = sum(n),
       prop = ifelse(row_total > 0, n / row_total * 100, 0),
@@ -332,12 +307,12 @@ plot_vax_count <- function(subgroup) {
   temp_plot <-
     ggplot(summary_by) +
     geom_bar(
-      aes(x = prop, y = {{ subgroup }}, width = row_total, fill = vax_count_group),
+      aes(x = prop, y =  subgroup, width = row_total, fill = vax_count_group),
       stat = "identity", # position = "fill",
       position = position_stack(reverse = TRUE),
     ) +
     facet_grid(
-      rows = vars({{ subgroup }}),
+      rows = vars(subgroup),
       scales = "free_y",
       space = "free_y") +
     labs(
@@ -366,52 +341,17 @@ plot_vax_count <- function(subgroup) {
 
   # print(temp_plot)
 
-  subgroup_name <- deparse(substitute(subgroup))
-  # col_name = deparse(substitute(cols))
-
-  ggsave(fs::path(output_dir, glue("vax_count_{subgroup_name}.png")), plot = temp_plot)
+  ggsave(fs::path(output_dir, glue("vax_count_{subgroup}.png")), plot = temp_plot)
 
   # write tables that capture underlying plotting data
-  write_csv(summary_by, fs::path(output_dir, glue("vax_count_{subgroup_name}.csv")))
+  write_csv(summary_by, fs::path(output_dir, glue("vax_count_{subgroup}.csv")))
 }
 
 
-## --VARIABLES--
+for (group in level1_group) {
+  plot_vax_count(group)
+}
 
-# Demographic
-plot_vax_count(all)
-plot_vax_count(sex)
-plot_vax_count(ageband4)
-plot_vax_count(ethnicity5)
-plot_vax_count(region)
-plot_vax_count(imd_quintile)
-plot_vax_count(carehome_status)
-
-
-# PRIMIS
-plot_vax_count(crd) # chronic respiratory disease
-plot_vax_count(chd) # chronic heart disease
-plot_vax_count(ckd) # chronic kidney disease
-plot_vax_count(cld) # chronic liver disease
-plot_vax_count(cns_learndis) # chronic neurological disease or learning disability
-plot_vax_count(diabetes) # diabetes
-plot_vax_count(immunosuppressed) # immunosuppressed
-plot_vax_count(asplenia) # asplenia
-plot_vax_count(severe_obesity) # obesity
-plot_vax_count(smi) # severe mental illness
-plot_vax_count(primis_atrisk) # clinically vulnerable
-
-# Extended subgroups
-
-plot_vax_count(ckd_rrt)        # Chronic kidney disease classification
-plot_vax_count(copd)           # Chronic obstructive pulmonary disease
-plot_vax_count(learndis_cat)   # Learning disability categories
-plot_vax_count(sickle_cell_asplenia)    # Sickle cell disease or asplenia
-plot_vax_count(cirrhosis)      # Cirrhosis
-plot_vax_count(cochlear_implant) # Cochlear implant
-plot_vax_count(cystic_fibrosis)  # Cystic fibrosis
-plot_vax_count(csfl)           # Cerebrospinal fluid leak
-plot_vax_count(homeless)           # Homeless
 
 ## _______________________________________________________________________________________
 ## Report info in a standardised table
@@ -719,8 +659,10 @@ iwalk(
 # Post-snapshot Covid-19 vaccination and disease burden up to final milestone, stratified by characteristics recorded on the snapshot_date ----
 # ________________________________________________________________________________________
 
-# Function to output HRs and IRRs for disease  burden comparing different subgroups
-adjusted_estimates <- function(data, subgroup, event_name, event_time, event_indicator) {
+# Function to output HRs and IRRs for disease burden comparing different subgroups
+# note that parglm is faster, but produces an annoying warning that "'mustart' will not be used"
+# don't know how to get rid of it!
+adjusted_estimates <- function(data, subgroup, event_time, event_indicator) {
   # use age-splines unless age is the subgroup of interest
 
   poisson_formula <- as.formula(glue("event_indicator ~ {subgroup} + sex + ns(age, 3)"))
@@ -736,8 +678,8 @@ adjusted_estimates <- function(data, subgroup, event_name, event_time, event_ind
   data_outcome <-
     data |>
     mutate(
-      event_time = {{ event_time }},
-      event_indicator =  {{ event_indicator }}
+      event_time = .data[[event_time]],
+      event_indicator = .data[[event_indicator]]
     ) |>
     select(
       all_of(subgroup),
@@ -746,35 +688,57 @@ adjusted_estimates <- function(data, subgroup, event_name, event_time, event_ind
       event_indicator
     )
 
+  n_values <- n_distinct(data_outcome[[subgroup]])
+
   # IRR model
 
-  parglm_control <- parglm.control(maxit = 40, nthreads = 4)
+  if (n_values == 1) {
+    # cox / glm function does not work when the contrast is a single valued vector
+    # so creating the summary info manually here
 
-  data_poisson <-
-    data_outcome |>
-    parglm(
-      data = _,
-      formula = poisson_formula,
-      family = poisson,
-      offset = log(event_time),
-      control = parglm_control
-    ) |>
-    broom.helpers::tidy_plus_plus(tidy_fun = broom.helpers::tidy_parameters) |>
-    filter(variable == subgroup) |>
-    # note: selecting the effect as above is the same as doing marginaleffects::avg_comparisons(model, type = "link", variables = subgroup, comparison = "difference"),
-    # as long as there are no interaction terms between subgroup and anything else
-    # we use broom.helpers because it gives us the really nice variable, label, reference_row etc formatting for the outputted tidy dataset
-    # if we want to use avg_comparisons in future, then attach the nicely formatted meta info onto a broom::tidy(avg_comparisons) object
-    transmute(
-      variable, label, reference_row,
-      n_obs, n_event, exposure,
-      irr = exp(estimate),
-      irr.low = exp(conf.low),
-      irr.high = exp(conf.high),
-      irr.ln.std.error = std.error
-    )
+    data_poisson <-
+      data_outcome |>
+      summarise(
+        variable = subgroup,
+        label = NA_character_,
+        reference_row = TRUE,
+        n_obs = round_any(n(), sdc_threshold),
+        n_event = round_any(sum(event_indicator), sdc_threshold),
+        exposure = round_any(sum(event_time), sdc_threshold),
+        irr = 1,
+        irr.low = NA_real_,
+        irr.high = NA_real_,
+        irr.ln.std.error = NA_real_
+      )
 
+  } else {
 
+    parglm_control <- parglm.control(maxit = 40, nthreads = 4)
+
+    data_poisson <-
+      data_outcome |>
+      parglm(
+        data = _,
+        formula = poisson_formula,
+        family = poisson,
+        offset = log(event_time),
+        control = parglm_control
+      ) |>
+      broom.helpers::tidy_plus_plus(tidy_fun = broom.helpers::tidy_parameters) |>
+      filter(variable == subgroup) |>
+      # note: selecting the effect as above is the same as doing marginaleffects::avg_comparisons(model, type = "link", variables = subgroup, comparison = "difference"),
+      # as long as there are no interaction terms between subgroup and anything else
+      # we use broom.helpers because it gives us the really nice variable, label, reference_row etc formatting for the outputted tidy dataset
+      # if we want to use avg_comparisons in future, then attach the nicely formatted meta info onto a broom::tidy(avg_comparisons) object
+      transmute(
+        variable, label, reference_row,
+        n_obs, n_event, exposure,
+        irr = exp(estimate),
+        irr.low = exp(conf.low),
+        irr.high = exp(conf.high),
+        irr.ln.std.error = std.error
+      )
+  }
 
   # HR model
   #
@@ -799,73 +763,70 @@ adjusted_estimates <- function(data, subgroup, event_name, event_time, event_ind
   data_estimates <-
     data_poisson #|>
   # left_join(data_cox, by = c("variable", "label", "reference_row"))
-
-  # write_csv(data_cox, fs::path(output_dir, glue("cox_{event_name}_{subgroup}.csv")))
   return(data_estimates)
 }
 
-# adjusted_estimates(data_combined, "ageband4", "admittes", covid_admitted_time, covid_admitted_indicator)
+adjusted_estimates(data_combined, "sex", "covid_admitted_time", "covid_admitted_indicator")
 
 
+
+# for a given outcome, loop over all groups combinations, obtaining contrasts for each using adjusted_estimates function, and combining into one file
+# specifically, compare level2 groups amongst each other, for all people meeting level1 group criteria
 get_all_estimates <- function(data, event_name, event_time, event_indicator) {
-  # cox / glm function does not work when the contrast is a single valued vector
-  # so creating the summary info manually here
-  estimates_event_all <-
-    data |>
-    summarise(
-      variable = "all",
-      label = NA_character_,
-      reference_row = TRUE,
-      n_obs = round_any(n(), sdc_threshold),
-      n_event = round_any(sum({{ event_indicator }}), sdc_threshold),
-      exposure = round_any(sum({{ event_time }}), sdc_threshold),
-    )
 
-  ## --VARIABLES--
+  l1ticker <<- ""
 
-  # Demographic
-  estimates_event_sex <- adjusted_estimates(data, "sex", event_name, {{ event_time }}, {{ event_indicator }})
-  estimates_event_ageband4 <- adjusted_estimates(data, "ageband4", event_name, {{ event_time }}, {{ event_indicator }})
-  estimates_event_ethnicity5 <- adjusted_estimates(data, "ethnicity5", event_name, {{ event_time }}, {{ event_indicator }})
-  estimates_event_region <- adjusted_estimates(data, "region", event_name, {{ event_time }}, {{ event_indicator }})
-  estimates_event_imd_quintile <- adjusted_estimates(data, "imd_quintile", event_name, {{ event_time }}, {{ event_indicator }})
-  estimates_event_carehome_status <- adjusted_estimates(data, "carehome_status", event_name, {{ event_time }}, {{ event_indicator }})
-
-  # PRIMIS
-  estimates_event_primis_atrisk <- adjusted_estimates(data, "primis_atrisk", event_name, {{ event_time }}, {{ event_indicator }})
-
-  estimates <-
-    bind_rows(
-      estimates_event_all,
-      estimates_event_sex,
-      estimates_event_ageband4,
-      estimates_event_ethnicity5,
-      estimates_event_imd_quintile,
-      estimates_event_carehome_status,
-      estimates_event_primis_atrisk
-    ) |>
+  estimates_list <-
+    level_combos |>
     mutate(
-      ir = n_event / exposure,
-      ir.ln.std.error = 1 / sqrt(n_event),
-      ir.low = exp(log(ir) + qnorm(0.025) * ir.ln.std.error),
-      ir.high = exp(log(ir) + qnorm(0.975) * ir.ln.std.error)
-    )
+      estimates = map2(
+        group1, group2,
+        function(group1, group2) {
+          # just to keep track of how far along we are
+          if (l1ticker != group1) {
+            print(group1)
+            l1ticker <<- group1
+          }
 
-  write_csv(estimates, fs::path(output_dir, glue("contrasts_{event_name}.csv")))
+          data |>
+            mutate(
+              label1 = data[[group1]],
+            ) |>
+            nest(.by = c(label1), .key = "group1_subset") |>
+            mutate(
+              estimates = map(group1_subset, \(group1_subset) {
+                adjusted_estimates(group1_subset, group2, event_time, event_indicator)
+              })
+            ) |>
+            select(-group1_subset) |>
+            unnest(estimates) |>
+            select(-variable) |>
+            rename(label2 = label) |>
+            mutate(
+              across(c(label1, label2), as.character) # to ensure the bind_rows() works later
+            )
+        }
+      )
+    ) |>
+    unnest(estimates)
+
+  write_csv(estimates_list, fs::path(output_dir, glue("contrasts_{event_name}.csv")))
 
 }
 
-# uptake estimates
-
 # IRR for vaccination, in the usual way
-get_all_estimates(data_combined, "vax", vax_time, vax_indicator)
+get_all_estimates(data_combined, "vax", "vax_time", "vax_indicator")
+
 # IRR for vaccination, only looking at those who survived or stayed registered to the end of the season (collider bias! but matches UKHSA reports)
 get_all_estimates(
   filter(data_combined, (!death_indicator) & (!deregistration_indicator)),
-  "vax_alive", vax_time, vax_indicator
+  "vax_alive", "vax_time", "vax_indicator"
 )
 
 # IRR for COVID burden, in the usual way
-get_all_estimates(data_combined, "covid_admitted", covid_admitted_time, covid_admitted_indicator)
-get_all_estimates(data_combined, "covid_critcare", covid_critcare_time, covid_critcare_indicator)
-get_all_estimates(data_combined, "covid_death", covid_death_time, covid_death_indicator)
+get_all_estimates(data_combined, "covid_admitted", "covid_admitted_time", "covid_admitted_indicator")
+get_all_estimates(data_combined, "covid_admitted_primary", "covid_admitted_primary_time", "covid_admitted_primary_indicator")
+get_all_estimates(data_combined, "covid_critcare", "covid_critcare_time", "covid_critcare_indicator")
+get_all_estimates(data_combined, "covid_death", "covid_death_time", "covid_death_indicator")
+
+

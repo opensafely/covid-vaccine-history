@@ -40,7 +40,7 @@ data_vax <-
   mutate(
     vax_dosenumber = factor(vax_index, levels = sort(unique(vax_index)), labels = paste("Dose", sort(unique(vax_index)))),
     vax_week = floor_date(vax_date, unit = "week", week_start = 1),
-    vax_product_core = fct_collapse(vax_product, !!!vax_shortname_8, other_level = "Other"),
+    vax_product_core = fct_other(vax_product, vax_product_core_levels, other_level = "other"),
     all = ""
   ) |>
   as_tibble()
