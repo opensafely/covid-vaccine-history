@@ -18,6 +18,14 @@ actions:
       highly_sensitive:
         cohort: output/1-extract/extract_varying/*.arrow
 
+  vax_data_quality:
+    run: r:v2 analysis/2-prepare/vax_data_quality.R
+    needs: [extract_fixed, extract_varying]
+    outputs:
+      moderately_sensitive:
+        csv: output/2-prepare/vax_data_quality/*.csv
+        txt: output/2-prepare/vax_data_quality/*.txt
+
   prepare:
     run: r:v2 analysis/2-prepare/prepare.R
     needs: [extract_fixed, extract_varying]

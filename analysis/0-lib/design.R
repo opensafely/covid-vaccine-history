@@ -493,7 +493,7 @@ level_combos <- expand_grid(group1 = level1_group, group2 = level2_group) |>
 # Local run flag ----
 # is this script being run locally, and if so do we need to output objects to be picked up by ehrQL scripts
 
-localrun <- Sys.getenv("OPENSAFELY_BACKEND") %in% c("")
+localrun <- Sys.getenv("OPENSAFELY_BACKEND") %in% c("", "expectations")
 
 if (localrun) {
 

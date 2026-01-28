@@ -137,7 +137,7 @@ data_vax <-
   arrange(patient_id, vax_date) |>
   mutate(
     vax_product_raw = vax_product,
-    vax_product = fct_recode(factor(vax_product, vax_product_lookup), !!!vax_product_lookup) |> fct_na_value_to_level("other")
+    vax_product = fct_recode(factor(vax_product, vax_product_lookup), !!!vax_product_lookup) |> fct_na_value_to_level("UNMAPPED")
   ) |>
   group_by(patient_id) |>
   mutate(
@@ -195,13 +195,20 @@ write_feather(data_vax_clean, fs::path(output_dir, "data_vax_clean.arrow"))
 
 data_vax_ELD0 <- read_feather(here("output", "1-extract", "extract_varying", "vaccinations.arrow"))
 
+# - remove rows where vaccination date is missing
+# - attach info about the campaign during which the vaccination was given
+# - collapse exact duplicates (where patient id, date, and product all match)
 data_vax_ELD <-
   data_vax_ELD0 |>
   lazy_dt() |>
   arrange(patient_id, vax_date) |>
   filter(!is.na(vax_date)) |>
+  # distinct(.keep_all = TRUE) |> # remove exact duplicates # or use
+  count(patient_id, vax_date, vax_product, age) |> # or alternatively, capture how many duplicate vaccines there are. This creates a new variable `n` counting the duplicates
   as_tibble() |>
   mutate(
+    vax_product_raw = vax_product,
+    vax_product = fct_recode(factor(vax_product, vax_product_lookup), !!!vax_product_lookup) |> fct_na_value_to_level("UNMAPPED"),
     campaign = cut(
       vax_date,
       breaks = c(campaign_info$campaign_start_date, as.Date(Inf)),
@@ -214,100 +221,6 @@ data_vax_ELD <-
     ),
   ) |>
   lazy_dt()
-
-
-## count products ----
-
-# overall
-count_product <-
-  data_vax_ELD |>
-  mutate(
-    adult = age >= 12,
-    vax_date_onorafter20201201 = if_else(vax_date >= as.Date("2020-12-01"), vax_date, as.Date(NA))
-  ) |>
-  group_by(adult, vax_product) |>
-  summarise(
-    count_total = round_any(n(), sdc_threshold),
-    count_before20200101 = round_any(sum(vax_date < as.Date("2020-01-01")), sdc_threshold),
-    count_onorafter20200101 = round_any(sum(vax_date >= as.Date("2020-01-01")), sdc_threshold),
-    count_onorafter20201201 = round_any(sum(vax_date >= as.Date("2020-12-01")), sdc_threshold),
-    earliest_date_onorafter20201201 = min(vax_date_onorafter20201201, na.rm = TRUE),
-    count_on_earlier_date = sum(vax_date_onorafter20201201 %in% min(vax_date_onorafter20201201, na.rm = TRUE))
-  ) |>
-  as_tibble()
-
-write_csv(count_product, fs::path(output_dir, "count_product.csv"))
-
-# by campaign
-
-count_product_campaign <-
-  data_vax_ELD |>
-  mutate(
-    adult = age >= 12
-  ) |>
-  group_by(adult, campaign, vax_product) |>
-  summarise(
-    count_total = round_any(n(), sdc_threshold),
-    earliest_date = min(vax_date),
-    count_on_earliest_date = sum(vax_date %in% min(vax_date))
-  ) |>
-  as_tibble()
-
-write_csv(count_product_campaign, fs::path(output_dir, "count_product_campaign.csv"))
-
-## count product same-day co-occurrence ----
-
-# summary function to turn eg c("A", "A", "B", "C", "C", "C") into "2x A -- 1x B -- 3x C"
-flat_table_chr <- function(x, collapse = NULL) {
-  rle_obj <- rle(x)
-  paste0(rle_obj$length, "x ", rle_obj$values, collapse = collapse)
-}
-
-products_cooccurrence <-
-  data_vax_ELD |>
-  filter(age >= 12) |>
-  arrange(vax_product) |>
-  group_by(patient_id, vax_date, campaign) |>
-  summarise(
-    vax_product = flat_table_chr(vax_product, collapse = "  --AND-- "),
-  )
-
-# count overall
-
-count_products_cooccurrence <-
-  products_cooccurrence |>
-  mutate(
-    vax_date_onorafter20201201 = if_else(vax_date >= as.Date("2020-12-01"), vax_date, as.Date(NA))
-  ) |>
-  group_by(vax_product) |>
-  summarise(
-    count_total = round_any(n(), sdc_threshold),
-    count_before20200101 = round_any(sum(vax_date < as.Date("2020-01-01")), sdc_threshold),
-    count_onorafter20200101 = round_any(sum(vax_date >= as.Date("2020-01-01")), sdc_threshold),
-    count_onorafter20201201 = round_any(sum(vax_date >= as.Date("2020-12-01")), sdc_threshold),
-    earliest_date_onorafter20201201 = min(vax_date_onorafter20201201, na.rm = TRUE),
-    count_on_earliest_date = sum(vax_date_onorafter20201201 %in% min(vax_date_onorafter20201201, na.rm = TRUE))
-  ) |>
-  as_tibble()
-
-write_csv(count_products_cooccurrence, fs::path(output_dir, "count_product_cooccurrence.csv"))
-
-# count by campaign
-
-count_products_cooccurrence_campaign <-
-  products_cooccurrence |>
-  group_by(vax_product, campaign) |>
-  summarise(
-    count_total = round_any(n(), sdc_threshold),
-    count_before20200101 = round_any(sum(vax_date < as.Date("2020-01-01")), sdc_threshold),
-    count_onorafter20200101 = round_any(sum(vax_date >= as.Date("2020-01-01")), sdc_threshold),
-    count_onorafter20201201 = round_any(sum(vax_date >= as.Date("2020-12-01")), sdc_threshold),
-    earliest_date = min(vax_date, na.rm = TRUE),
-    count_on_earliest_date = vax_date %in% min(vax_date, na.rm = TRUE)
-  ) |>
-  as_tibble()
-
-write_csv(count_products_cooccurrence_campaign, fs::path(output_dir, "count_product_cooccurrence_campaign.csv"))
 
 
 # Test equivalence of ELD extract ----
