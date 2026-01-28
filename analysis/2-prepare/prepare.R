@@ -154,17 +154,6 @@ capture.output(
 # save dataset with all vaccines
 write_feather(data_vax, fs::path(output_dir, "data_vax.arrow"))
 
-data_vax |>
-  mutate(
-    vax_product_raw = if_else(is.na(vax_product_raw), "NULL", vax_product_raw),
-  ) |>
-  group_by(vax_product_raw) |>
-  summarise(
-    n = round_any(n(), sdc_threshold),
-  ) |>
-  write_csv(fs::path(output_dir, "vax_product_count.csv"))
-
-
 # remove vaccinations occurring within 14 days of a previous vaccination
 data_vax_clean <-
   # remove vaccine events occurring within 14 days of a previous vaccine event
