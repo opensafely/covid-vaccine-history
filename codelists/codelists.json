@@ -281,6 +281,42 @@
       "url": "https://www.opencodelists.org/codelist/nhsd-primary-care-domain-refsets/cirrhosis_cod/20250627/",
       "downloaded_at": "2025-10-09 12:12:48.317401Z",
       "sha": "b5e48eca0f7a0614cd57f51e89b3f832fb1900cd"
+    },
+    "nhsd-primary-care-domain-refsets-cocimpatrisk1_cod.csv": {
+      "id": "nhsd-primary-care-domain-refsets/cocimpatrisk1_cod/20250912",
+      "url": "https://www.opencodelists.org/codelist/nhsd-primary-care-domain-refsets/cocimpatrisk1_cod/20250912/",
+      "downloaded_at": "2026-01-07 16:52:31.018883Z",
+      "sha": "76bf5a47b2b15f087b25415f3d015656cf014a7f"
+    },
+    "nhsd-primary-care-domain-refsets-cocimprematrisk1_cod.csv": {
+      "id": "nhsd-primary-care-domain-refsets/cocimprematrisk1_cod/20250912",
+      "url": "https://www.opencodelists.org/codelist/nhsd-primary-care-domain-refsets/cocimprematrisk1_cod/20250912/",
+      "downloaded_at": "2026-01-07 16:52:31.074149Z",
+      "sha": "802ef89c7921aa300f6befb131692dce1d1c9be1"
+    },
+    "opensafely-cystic-fibrosis-snomed.csv": {
+      "id": "opensafely/cystic-fibrosis-snomed/1eb02212",
+      "url": "https://www.opencodelists.org/codelist/opensafely/cystic-fibrosis-snomed/1eb02212/",
+      "downloaded_at": "2026-01-07 16:52:31.152740Z",
+      "sha": "b7fd3bf05d66ec7efc35ecfd8366adaa821cbc4a"
+    },
+    "nhsd-primary-care-domain-refsets-csflatrisk1_cod.csv": {
+      "id": "nhsd-primary-care-domain-refsets/csflatrisk1_cod/20250912",
+      "url": "https://www.opencodelists.org/codelist/nhsd-primary-care-domain-refsets/csflatrisk1_cod/20250912/",
+      "downloaded_at": "2026-01-07 16:52:31.224613Z",
+      "sha": "f738712e9a9c752126b6a9e8a8079de3f56e2930"
+    },
+    "primis-covid19-vacc-uptake-homeless_cod.csv": {
+      "id": "primis-covid19-vacc-uptake/homeless_cod/v2.5",
+      "url": "https://www.opencodelists.org/codelist/primis-covid19-vacc-uptake/homeless_cod/v2.5/",
+      "downloaded_at": "2026-01-07 16:52:31.300787Z",
+      "sha": "91abb1b83667d3b2eab8a357d5c01aa88a2bdcc4"
+    },
+    "primis-covid19-vacc-uptake-reside_cod.csv": {
+      "id": "primis-covid19-vacc-uptake/reside_cod/v2.5",
+      "url": "https://www.opencodelists.org/codelist/primis-covid19-vacc-uptake/reside_cod/v2.5/",
+      "downloaded_at": "2026-01-07 16:52:31.359052Z",
+      "sha": "906a866473bd4c99a48ddb1d86c08986d228ba38"
     }
   }
 }

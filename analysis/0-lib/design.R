@@ -102,80 +102,154 @@ sdc_threshold <- 10
 # covid-19 vaccine campaign dates
 campaign_info <-
   tribble(
-    ~campaign_label,        ~campaign_start_date,      ~primary_milestone_date, ~age_date, ~age_threshold,
-    "Pre-2020-07-01", "1900-01-01", "1900-01-01", "1900-01-01", 16,
-    "Pre-roll-out",   as.character(study_dates$firstpossiblevax_date), as.character(study_dates$firstpossiblevax_date), as.character(study_dates$firstpossiblevax_date), 16,
-    "Primary series", "2020-12-07", "2021-06-30", "2021-03-31", 16,
-    "Autumn 2021",    "2021-09-06", "2022-02-28", "2021-08-31", 16,
-    "Spring 2022",    "2022-03-21", "2022-06-30", "2022-06-30", 75,
-    "Autumn 2022",    "2022-08-29", "2023-02-28", "2023-03-31", 50,
-    "Spring 2023",    "2023-04-03", "2023-06-30", "2023-06-30", 75,
-    "Autumn 2023",    "2023-08-28", "2024-02-28", "2024-03-31", 65,
-    "Spring 2024",    "2024-04-15", "2024-06-30", "2024-06-30", 75,
-    "Autumn 2024",    "2024-09-30", "2025-02-28", "2025-03-31", 65,
-    "Spring 2025",    "2025-03-31", "2025-06-30", "2025-06-30", 75,
+    ~campaign_label,        ~campaign_start_date,      ~primary_milestone_date, ~age_date, ~age_threshold, ~clinical_priority,
+    "Pre-2020-07-01", "1900-01-01", "1900-01-01", "1900-01-01", 16, "primis_atrisk",
+    "Pre-roll-out",   as.character(study_dates$firstpossiblevax_date), as.character(study_dates$firstpossiblevax_date), as.character(study_dates$firstpossiblevax_date), 16, "primis_atrisk",
+    "Primary series", "2020-12-07", "2021-06-30", "2021-03-31", 16, "primis_atrisk",
+    "Autumn 2021",    "2021-09-06", "2022-02-28", "2021-08-31", 16, "primis_atrisk",
+    "Spring 2022",    "2022-03-21", "2022-06-30", "2022-06-30", 75, "immunosuppressed",
+    "Autumn 2022",    "2022-08-29", "2023-02-28", "2023-03-31", 50, "primis_atrisk",
+    "Spring 2023",    "2023-04-03", "2023-06-30", "2023-06-30", 75, "immunosuppressed",
+    "Autumn 2023",    "2023-08-28", "2024-02-28", "2024-03-31", 65, "primis_atrisk",
+    "Spring 2024",    "2024-04-15", "2024-06-30", "2024-06-30", 75, "immunosuppressed",
+    "Autumn 2024",    "2024-09-30", "2025-02-28", "2025-03-31", 65, "primis_atrisk",
+    "Spring 2025",    "2025-03-31", "2025-06-30", "2025-06-30", 75, "immunosuppressed",
+    "Autumn 2025",    "2025-09-29", "2026-02-28", "2026-03-31", 75, "primis_atrisk",
   ) |>
   mutate(
     across(c(campaign_start_date, primary_milestone_date, age_date), as.Date),
-    early_milestone_date = campaign_start_date + (7 * 8) - 1,
-    final_milestone_date = lead(campaign_start_date, 1, as.Date("2030-01-01")) - 1
+    early_milestone_date = campaign_start_date + (7 * 8) - 1, # end of eighth week after campaign_start_date
+    final_milestone_date = lead(campaign_start_date, 1, as.Date("2030-01-01")) - 1 # day before next campaign date (or some arbitrary future date if last campaign)
   )  |>
   mutate(
-    early_milestone_days = as.integer(primary_milestone_date - campaign_start_date) + 1L,
-    primary_milestone_days = as.integer(early_milestone_date - campaign_start_date) + 1L,
+    early_milestone_days = as.integer(early_milestone_date - campaign_start_date) + 1L,
+    primary_milestone_days = as.integer(primary_milestone_date - campaign_start_date) + 1L,
     final_milestone_days = as.integer(final_milestone_date - campaign_start_date) + 1L
   )
 
 # output from https://jobs.opensafely.org/opensafely-internal/tpp-vaccination-names/ workspace
 # shows all possible covid vaccination names in TPP
 
-# lookup to rename TPP product names to coding-friendly porduct names
+# lookup to rename TPP product names to coding-friendly product names
+# taking format: manufacturer/brand _ era/variant _ (dose/target) _ (modality)
 vax_product_lookup <- c(
-  "pfizer" = "COVID-19 mRNA Vaccine Comirnaty 30micrograms/0.3ml dose conc for susp for inj MDV (Pfizer)",
-  "pfizerBA1" = "Comirnaty Original/Omicron BA.1 COVID-19 Vacc md vials",
-  "pfizerBA45" = "Comirnaty Original/Omicron BA.4-5 COVID-19 Vacc md vials",
-  "pfizerXBB15" = "Comirnaty Omicron XBB.1.5 COVID-19 Vacc md vials",
-  "pfizerJN1" = "Comirnaty JN.1 COVID-19 mRNA Vaccine 0.3ml inj md vials (Pfizer Ltd)",
-  "pfizerchildren" = "COVID-19 mRNA Vaccine Comirnaty Children 5-11yrs 10mcg/0.2ml dose conc for disp for inj MDV (Pfizer)",
 
-  "az" = "COVID-19 Vaccine Vaxzevria 0.5ml inj multidose vials (AstraZeneca)",
-  "azhalf" = "COVID-19 Vac AZD2816 (ChAdOx1 nCOV-19) 3.5x10*9 viral part/0.5ml dose sol for inj MDV (AstraZeneca)",
+  # Pfizer adult
+  "pfizer_original" = "COVID-19 mRNA Vaccine Comirnaty 30micrograms/0.3ml dose conc for susp for inj MDV (Pfizer)",
+  "pfizer_BA1" = "Comirnaty Original/Omicron BA.1 COVID-19 Vacc md vials",
+  "pfizer_BA45" = "Comirnaty Original/Omicron BA.4-5 COVID-19 Vacc md vials",
+  "pfizer_XBB15" = "Comirnaty Omicron XBB.1.5 COVID-19 Vacc md vials",
+  "pfizer_JN1" = "Comirnaty JN.1 COVID-19 mRNA Vaccine 0.3ml inj md vials (Pfizer Ltd)",
+  "pfizer_LP81" = "Comirnaty LP.8.1 COVID-19 Vacc 30microg/0.3ml dose inj pfs (Pfizer Ltd)",
+  "pfizer_KP2" = "Comirnaty KP.2 COVID-19 Vacc 30microg/0.3ml dose inj md vial (Pfizer Ltd)",
+  "pfizer_KP2_pfs" = "Comirnaty KP.2 COVID-19 Vacc 30microg/0.3ml dose inj pfs (Pfizer Ltd)",
 
-  "moderna" = "COVID-19 mRNA Vaccine Spikevax (nucleoside modified) 0.1mg/0.5mL dose disp for inj MDV (Moderna)",
-  "modernaomicron" = "COVID-19 Vac Spikevax (Zero)/(Omicron) inj md vials",
-  "modernaBA45" = "COVID-19 Vacc Spikevax Orig/Omicron BA.4/BA.5 inj md vials",
-  "modernaXBB15" = "COVID-19 Vacc Spikevax (XBB.1.5) 0.1mg/1ml inj md vials",
-  "modernaJN1" = "Spikevax JN.1 COVID-19 Vacc 0.1mg/ml inj md vials (Moderna, Inc)",
+  "pfizer_unspecified" = "Comirnaty COVID-19 mRNA Vacc ready to use 0.3ml inj md vials",
 
-  "sanofigsk" = "COVID-19 Vacc VidPrevtyn (B.1.351) 0.5ml inj multidose vials",
+  # Pfizer children
 
-  "novavax" = "COVID-19 Vac Nuvaxovid (recombinant, adj) 5micrograms/0.5ml dose susp for inj MDV (Novavax CZ a.s.)"
+  "pfizer_original_children" = "COVID-19 mRNA Vaccine Comirnaty Children 5-11yrs 10mcg/0.2ml dose conc for disp for inj MDV (Pfizer)",
+  "pfizer_JN1_children" = "Comirnaty JN.1 Children 5-11yrs COVID-19 Vacc 0.3ml sd vials (Pfizer Ltd)",
+  "pfizer_XBB15_children" = "Comirnaty Omicron XBB.1.5 Child 5-11y COVID-19 Vacc md vials",
+  "pfizer_LP81_children" = "Comirnaty LP.8.1 Children 5-11y COVID-19 Vacc 0.3ml sd vials (Pfizer Ltd)",
+
+  "pfizer_original_under5" = "Comirnaty Children 6m-4yrs COVID-19 mRNA Vacc 0.2ml md vials",
+  "pfizer_JN1_under5" = "Comirnaty JN.1 Children 6m-4yrs COVID-19 Vacc 0.3ml md vials (Pfizer Ltd)",
+  "pfizer_XBB15_under5" = "Comirnaty Omicron XBB.1.5 Child 6m-4y COVID-19 Vacc md vials",
+  "pfizer_LP81_under5" = "Comirnaty LP.8.1 Children 6m-4y COVID-19 Vacc 0.3m md vials (Pfizer Ltd)",
+
+  # Astrazeneca
+
+  "az_original" = "COVID-19 Vaccine Vaxzevria 0.5ml inj multidose vials (AstraZeneca)",
+  "az_original_half" = "COVID-19 Vac AZD2816 (ChAdOx1 nCOV-19) 3.5x10*9 viral part/0.5ml dose sol for inj MDV (AstraZeneca)",
+
+  # Moderna
+
+  "moderna_original" = "COVID-19 mRNA Vaccine Spikevax (nucleoside modified) 0.1mg/0.5mL dose disp for inj MDV (Moderna)",
+  "moderna_omicron" = "COVID-19 Vac Spikevax (Zero)/(Omicron) inj md vials",
+  "moderna_BA45" = "COVID-19 Vacc Spikevax Orig/Omicron BA.4/BA.5 inj md vials",
+  "moderna_XBB15" = "COVID-19 Vacc Spikevax (XBB.1.5) 0.1mg/1ml inj md vials",
+  "moderna_JN1" = "Spikevax JN.1 COVID-19 Vacc 0.1mg/ml inj md vials (Moderna, Inc)",
+  "moderna_omicron2" = "COVID-19 Vaccine Moderna (mRNA-1273.529) 50micrograms/0.25ml dose sol for inj MDV",
+  "moderna_unspecified" = "COVID-19 Vaccine Moderna 0.5ml dispersion for inj vials",
+
+  # Sanofi-GSK
+  "sanofigsk_B1" = "COVID-19 Vacc VidPrevtyn (B.1.351) 0.5ml inj multidose vials",
+  "sanofigsk_D614" = "COVID-19 Vac Sanofi (CoV2 preS dTM monovalent D614 (recombinant)) 5mcg/0.5ml dose susp for inj MDV",
+  "sanofigsk_D614B1" = "COVID-19 Vacc Sanofi (D614+B.1.351) 0.5ml inj md vials",
+
+
+  # Novavax
+  "novavax" = "COVID-19 Vac Nuvaxovid (recombinant, adj) 5micrograms/0.5ml dose susp for inj MDV (Novavax CZ a.s.)",
+
+  # Sputnik
+  "sputnik_i_multi" = "COVID-19 Vacc Sputnik V Component I 0.5ml multidose vials",
+  "sputnik_ii_multi" = "COVID-19 Vacc Sputnik V Component II 0.5ml multidose vials",
+  "sputnik_i_inj" = "COVID-19 Vaccine Sputnik V Component I 0.5ml inj vials",
+  "sputnik_ii_inj" = "COVID-19 Vaccine Sputnik V Component II 0.5ml inj vials",
+
+  # Janssen
+  "jansenn" = "COVID-19 Vaccine Janssen (Ad26.COV2-S (recomb)) 0.5ml dose solution for injection multidose vials",
+
+  # Sinopharm
+  "sinopharm" = "COVID-19 Vac Sinopharm BIBP (inactivated adjuvanted) 6.5U/0.5ml dose susp for inj vials",
+
+  # Valneva
+  "valneva" = "COVID-19 Vaccine Valneva (inactivated adj whole virus) 40antigen units/0.5ml dose susp for inj MDV",
+
+  # Medicago
+  "medicago" = "COVID-19 Vaccine Medicago (CoVLP) 3.75micrograms/0.5ml dose emulsion for injection multidose vials",
+
+  # Convidecia
+  "convidecia" = "COVID-19 Vaccine Convidecia 0.5ml inj vials",
+
+  # Covaxin
+  "covaxin" = "COVID-19 Vac Covaxin (NIV-2020-770 inactivated) 6micrograms/0.5ml dose susp for inj MDV",
+
+  # Coronavac
+  "coronavac" = "COVID-19 Vac CoronaVac (adjuvanted) 600U/0.5ml dose susp for inj vials",
+
+  # Covishield
+  "covishield" = "COVID-19 Vac Covishield (ChAdOx1 S recombinant) 5x10*9 viral particles/0.5ml dose sol for inj MDV",
+
+  # Covovax
+  "covovax" = "COVID-19 Vac Covovax (adjuvanted) 5micrograms/0.5ml dose susp for inj MDV (Serum Institute of India)",
+
+  # Not specified
+  "unspecified" = "SARS-2 Coronavirus vaccine"
+
 )
 
 
 # lookup to rename coding-friendly product names to publication-friendly product names
-vax_shortname_lookup <- c(
-  "BNT162b2" = "pfizer",
-  "BNT162b2/BA.1" = "pfizerBA1",
-  "BNT162b2/BA.4-5" = "pfizerBA45",
-  "BNT162b2/XBB.1.5" = "pfizerXBB15",
-  "BNT162b2/JN.1" = "pfizerJN1",
-  "BNT162b2/children" = "pfizerchildren",
+vax_product_core_levels <- c(
+  "pfizer_original",
+  "pfizer_BA1",
+  "pfizer_BA45",
+  "pfizer_XBB15",
+  "pfizer_JN1",
+  "pfizer_LP81",
+  "pfizer_KP2",
 
-  "ChAdOx1" = "az",
-  "ChAdOx1/half" = "azhalf",
+  "pfizer_original_children",
 
-  "mRNA-1273" = "moderna",
-  "mRNA-1273/omicron" = "modernaomicron",
-  "mRNA-1273/BA45" = "modernaBA45",
-  "mRNA-1273/XBB.1.5" = "modernaXBB15",
-  "mRNA-1273/JN.1" = "modernaJN1",
+  "az_original",
+  "az_original_half",
 
-  "Vidprevtyn" = "sanofigsk",
+  "moderna_original",
+  "moderna_omicron",
+  "moderna_BA45",
+  "moderna_XBB15",
+  "moderna_JN1",
+  "moderna_omicron2",
 
-  "Novavax" = "novavax",
+  "sanofigsk_B1",
 
-  "Other" = "other"
+  "novavax",
+
+  "jansenn",
+  "coronavac",
+  "covishield"
 )
 
 
@@ -183,88 +257,6 @@ vax_shortname_lookup <- c(
 #   left_join(tibble(x=x), source, by = {{from}})[[{{to}}]]
 # }
 
-
-# template for standardising demographic characteristics that are extracted multiple times
-# using this in mutate like this: `mutate(!!!standardise_demographic_characteristics)`
-standardise_demographic_characteristics <-
-  rlang::quos(
-
-    ## --VARIABLES--
-    ## demographics
-    ageband = cut(
-      age,
-      breaks = c(-Inf, 16, 50, 65, 75, 105, Inf),
-      labels = c("under 16", "16-49", "50-64", "65-74", "75-104", "105+"), # under 16 and 105+ are excluded in analysis but include here to ensure nobody slipped through the net
-      right = FALSE
-    ),
-    region = fct_collapse(
-      factor(region, ordered = FALSE),
-      `East of England` = "East",
-      `London` = "London",
-      `Midlands` = c("West Midlands", "East Midlands"),
-      `North East and Yorkshire` = c("Yorkshire and The Humber", "North East"),
-      `North West` = "North West",
-      `South East` = "South East",
-      `South West` = "South West"
-    ),
-    imd_quintile = cut(
-      imd,
-      breaks = c(0, 32844 * (1:5) / 5),
-      labels = c("1 (most deprived)", "2", "3", "4", "5 (least deprived)"),
-      include.lowest = TRUE,
-      right = FALSE
-    ),
-  )
-
-## CKD-RRT classification
-# adapted from https://github.com/opensafely/covid_mortality_over_time/blob/main/analysis/utils/kidney_functions.R
-ckd_rrt_classif <-
-  rlang::quos(
-    # transform rrt to character
-    rrt_chr = as.character(rrt),
-
-    # creatinine mg/dL from µmol/L
-    SCR_adj = creatinine_umol / 88.4,
-
-    # min/max creatinine
-    min_creat = if_else(
-      sex == "male",
-      pmin(SCR_adj / 0.9, 1)^-0.411,
-      pmin(SCR_adj / 0.7, 1)^-0.329
-    ),
-    max_creat = if_else(
-      sex == "male",
-      pmax(SCR_adj / 0.9, 1)^-1.209,
-      pmax(SCR_adj / 0.7, 1)^-1.209
-    ),
-    # eGFR (male/female)
-    egfr_male = case_when(
-      is.na(creatinine_umol) ~ NA_real_,
-      is.na(creatinine_age) ~ NA_real_,
-      TRUE ~ (min_creat * max_creat * 141) * (0.993^creatinine_age)
-    ),
-    egfr = if_else(sex == "female", 1.018 * egfr_male, egfr_male),
-    ckd_rrt = case_when(
-      rrt_chr == "1" ~ "RRT (dialysis)",
-      rrt_chr == "2" ~ "RRT (transplant)",
-      (egfr >= 0 & egfr < 15) ~ "Stage 5",
-      (egfr >= 15 & egfr < 30) ~ "Stage 4",
-      (egfr >= 30 & egfr < 45) ~ "Stage 3b",
-      (egfr >= 45 & egfr < 60) ~ "Stage 3a",
-      ((is.na(egfr) | (egfr >= 60)) & rrt_chr == "0") ~ "No CKD or RRT"
-    ) |>
-      factor(
-        levels = c(
-          "No CKD or RRT",
-          "Stage 3a",
-          "Stage 3b",
-          "Stage 4",
-          "Stage 5",
-          "RRT (transplant)",
-          "RRT (dialysis)"
-        )
-      )
-  )
 
 ## factor levels provided in a sensible order, as this won't happen directly from opensafely ----
 
@@ -294,8 +286,122 @@ factor_levels <-
       "Black or Black British - Any other Black background",
       "Other Ethnic Groups - Chinese",
       "Other Ethnic Groups - Any other ethnic group"
+    ),
+
+    learndis_cat = c(
+      "No Learning disability",
+      "Down's syndrome",
+      "Other learning disability",
+      "Learning disability register"
+    ),
+    ckd_stage_3to5 = c(
+      "no ckd",
+      "3",
+      "4",
+      "5",
+      "ckd, without ckd3-5 code"
+    ),
+    ckd_rrt = c(
+      "No CKD or RRT",
+      "RRT (transplant)",
+      "RRT (dialysis)",
+      "Stage 3",
+      "Stage 4",
+      "Stage 5",
+      "CKD, without stage 3-5 code"
     )
+
   )
+
+
+# template for standardising demographic characteristics that are extracted multiple times
+# using this in mutate like this: `mutate(!!!standardise_demographic_characteristics)`
+standardise_demographic_characteristics <-
+  rlang::quos(
+
+    ## --VARIABLES--
+    ## demographics
+    ageband4 = cut(
+      age,
+      breaks = c(-Inf, 12, 50, 65, 75, 105, Inf),
+      labels = c("under 12", "12-49", "50-64", "65-74", "75-104", "105+"), # under 12 and 105+ should be excluded in analysis but include here to ensure nobody slipped through the net
+      right = FALSE
+    ),
+    ageband13 = cut(
+      age,
+      breaks = c(-Inf, 12, 18, 30, 40, 50, 55, 60, 65, 70, 75, 80, 85, 90, 105, Inf),
+      labels = c("under 12", "12-17", "18-29", "30-39", "40-49", "50-54", "55-59", "60-64", "65-69", "70-74", "75-79", "80-84", "85-89", "90-104", "105+"), # under 16 and 105+ should be excluded in analysis but include here to ensure nobody slipped through the net
+      right = FALSE
+    ),
+    region = fct_collapse(
+      factor(region, ordered = FALSE),
+      `East of England` = "East",
+      `London` = "London",
+      `Midlands` = c("West Midlands", "East Midlands"),
+      `North East and Yorkshire` = c("Yorkshire and The Humber", "North East"),
+      `North West` = "North West",
+      `South East` = "South East",
+      `South West` = "South West"
+    ),
+    imd_quintile = cut(
+      imd,
+      breaks = c(0, 32844 * (1:5) / 5),
+      labels = c("1 (most deprived)", "2", "3", "4", "5 (least deprived)"),
+      include.lowest = TRUE,
+      right = FALSE
+    ),
+  )
+
+## CKD-RRT classification
+# adapted from https://github.com/opensafely/covid_mortality_over_time/blob/main/analysis/utils/kidney_functions.R
+
+# egfr <- function(rrt_cat, sex, creatinine_umol, creatinine_age) {
+#   # creatinine mg/dL from µmol/L
+#   SCR_adj <- creatinine_umol / 88.4
+
+#   # min/max creatinine
+#   min_creat <- if_else(
+#     sex == "male",
+#     pmin(SCR_adj / 0.9, 1)^-0.411,
+#     pmin(SCR_adj / 0.7, 1)^-0.329
+#   )
+#   max_creat <- if_else(
+#     sex == "male",
+#     pmax(SCR_adj / 0.9, 1)^-1.209,
+#     pmax(SCR_adj / 0.7, 1)^-1.209
+#   )
+#   # eGFR (male/female)
+#   egfr_male <- case_when(
+#     is.na(creatinine_umol) ~ NA_real_,
+#     is.na(creatinine_age) ~ NA_real_,
+#     TRUE ~ (min_creat * max_creat * 141) * (0.993^creatinine_age)
+#   )
+#   egfr <- if_else(sex == "female", 1.018 * egfr_male, egfr_male)
+
+#   return(egfr)
+# }
+
+standardise_primis_and_extended_characteristics <-
+  rlang::quos(
+
+    ckd_rrt = case_when(
+      rrt_cat == "1 dialysis" ~ "RRT (dialysis)",
+      rrt_cat == "2 transplant" ~ "RRT (transplant)",
+      ckd_stage_3to5 == "5" ~ "Stage 5",
+      ckd_stage_3to5 == "4" ~ "Stage 4",
+      ckd_stage_3to5 == "3" ~ "Stage 3",
+      ckd_stage_3to5 == "ckd, without stage 3-5 code" ~ "CKD, without stage 3-5 code",
+      TRUE ~ "No CKD or RRT"
+    ) |> factor(levels = factor_levels$ckd_rrt),
+
+    learndis_cat = factor(learndis_cat,  levels = factor_levels$learndis_cat),
+
+    cns_learndis = (cns | learndis),
+
+    sickle_cell_asplenia = (sickle_cell | asplenia)
+  )
+
+
 
 # function to convert ethnicity 16 group into 5 group
 ethnicity_16_to_5 <- function(x) {
@@ -309,32 +415,48 @@ ethnicity_16_to_5 <- function(x) {
 ## --VARIABLES--
 
 level1_group <- c(
+
+  # Level 1A (all)
   "all",
+
+  # level 1B (age)
+  "ageband4",
+
+  # Level 1C (eligibility)
   "any_eligibility",
   "age_above_eligiblity_threshold",
-  "primis_atrisk",
-  "primis_atrisk_only",
+  "clinical_priority",
+  "clinical_priority_only",
   "carehome_status",
-  "ageband",
+
+  # Level 1D(clinical risk)
+  "primis_atrisk",
   "crd",
   "chd",
   "ckd",
   "cld",
   "cns_learndis",
   "diabetes",
-  "immunosuppressed_asplenia",
+  "immunosuppressed",
+  # "asplenia",
   "severe_obesity",
   "smi"
 )
 
 level2_group <- c(
   "all",
+
+  # sociodemographic subgroups
+  "ageband4",
+  "ageband13",
   "sex",
-  "ageband",
   "ethnicity5",
+  # "ethnicity16",
   "region",
   "imd_quintile",
   "carehome_status",
+
+  # Core clinical risk subgroups
   "primis_atrisk",
   "crd",
   "chd",
@@ -342,14 +464,21 @@ level2_group <- c(
   "cld",
   "cns_learndis",
   "diabetes",
-  "immunosuppressed_asplenia",
+  "immunosuppressed",
+  "asplenia",
   "severe_obesity",
   "smi",
+
   # Extended subgroups
-  "ckd_rrt", # CKD/RRT
+  "ckd_rrt", # RRT - CKD3-5
   "copd", # Chronic obstructive pulmonary disease
-  "down_sydrome", # Down's syndrome
-  "sickle_cell" # Sickle Cell
+  "learndis_cat", # Learning disabilities categories
+  "sickle_cell_asplenia", # Sickle Cell or asplenia
+  "cirrhosis",          # Cirrhosis
+  "cochlear_implant",   # Cochlear implant
+  "cystic_fibrosis",    # Cystic fibrosis
+  "csfl",               # Cerebrospinal fluid leak
+  "homeless"           # Homeless
 )
 
 level_combos <- expand_grid(group1 = level1_group, group2 = level2_group) |>
@@ -357,13 +486,14 @@ level_combos <- expand_grid(group1 = level1_group, group2 = level2_group) |>
     # group2 = na_if(group2, "all")
   ) |>
   filter(
-    (group1 == group2) %in% c(FALSE, NA) | (group1 == "all")
+    (group1 == group2) %in% c(FALSE, NA) | (group1 == "all"),
+    !(group1 == "ageband4" & group2 == "ageand13")
   )
 
 # Local run flag ----
 # is this script being run locally, and if so do we need to output objects to be picked up by ehrQL scripts
 
-localrun <- Sys.getenv("OPENSAFELY_BACKEND") %in% c("")
+localrun <- Sys.getenv("OPENSAFELY_BACKEND") %in% c("", "expectations")
 
 if (localrun) {
 

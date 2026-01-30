@@ -4,7 +4,7 @@
 
 # from ehrql.codes import CTV3Code, ICD10Code
 
-from ehrql import case, days, when, years
+from ehrql import case, days, when, years, months
 from ehrql.tables.tpp import clinical_events_ranges
 
 import codelists
@@ -72,9 +72,16 @@ def last_prior_meds(codelist, index_date, where=True):
     )
 
 
+
+
+# --VARIABLES--
+
 #######################################################
 # PRIMIS
 #######################################################
+
+
+
 
 # Asthma
 def has_asthma(index_date):
@@ -157,7 +164,7 @@ def has_severe_obesity(index_date):
     )
     # Severe obesity
     severe_obesity = case(
-        when(aged18plus).then(True),
+        when(~aged18plus).then(False),
         when(
             (date_sev_obesity > event_bmi.date) | 
             (date_sev_obesity.is_not_null() & event_bmi.date.is_null())
@@ -230,11 +237,11 @@ def is_immunosuppressed(index_date):
         codelists.immdx_cov, 
         index_date
     )
-    # Immunosuppression medication (within the last 3 years)
+    # Immunosuppression medication (within the last 6 months)
     has_immrx = has_prior_meds(
         codelists.immrx,
         index_date,
-        where=medications.date.is_on_or_after(index_date - years(3))
+        where=medications.date.is_on_or_after(index_date - months(6))
     )
     # Immunosuppression admin date (within the last 3 years)
     has_immadm = has_prior_event(
@@ -242,11 +249,11 @@ def is_immunosuppressed(index_date):
         index_date,
         where=clinical_events.date.is_on_or_after(index_date - years(3))
     )
-    # Chemotherapy medication date (within the last 3 years)
+    # Chemotherapy medication date (within the last 6 months)
     has_dxt_chemo = has_prior_event(
         codelists.dxt_chemo,
         index_date,
-        where=clinical_events.date.is_on_or_after(index_date - years(3))
+        where=clinical_events.date.is_on_or_after(index_date - months(6))
     )
     # Immunosuppression
     immunosupp = case(
@@ -322,13 +329,25 @@ def carehome_status(index_date):
       carehome_tpp | carehome_primis | carehome_nhs_refset
   )
 
+
+# cochlear implant 
+def has_cochlear_implant(index_date, where=True):
+    date_cochlear_implant = last_prior_event(codelists.cochlear_implant, index_date).date
+    # Removal codes relating to cochlear implant
+    date_remove_cochlear_implant = last_prior_event(codelists.remove_cochlear_implant, index_date).date
+    # Severe mental illness
+    cochlear_implant = case(
+        when(date_remove_cochlear_implant < date_cochlear_implant).then(True),
+        when(date_cochlear_implant.is_not_null() & date_remove_cochlear_implant.is_null()).then(True),
+        otherwise=False
+    )
+    return cochlear_implant
 ###########################################################
 # Extended subgroups
 ###########################################################
-
 # CKD/RRT
 # adapted from https://github.com/opensafely/covid_mortality_over_time/blob/main/analysis/utils/kidney_functions.R
-def has_rrt(index_date):
+def rrt_cat(index_date):
     # RRT: dialysis / transplant) ----------------------------------------------
     has_kidney_tx = has_prior_event(codelists.kidney_transplant, index_date)
     has_dial      = has_prior_event(codelists.dialysis, index_date)
@@ -359,13 +378,49 @@ def has_rrt(index_date):
     )
     # RRT category: "1" dialysis, "2" transplant,  "0" none
     rrt_cat = case(
-    when(rrt_dialysis).then("1"),
-    when(rrt_transplant).then("2"),
-    otherwise="0"
+      when(rrt_dialysis).then("1 dialysis"),
+      when(rrt_transplant).then("2 transplant"),
+      otherwise="0 no RRT"
     )
     return rrt_cat
 
-#Creatinine event
+# ckd stage 3-5 in patients has_ckd = TRUE
+def ckd_stage_3to5(index_date):
+    ckd = has_ckd(index_date)
+
+    ckd3_date = last_prior_event(codelists.ckd3_snomed, index_date).date
+    ckd4_date = last_prior_event(codelists.ckd4_snomed, index_date).date
+    ckd5_date = last_prior_event(codelists.ckd5_snomed, index_date).date
+
+    stage = case(
+        # no CKD
+        when(~ckd).then("no CKD"),
+
+        # latest CKD stage
+        when(
+            ckd5_date.is_not_null()
+            & (ckd4_date.is_null() | (ckd5_date >= ckd4_date))
+            & (ckd3_date.is_null() | (ckd5_date >= ckd3_date))
+        ).then("5"),
+
+        when(
+            ckd4_date.is_not_null()
+            & (ckd5_date.is_null() | (ckd4_date > ckd5_date))
+            & (ckd3_date.is_null() | (ckd4_date >= ckd3_date))
+        ).then("4"),
+
+        when(
+            ckd3_date.is_not_null()
+            & (ckd4_date.is_null() | (ckd3_date > ckd4_date))
+            & (ckd5_date.is_null() | (ckd3_date > ckd5_date))
+        ).then("3"),
+
+        # ckd, without ckd3-5 code
+        otherwise="CKD, without stage 3-5 code"
+    )
+    return stage
+
+# Creatinine event
 def last_creatinine_event(index_date):
     creatinine_event = (
         clinical_events_ranges
@@ -389,15 +444,54 @@ def last_creatinine_event(index_date):
     )
     return creatinine_event
 
+# learning disability cateogry
+def learndis_cat(index_date): 
+    
+    learndis = has_prior_event(codelists.learndis, index_date)
+    down_syndrome = has_prior_event(codelists.down_syndrome, index_date)
+    learndis_register = has_prior_event(codelists.learndis_register, index_date)
+    other_learndis = learndis.is_not_null() & learndis_register.is_null()
+
+    # categories
+    learndis_cat = case(
+        when(down_syndrome).then("Down's syndrome"),
+        when(other_learndis).then("Other learning disability"),
+        when(learndis_register).then("Learning disability register"),
+        otherwise = "No learning disability"
+    )
+    
+    return learndis_cat
+
+# Homelessness
+def homeless(index_date, where=True):
+    # homeless date
+    date_homeless = last_prior_event(codelists.homeless, index_date).date
+    # Residence code  date indicating no longer homeless
+    date_reside = last_prior_event(codelists.reside, index_date).date
+    # homelessness
+    homeless = case(
+        when(date_homeless.is_null()).then(False),
+        when(date_homeless.is_not_null() & ((date_reside.is_not_null() & (date_reside < date_homeless)) | date_reside.is_null())).then(True),
+        otherwise = False
+    )
+    return homeless
+
+
 def extended_subgroups(dataset, index_date, var_name_suffix=""):
     ## extended subgroups
-    dataset.add_column(f"rrt{var_name_suffix}", has_rrt(index_date))
-    dataset.add_column(f"creatinine_umol{var_name_suffix}", last_creatinine_event(index_date).numeric_value)
-    dataset.add_column(f"creatinine_age{var_name_suffix}", patients.age_on(last_creatinine_event(index_date).date))
+    dataset.add_column(f"rrt_cat{var_name_suffix}", rrt_cat(index_date)) # rrt
+    dataset.add_column(f"ckd_stage_3to5{var_name_suffix}", ckd_stage_3to5(index_date)) # ckd 3-5
+    # dataset.add_column(f"creatinine_umol{var_name_suffix}", last_creatinine_event(index_date).numeric_value)
+    # dataset.add_column(f"creatinine_age{var_name_suffix}", patients.age_on(last_creatinine_event(index_date).date))
     dataset.add_column(f"copd{var_name_suffix}", has_prior_event(codelists.copd, index_date)) # Chronic obstructive pulmonary disease
-    dataset.add_column(f"down_sydrome{var_name_suffix}", has_prior_event(codelists.down_sydrome, index_date)) #Down's sydrome
+    dataset.add_column(f"learndis_cat{var_name_suffix}", learndis_cat(index_date)) # Learning disabilities categories
     dataset.add_column(f"sickle_cell{var_name_suffix}", has_prior_event(codelists.sickle_cell, index_date)) # Sickle cell anaemia
-    dataset.add_column(f"cirrhosis{var_name_suffix}", has_prior_event(codelists.cirrhosis, index_date)) #Down's sydrome 
+    dataset.add_column(f"cirrhosis{var_name_suffix}", has_prior_event(codelists.cirrhosis, index_date)) # cirrhosis 
+    dataset.add_column(f"cochlear_implant{var_name_suffix}", has_cochlear_implant(index_date)) # cochlear implant
+    dataset.add_column(f"cystic_fibrosis{var_name_suffix}", has_prior_event(codelists.cystic_fibrosis, index_date)) # cystic fibrosis
+    dataset.add_column(f"csfl{var_name_suffix}", has_prior_event(codelists.csfl, index_date)) # Cerebrospinal fluid leak
+    dataset.add_column(f"homeless{var_name_suffix}", homeless(index_date)) # Homeless
+    
 
 # def other_cx_variables(dataset, index_date, var_name_suffix=""):
     ## others of interest
@@ -418,6 +512,7 @@ def demographic_variables(dataset, index_date, var_name_suffix=""):
     dataset.add_column(f"stp{var_name_suffix}", registration.practice_stp)
     dataset.add_column(f"imd{var_name_suffix}", addresses.for_patient_on(index_date).imd_rounded)
     dataset.add_column(f"carehome_status{var_name_suffix}", carehome_status(index_date))
+    
 
 # See https://github.com/opensafely/reusable-variables/blob/main/analysis/vaccine-history/vaccine_variables.py
 # this is an adpated version that only selects vaccines _near_ the index date 

@@ -56,7 +56,7 @@ dataset.configure_dummy_data(population_size=1000)
 # define dataset poppulation
 dataset.define_population(
    covid_vaccinations.exists_for_patient()
-   & (patients.age_on(end_date) >=16) # only include people who are aged 16 or over during at least one season
+   & (patients.age_on(end_date) >= 12) # only include people who are aged 2 or over during at least one season
 )
 
 
@@ -69,8 +69,6 @@ for i in range(1, 16+1):
 
     suffix = f"_{i}"
 
-    ## --VARIABLES--
-    
     # vaccine variables
     current_vax = covid_vaccinations.where(covid_vaccinations.date>previous_vax_date).first_for_patient()
     dataset.add_column(f"covid_vax_{i}_date", current_vax.date)

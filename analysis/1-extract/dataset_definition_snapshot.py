@@ -15,7 +15,7 @@ from ehrql import (
     get_parameter,
 #    case,
     create_dataset,
-#    days,
+    days,
     weeks,
 #    when,
 #    minimum_of,
@@ -48,6 +48,9 @@ campaign_info = all_campaign_info[snapshot_date]
 # this is different to snapshot date because we allow people to be eligible if they reach the age during the campaign
 age_calculation_date = campaign_info["age_date"]
 
+# end of follow-up for campaign (= day before next campaign))
+end_of_campaign_date = campaign_info["final_milestone_date"]
+
 # initialise dataset
 
 dataset = create_dataset()
@@ -68,11 +71,9 @@ dataset.define_population(
   registered 
   & (registered_start_date <= (snapshot_date - weeks(12)))
   & alive
-  & (age >= 16) & (age <= 104)
+  & (age >= 12) & (age <= 104)
   & (patients.sex.is_in(["male", "female"]))
 )
-
-# --VARIABLES--
 
 ## demographic variables ----
 
@@ -83,6 +84,7 @@ demographic_variables(dataset = dataset, index_date = snapshot_date)
 primis_variables(dataset = dataset, index_date = snapshot_date)
 
 ## extended subgroups ----
+
 extended_subgroups(dataset = dataset, index_date = snapshot_date)
 
 # other_cx_variables(dataset = dataset, index_date = snapshot_date)
@@ -122,9 +124,9 @@ add_n_vaccines(
 
 # count total number of vaccines prior to vaccine date
 dataset.covid_vax_prior_count = (
-  covid_vaccinations
-  .where(vaccinations.date.is_before(snapshot_date))
-  .count_for_patient()
+    covid_vaccinations
+    .where(vaccinations.date.is_before(snapshot_date))
+    .count_for_patient()
 )
 
 # Deregistration dates after the snapshot date
@@ -132,42 +134,47 @@ dataset.deregistered_date = registered_patients.end_date
 
 # Covid-19 outcomes
 
+all_covid_admissions = (
+    apcs
+    .where(apcs.all_diagnoses.contains_any_of(codelists.covid_icd10))
+    .where(apcs.admission_method.is_in(["21", "22", "23", "24", "25", "2A", "2B", "2C", "2D", "28"]))
+    .where(apcs.patient_classification == "1")  # Ordinary admissions only
+    .where(apcs.admission_date.is_on_or_between(snapshot_date,end_of_campaign_date))
+    .sort_by(apcs.admission_date)
+)
+
 # covid-related admission 
 dataset.covid_admitted_date = (
-    apcs
-        .where(apcs.all_diagnoses.contains_any_of(codelists.covid_icd10))
-        .where(apcs.admission_method.is_in(["21", "22", "23", "24", "25", "2A", "2B", "2C", "2D", "28"]))
-        .where(apcs.patient_classification == "1")  # Ordinary admissions only
-        .where(apcs.admission_date.is_on_or_after(snapshot_date))
-        .sort_by(apcs.admission_date)
-        .first_for_patient()
-        .admission_date
+    all_covid_admissions
+    .first_for_patient()
+    .admission_date
 )
 
 # covid-related admission, primary diagnosis only
 dataset.covid_admitted_primary_date = (
-    apcs
-        .where(apcs.primary_diagnosis.is_in(codelists.covid_icd10))
-        .where(apcs.admission_method.is_in(["21", "22", "23", "24", "25", "2A", "2B", "2C", "2D", "28"]))
-        .where(apcs.patient_classification == "1")  # Ordinary admissions only
-        .where(apcs.admission_date.is_on_or_after(snapshot_date))
-        .sort_by(apcs.admission_date)
-        .first_for_patient()
-        .admission_date
+    all_covid_admissions
+    .where(apcs.primary_diagnosis.is_in(codelists.covid_icd10))
+    .first_for_patient()
+    .admission_date
 )
+
+# first covid-related admission, length of stay
+#dataset.covid_admitted_first_los = (all_covid_admissions.first_for_patient().discharge_date) - dataset.covid_admitted_date
+
+
+# length of stay across all covid admissions with admission within the campaign date
+dataset.covid_admitted_los = (
+  all_covid_admissions.discharge_date - all_covid_admissions.admission_date
+).days.sum_for_patient()
 
 # covid-related critical care admission 
 dataset.covid_critcare_date = (
-    apcs
-        .where(apcs.all_diagnoses.contains_any_of(codelists.covid_icd10))
-        .where(apcs.admission_method.is_in(["21", "22", "23", "24", "25", "2A", "2B", "2C", "2D", "28"]))
-        .where(apcs.patient_classification == "1")  # Ordinary admissions only
-        .where(apcs.days_in_critical_care>0)
-        .where(apcs.admission_date.is_on_or_after(snapshot_date))
-        .sort_by(apcs.admission_date)
-        .first_for_patient()
-        .admission_date
+  all_covid_admissions
+  .where(apcs.days_in_critical_care>0)
+  .first_for_patient()
+  .admission_date
 )
+
 
 # covid-related death
 #dataset.covid_death_date = (

@@ -102,3 +102,17 @@ nhsd-primary-care-domain-refsets/copd_cod/20250627
 nhsd-primary-care-domain-refsets/ds_cod/20250627
 nhsd/sickle-spl-atriskv4-snomed-ct/7083ed37
 nhsd-primary-care-domain-refsets/cirrhosis_cod/20250627
+
+# Cochlear implant
+nhsd-primary-care-domain-refsets/cocimpatrisk1_cod/20250912
+nhsd-primary-care-domain-refsets/cocimprematrisk1_cod/20250912
+
+# Cystic fibrosis
+opensafely/cystic-fibrosis-snomed/1eb02212
+
+# Cerebrospinal fluid leak
+nhsd-primary-care-domain-refsets/csflatrisk1_cod/20250912
+
+# Homeless
+primis-covid19-vacc-uptake/homeless_cod/v2.5
+primis-covid19-vacc-uptake/reside_cod/v2.5
