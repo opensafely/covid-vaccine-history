@@ -471,7 +471,7 @@ def homeless(index_date, where=True):
     # homelessness
     homeless = case(
         when(date_homeless.is_null()).then(False),
-        when(date_homeless.is_not_null() & ((date_reside.is_not_null() & (date_reside < date_homeless)) | date_reside.is_null())).then(True),
+        when(date_homeless.is_not_null() & ((date_reside.is_not_null() & (date_reside <= date_homeless)) | date_reside.is_null())).then(True),
         otherwise = False
     )
     return homeless
