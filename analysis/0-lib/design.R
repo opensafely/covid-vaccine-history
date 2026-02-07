@@ -482,12 +482,10 @@ level2_group <- c(
 )
 
 level_combos <- expand_grid(group1 = level1_group, group2 = level2_group) |>
-  mutate(
-    # group2 = na_if(group2, "all")
-  ) |>
   filter(
     (group1 == group2) %in% c(FALSE, NA) | (group1 == "all"),
-    !(group1 == "ageband4" & group2 == "ageband13")
+    !((group1 == "ageband4") & (group2 == "ageband13")),
+    !((group1 %in% c("age_above_eligiblity_threshold", "clinical_priority_only")) & (group2 %in% c("ageband4", "ageband13"))),
   )
 
 # Local run flag ----
