@@ -198,7 +198,7 @@ plot_date_of_last_dose <- function(subgroup) {
     lazy_dt() |>
     group_by(subgroup, last_vax_product, last_vax_period) |>
     summarise(
-      n = round_any(n(), sdc_threshold)
+      n = roundmid_any(n(), sdc_threshold)
     ) |>
     ungroup() |>
     mutate(
@@ -289,7 +289,7 @@ plot_vax_count <- function(subgroup) {
     lazy_dt() |>
     group_by(subgroup, vax_count_group) |>
     summarise(
-      n = round_any(n(), sdc_threshold),
+      n = roundmid_any(n(), sdc_threshold),
     ) |>
     ungroup() |>
     as_tibble() |>
@@ -370,13 +370,13 @@ table_prior_vax_summary <- function(...) {
     lazy_dt() |>
     summarise(
       # Dose counts
-      total = round_any(n(), sdc_threshold),
-      count_n0 = round_any(sum(vax_count == 0, na.rm = TRUE), sdc_threshold),
-      count_n1 = round_any(sum(vax_count == 1, na.rm = TRUE), sdc_threshold),
-      count_n2 = round_any(sum(vax_count == 2, na.rm = TRUE), sdc_threshold),
-      count_n3 = round_any(sum(vax_count == 3, na.rm = TRUE), sdc_threshold),
-      count_n4 = round_any(sum(vax_count == 4, na.rm = TRUE), sdc_threshold),
-      count_n5plus = round_any(sum(vax_count >= 5, na.rm = TRUE), sdc_threshold),
+      total = roundmid_any(n(), sdc_threshold),
+      count_n0 = roundmid_any(sum(vax_count == 0, na.rm = TRUE), sdc_threshold),
+      count_n1 = roundmid_any(sum(vax_count == 1, na.rm = TRUE), sdc_threshold),
+      count_n2 = roundmid_any(sum(vax_count == 2, na.rm = TRUE), sdc_threshold),
+      count_n3 = roundmid_any(sum(vax_count == 3, na.rm = TRUE), sdc_threshold),
+      count_n4 = roundmid_any(sum(vax_count == 4, na.rm = TRUE), sdc_threshold),
+      count_n5plus = roundmid_any(sum(vax_count >= 5, na.rm = TRUE), sdc_threshold),
       # Dose summary
       count_median = quantile(vax_count, probs = 0.5, na.rm = TRUE),
       count_p10 = quantile(vax_count, probs = 0.10, na.rm = TRUE),
@@ -384,8 +384,8 @@ table_prior_vax_summary <- function(...) {
       count_p75 = quantile(vax_count, probs = 0.75, na.rm = TRUE),
       count_p90 = quantile(vax_count, probs = 0.90, na.rm = TRUE),
       # Vaccination in past 12 and 24 months
-      days_since_n12m = round_any(sum(days_since_vax <= 365, na.rm = TRUE), sdc_threshold),
-      days_since_n24m = round_any(sum(days_since_vax <= 365 * 2, na.rm = TRUE), sdc_threshold),
+      days_since_n12m = roundmid_any(sum(days_since_vax <= 365, na.rm = TRUE), sdc_threshold),
+      days_since_n24m = roundmid_any(sum(days_since_vax <= 365 * 2, na.rm = TRUE), sdc_threshold),
       # Time since last dose
       days_since_median = quantile(days_since_vax, probs = 0.5, na.rm = TRUE),
       days_since_p10 = quantile(days_since_vax, probs = 0.10, na.rm = TRUE),
@@ -662,6 +662,8 @@ iwalk(
 # Function to output HRs and IRRs for disease burden comparing different subgroups
 # note that parglm is faster, but produces an annoying warning that "'mustart' will not be used"
 # don't know how to get rid of it!
+
+
 adjusted_estimates <- function(data, subgroup, event_time, event_indicator) {
   # use age-splines unless age is the subgroup of interest
 
@@ -669,12 +671,7 @@ adjusted_estimates <- function(data, subgroup, event_time, event_indicator) {
   if (subgroup == "ageband4") poisson_formula <- as.formula(glue("event_indicator ~ ageband4 + sex"))
   if (subgroup == "ageband13") poisson_formula <- as.formula(glue("event_indicator ~ ageband13 + sex"))
 
-  cox_formula <- as.formula(glue("Surv(event_time, event_indicator) ~ {subgroup} + sex + ns(age, 3)"))
-  if (subgroup == "ageband4") cox_formula <- as.formula(glue("Surv(event_time, event_indicator) ~ ageband4 + sex"))
-  if (subgroup == "ageband13") cox_formula <- as.formula(glue("Surv(event_time, event_indicator) ~ ageband13 + sex"))
-
   # prepare dataset
-
   data_outcome <-
     data |>
     mutate(
@@ -688,87 +685,91 @@ adjusted_estimates <- function(data, subgroup, event_time, event_indicator) {
       event_indicator
     )
 
+  # how many possible values of the group are there
   n_values <- n_distinct(data_outcome[[subgroup]])
+
+  # summarise total people, events, and person-time
+  # and add contrast label for merging with model output later
+  data_summary <-
+    data_outcome |>
+    mutate(label = .data[[subgroup]]) |>
+    arrange(label) |>
+    summarise(
+      variable = subgroup,
+      n_obs = roundmid_any(n(), sdc_threshold),
+      n_event = roundmid_any(sum(event_indicator), sdc_threshold),
+      exposure = roundmid_any(sum(event_time), sdc_threshold),
+
+      .by = label
+    ) |>
+    mutate(
+      label = as.character(label),
+      reference_row = first(label) == label,
+      contrast = glue("{subgroup}{label}")
+    )
 
   # IRR model
 
-  if (n_values == 1) {
-    # cox / glm function does not work when the contrast is a single valued vector
-    # so creating the summary info manually here
-
-    data_poisson <-
-      data_outcome |>
-      summarise(
-        variable = subgroup,
-        label = NA_character_,
-        reference_row = TRUE,
-        n_obs = round_any(n(), sdc_threshold),
-        n_event = round_any(sum(event_indicator), sdc_threshold),
-        exposure = round_any(sum(event_time), sdc_threshold),
-        irr = 1,
-        irr.low = NA_real_,
-        irr.high = NA_real_,
-        irr.ln.std.error = NA_real_
-      )
-
-  } else {
+  if (n_values > 1) {
 
     parglm_control <- parglm.control(maxit = 40, nthreads = 4)
 
+
+    # fit the model
+    # if there is an error, just return an empty dataset rather than fail
+    data_poisson0 <-
+      tryCatch(
+        expr = {
+          data_outcome |>
+            parglm(
+              data = _,
+              formula = poisson_formula,
+              family = poisson,
+              offset = log(event_time),
+              control = parglm_control
+            ) |>
+            broom.helpers::tidy_and_attach(tidy_fun = broom.helpers::tidy_parameters, ci_method = "wald") |>
+            broom.helpers::tidy_add_term_labels() |>
+            filter(variable == subgroup) |>
+            select(variable, label, estimate, std.error, conf.low, conf.high)
+          # note: the filter above is the same as doing marginaleffects::avg_comparisons(model, type = "link", variables = subgroup, comparison = "difference"),
+          # as long as there are no interaction terms between subgroup and anything else
+          # we use broom.helpers functions because it gives us the really nice variable and label info formatting for the outputted tidy dataset
+          # if we want to use avg_comparisons in future, then attach the nicely formatted meta info onto a broom::tidy(avg_comparisons) object
+          # or see "get_estimates_using_marginaleffects.R" script for a clue
+        },
+        error = function(e) {
+          cat("error for subgroup", subgroup, ":", conditionMessage(e), "\n")
+          data_summary |>
+            select(variable, label) |>
+            mutate(estimate = NA_real_, std.error = NA_real_, conf.low = NA_real_, conf.high = NA_real_)
+        }
+      )
+
+    # combine summary and model outputs
     data_poisson <-
-      data_outcome |>
-      parglm(
-        data = _,
-        formula = poisson_formula,
-        family = poisson,
-        offset = log(event_time),
-        control = parglm_control
+      full_join(
+        data_summary,
+        data_poisson0,
+        by = c("variable", "label"),
       ) |>
-      broom.helpers::tidy_plus_plus(tidy_fun = broom.helpers::tidy_parameters) |>
-      filter(variable == subgroup) |>
-      # note: selecting the effect as above is the same as doing marginaleffects::avg_comparisons(model, type = "link", variables = subgroup, comparison = "difference"),
-      # as long as there are no interaction terms between subgroup and anything else
-      # we use broom.helpers because it gives us the really nice variable, label, reference_row etc formatting for the outputted tidy dataset
-      # if we want to use avg_comparisons in future, then attach the nicely formatted meta info onto a broom::tidy(avg_comparisons) object
       transmute(
         variable, label, reference_row,
         n_obs, n_event, exposure,
         irr = exp(estimate),
         irr.low = exp(conf.low),
         irr.high = exp(conf.high),
-        irr.ln.std.error = std.error
+        irr.ln.std.error = std.error,
       )
+
+  } else {
+    data_poisson <- data_summary |> select(-contrast)
   }
 
-  # HR model
-  #
-  # data_cox <-
-  #   data_outcome |>
-  #   coxph(
-  #     data = _,
-  #     formula = cox_formula,
-  #     ties = "breslow"
-  #   ) |>
-  #   broom.helpers::tidy_plus_plus(tidy_fun = broom.helpers::tidy_parameters) |>
-  #   filter(variable == subgroup) |>
-  #   transmute(
-  #     variable, label, reference_row,
-  #     n_obs, n_event, exposure,
-  #     hr = exp(estimate),
-  #     hr.low = exp(conf.low),
-  #     hr.high = exp(conf.high),
-  #     hr.ln.std.error = std.error,
-  #   )
-
-  data_estimates <-
-    data_poisson #|>
-  # left_join(data_cox, by = c("variable", "label", "reference_row"))
-  return(data_estimates)
+  return(data_poisson)
 }
 
-adjusted_estimates(data_combined, "sex", "covid_admitted_time", "covid_admitted_indicator")
-
-
+# adjusted_estimates(data_combined, "ageband4", "covid_admitted_time", "covid_admitted_indicator")
 
 # for a given outcome, loop over all groups combinations, obtaining contrasts for each using adjusted_estimates function, and combining into one file
 # specifically, compare level2 groups amongst each other, for all people meeting level1 group criteria
@@ -803,12 +804,13 @@ get_all_estimates <- function(data, event_name, event_time, event_indicator) {
             select(-variable) |>
             rename(label2 = label) |>
             mutate(
-              across(c(label1, label2), as.character) # to ensure the bind_rows() works later
+              across(c(label1, label2), as.character) # to ensure the unnest() works later
             )
         }
       )
     ) |>
-    unnest(estimates)
+    unnest(estimates) |>
+    select(group1, label1, group2, label2, everything()) # reorder columns
 
   write_csv(estimates_list, fs::path(output_dir, glue("contrasts_{event_name}.csv")))
 
@@ -902,7 +904,8 @@ get_all_los_estimates <- function(data, event_name, event_los) {
         }
       )
     ) |>
-    unnest(estimates)
+    unnest(estimates) |>
+    select(group1, label1, group2, label2, everything()) # reorder columns
 
   write_csv(estimates_list, fs::path(output_dir, glue("los_{event_name}.csv")))
 
