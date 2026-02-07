@@ -74,14 +74,14 @@ summary_validation <-
   data_vax |>
   # group_by(vax_campaign) |>
   summarise(
-    n = round_any(n(), sdc_threshold),
-    n_missing_date = round_any(sum(is.na(vax_date)), sdc_threshold),
+    n = roundmid_any(n(), sdc_threshold),
+    n_missing_date = roundmid_any(sum(is.na(vax_date)), sdc_threshold),
     pct_missing_date = n_missing_date / n,
-    n_earlier_than_start_date = round_any(sum(vax_date < study_dates$start_date, na.rm = TRUE), sdc_threshold),
+    n_earlier_than_start_date = roundmid_any(sum(vax_date < study_dates$start_date, na.rm = TRUE), sdc_threshold),
     pct_earlier_than_start_date = n_earlier_than_start_date / n,
-    n_earlier_than_firstpossiblevax_date = round_any(sum(vax_date < study_dates$firstpossiblevax_date, na.rm = TRUE), sdc_threshold),
+    n_earlier_than_firstpossiblevax_date = roundmid_any(sum(vax_date < study_dates$firstpossiblevax_date, na.rm = TRUE), sdc_threshold),
     pct_earlier_than_firstpossiblevax_date = n_earlier_than_firstpossiblevax_date / n,
-    n_interval_within_14days = round_any(sum(vax_interval < 14, na.rm = TRUE), sdc_threshold),
+    n_interval_within_14days = roundmid_any(sum(vax_interval < 14, na.rm = TRUE), sdc_threshold),
     pct_interval_within_14days = n_interval_within_14days / n,
   ) |>
   ungroup()
@@ -97,14 +97,14 @@ summary_validation_stratified <-
     vax_dosenumber, vax_product_core
   ) |>
   summarise(
-    n = round_any(n(), sdc_threshold),
-    n_missing_date = round_any(sum(is.na(vax_date)), sdc_threshold),
+    n = roundmid_any(n(), sdc_threshold),
+    n_missing_date = roundmid_any(sum(is.na(vax_date)), sdc_threshold),
     pct_missing_date = n_missing_date / n,
-    n_earlier_than_start_date = round_any(sum(vax_date < study_dates$start_date, na.rm = TRUE), sdc_threshold),
+    n_earlier_than_start_date = roundmid_any(sum(vax_date < study_dates$start_date, na.rm = TRUE), sdc_threshold),
     pct_earlier_than_start_date = n_earlier_than_start_date / n,
-    n_earlier_than_firstpossiblevax_date = round_any(sum(vax_date < study_dates$firstpossiblevax_date, na.rm = TRUE), sdc_threshold),
+    n_earlier_than_firstpossiblevax_date = roundmid_any(sum(vax_date < study_dates$firstpossiblevax_date, na.rm = TRUE), sdc_threshold),
     pct_earlier_than_firstpossiblevax_date = n_earlier_than_firstpossiblevax_date / n,
-    n_interval_within_14days = round_any(sum(vax_interval < 14, na.rm = TRUE), sdc_threshold),
+    n_interval_within_14days = roundmid_any(sum(vax_interval < 14, na.rm = TRUE), sdc_threshold),
     pct_interval_within_14days = n_interval_within_14days / n,
   ) |>
   ungroup()
@@ -119,7 +119,7 @@ summary_vax_count <-
   group_by(patient_id) |>
   summarise(vax_count = n()) |>
   group_by(vax_count) |>
-  summarise(frequency = round_any(n(), sdc_threshold))
+  summarise(frequency = roundmid_any(n(), sdc_threshold))
 
 write_csv(summary_vax_count, fs::path(output_dir, "validation_vax_count.csv"))
 
@@ -132,7 +132,7 @@ summary_vax_product_campaign <-
     vax_campaign, vax_product
   ) |>
   summarise(
-    n = round_any(n(), sdc_threshold)
+    n = roundmid_any(n(), sdc_threshold)
   ) |>
   ungroup()
 
@@ -147,7 +147,7 @@ summary_vax_product_dosenumber <-
     vax_dosenumber, vax_product
   ) |>
   summarise(
-    n = round_any(n(), sdc_threshold)
+    n = roundmid_any(n(), sdc_threshold)
   ) |>
   ungroup()
 
@@ -180,7 +180,7 @@ summary_stratified <-
 
   ) |>
   summarise(
-    n = round_any(n(), sdc_threshold)
+    n = roundmid_any(n(), sdc_threshold)
   ) |>
   ungroup()
 
@@ -196,7 +196,7 @@ plot_vax_dates <- function(rows, cols) {
     group_by(vax_product_core, vax_week) |>
     group_by({{ rows }}, {{ cols }}, .add = TRUE) |>
     summarise(
-      n = round_any(n(), sdc_threshold)
+      n = roundmid_any(n(), sdc_threshold)
     )
 
   temp_plot <-
@@ -316,7 +316,7 @@ plot_vax_intervals <- function(rows, cols) {
     group_by(vax_dosenumber, vax_product_core, vax_interval) |>
     group_by({{ rows }}, {{ cols }}, .add = TRUE) |>
     summarise(
-      n = round_any(n(), sdc_threshold),
+      n = roundmid_any(n(), sdc_threshold),
     )
 
   temp_plot <-

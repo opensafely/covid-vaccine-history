@@ -198,7 +198,7 @@ plot_date_of_last_dose <- function(subgroup) {
     lazy_dt() |>
     group_by(subgroup, last_vax_product, last_vax_period) |>
     summarise(
-      n = round_any(n(), sdc_threshold)
+      n = roundmid_any(n(), sdc_threshold)
     ) |>
     ungroup() |>
     mutate(
@@ -289,7 +289,7 @@ plot_vax_count <- function(subgroup) {
     lazy_dt() |>
     group_by(subgroup, vax_count_group) |>
     summarise(
-      n = round_any(n(), sdc_threshold),
+      n = roundmid_any(n(), sdc_threshold),
     ) |>
     ungroup() |>
     as_tibble() |>
@@ -370,13 +370,13 @@ table_prior_vax_summary <- function(...) {
     lazy_dt() |>
     summarise(
       # Dose counts
-      total = round_any(n(), sdc_threshold),
-      count_n0 = round_any(sum(vax_count == 0, na.rm = TRUE), sdc_threshold),
-      count_n1 = round_any(sum(vax_count == 1, na.rm = TRUE), sdc_threshold),
-      count_n2 = round_any(sum(vax_count == 2, na.rm = TRUE), sdc_threshold),
-      count_n3 = round_any(sum(vax_count == 3, na.rm = TRUE), sdc_threshold),
-      count_n4 = round_any(sum(vax_count == 4, na.rm = TRUE), sdc_threshold),
-      count_n5plus = round_any(sum(vax_count >= 5, na.rm = TRUE), sdc_threshold),
+      total = roundmid_any(n(), sdc_threshold),
+      count_n0 = roundmid_any(sum(vax_count == 0, na.rm = TRUE), sdc_threshold),
+      count_n1 = roundmid_any(sum(vax_count == 1, na.rm = TRUE), sdc_threshold),
+      count_n2 = roundmid_any(sum(vax_count == 2, na.rm = TRUE), sdc_threshold),
+      count_n3 = roundmid_any(sum(vax_count == 3, na.rm = TRUE), sdc_threshold),
+      count_n4 = roundmid_any(sum(vax_count == 4, na.rm = TRUE), sdc_threshold),
+      count_n5plus = roundmid_any(sum(vax_count >= 5, na.rm = TRUE), sdc_threshold),
       # Dose summary
       count_median = quantile(vax_count, probs = 0.5, na.rm = TRUE),
       count_p10 = quantile(vax_count, probs = 0.10, na.rm = TRUE),
@@ -384,8 +384,8 @@ table_prior_vax_summary <- function(...) {
       count_p75 = quantile(vax_count, probs = 0.75, na.rm = TRUE),
       count_p90 = quantile(vax_count, probs = 0.90, na.rm = TRUE),
       # Vaccination in past 12 and 24 months
-      days_since_n12m = round_any(sum(days_since_vax <= 365, na.rm = TRUE), sdc_threshold),
-      days_since_n24m = round_any(sum(days_since_vax <= 365 * 2, na.rm = TRUE), sdc_threshold),
+      days_since_n12m = roundmid_any(sum(days_since_vax <= 365, na.rm = TRUE), sdc_threshold),
+      days_since_n24m = roundmid_any(sum(days_since_vax <= 365 * 2, na.rm = TRUE), sdc_threshold),
       # Time since last dose
       days_since_median = quantile(days_since_vax, probs = 0.5, na.rm = TRUE),
       days_since_p10 = quantile(days_since_vax, probs = 0.10, na.rm = TRUE),
@@ -662,6 +662,8 @@ iwalk(
 # Function to output HRs and IRRs for disease burden comparing different subgroups
 # note that parglm is faster, but produces an annoying warning that "'mustart' will not be used"
 # don't know how to get rid of it!
+
+
 adjusted_estimates <- function(data, subgroup, event_time, event_indicator) {
   # use age-splines unless age is the subgroup of interest
 
