@@ -20,7 +20,7 @@ actions:
 
   vax_data_quality:
     run: r:v2 analysis/2-prepare/vax_data_quality.R
-    needs: [extract_fixed, extract_varying]
+    needs: [extract_varying]
     outputs:
       moderately_sensitive:
         csv: output/2-prepare/vax_data_quality/*.csv
