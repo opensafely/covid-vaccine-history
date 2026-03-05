@@ -168,6 +168,11 @@ data_combined <-
     across(where(is.factor) | where(is.character), ~ fct_drop(fct_na_value_to_level(.x, level = "(Missing)")))
   )
 
+# remove snapshot and fixed datasets to save memory, as these is all captured in the data_combiend dataset.
+rm(data_snapshot, data_fixed)
+# recover memory
+gc()
+
 capture.output(
   skimr::skim_without_charts(data_combined),
   file = fs::path(output_dir, "data_combined_skim.txt"),
