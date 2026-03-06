@@ -173,6 +173,7 @@ rm(data_snapshot, data_fixed)
 # recover memory
 gc()
 
+
 capture.output(
   skimr::skim_without_charts(data_combined),
   file = fs::path(output_dir, "data_combined_skim.txt"),
@@ -549,6 +550,8 @@ km_estimates <- function(group_name1, group_name2, event_name, event_time, event
       cmlinc.high = 1 - conf.low,
     )
 
+  rm(data_outcome)
+
 
   # plot km curves locally for checking (but probs not for release as these can be reconstructed from released data)
   coverage_plot <-
@@ -668,7 +671,6 @@ iwalk(
 # note that parglm is faster, but produces an annoying warning that "'mustart' will not be used"
 # don't know how to get rid of it!
 
-
 adjusted_estimates <- function(data, subgroup, event_time, event_indicator) {
   # use age-splines unless age is the subgroup of interest
 
@@ -688,6 +690,12 @@ adjusted_estimates <- function(data, subgroup, event_time, event_indicator) {
       sex, age,
       event_time,
       event_indicator
+    ) |>
+    # to save memory, reduce dataset size by counting all distinct rows
+    # then use these counts as weights when modelling / summarising later
+    summarise(
+      count = n(),
+      .by = all_of(c(subgroup, "sex", "age",  "event_time", "event_indicator"))
     )
 
   # how many possible values of the group are there
@@ -701,9 +709,9 @@ adjusted_estimates <- function(data, subgroup, event_time, event_indicator) {
     arrange(label) |>
     summarise(
       variable = subgroup,
-      n_obs = roundmid_any(n(), sdc_threshold),
-      n_event = roundmid_any(sum(event_indicator), sdc_threshold),
-      exposure = roundmid_any(sum(event_time), sdc_threshold),
+      n_obs = roundmid_any(sum(count), sdc_threshold),
+      n_event = roundmid_any(sum(event_indicator * count), sdc_threshold),
+      exposure = roundmid_any(sum(event_time * count), sdc_threshold),
 
       .by = label
     ) |>
@@ -719,7 +727,6 @@ adjusted_estimates <- function(data, subgroup, event_time, event_indicator) {
 
     parglm_control <- parglm.control(maxit = 40, nthreads = 4)
 
-
     # fit the model
     # if there is an error, just return an empty dataset rather than fail
     data_poisson0 <-
@@ -731,7 +738,8 @@ adjusted_estimates <- function(data, subgroup, event_time, event_indicator) {
               formula = poisson_formula,
               family = poisson,
               offset = log(event_time),
-              control = parglm_control
+              control = parglm_control,
+              weights = count
             ) |>
             broom.helpers::tidy_and_attach(tidy_fun = broom.helpers::tidy_parameters, ci_method = "wald") |>
             broom.helpers::tidy_add_term_labels() |>
@@ -772,6 +780,9 @@ adjusted_estimates <- function(data, subgroup, event_time, event_indicator) {
   }
 
   return(data_poisson)
+
+  rm(data_outcome)
+  gc()
 }
 
 # adjusted_estimates(data_combined, "ageband4", "covid_admitted_time", "covid_admitted_indicator")
@@ -794,7 +805,8 @@ get_all_estimates <- function(data, event_name, event_time, event_indicator) {
             l1ticker <<- group1
           }
 
-          data |>
+          summary_data <-
+            data |>
             mutate(
               label1 = data[[group1]],
             ) |>
@@ -811,6 +823,10 @@ get_all_estimates <- function(data, event_name, event_time, event_indicator) {
             mutate(
               across(c(label1, label2), as.character) # to ensure the unnest() works later
             )
+
+          return(summary_data)
+          rm(summary_data)
+          gc()
         }
       )
     ) |>
