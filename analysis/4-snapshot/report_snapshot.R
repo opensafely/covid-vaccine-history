@@ -83,6 +83,18 @@ data_combined <-
     lazy_dt(data_fixed) |> select(patient_id, sex, ethnicity5, ethnicity16, death_date, covid_death_date),
     by = "patient_id"
   ) |>
+  rename(
+    # previous vaccine summary
+    # add more variables here based on covid_vax_prior_1_date, covid_vax_prior_2_date,... etc if needed
+    vax_count = covid_vax_prior_count,
+    last_vax_date = covid_vax_prior_1_date,
+    last_vax_product = covid_vax_prior_1_product,
+
+    # info on first vaccine(s) received after snapshot date
+    next_vax_date = covid_vax_1_date,
+    next_vax_product = covid_vax_1_product,
+    # next2_vax_date = covid_vax_2_date,
+  ) |>
   mutate(
     all = "All",
     !!!standardise_demographic_characteristics,
@@ -97,23 +109,10 @@ data_combined <-
 
     any_eligibility = age_above_eligiblity_threshold | clinical_priority | carehome_status,
 
-    # previous vaccine summary
-    # add more variables here based on covid_vax_prior_1_date, covid_vax_prior_2_date,... etc if needed
-    vax_count = covid_vax_prior_count,
-    vax_count_group = cut(vax_count, c(-Inf, 0, 2, 4, Inf), labels = c("0", "1-2", "3-4", "5+")),
-    last_vax_date = covid_vax_prior_1_date,
-    last_vax_product = covid_vax_prior_1_product,
-    days_since_vax = snapshot_date - last_vax_date,
-
     last_vax_product = fct_na_value_to_level(last_vax_product, "Unvaccinated"),
     last_vax_date = if_else(vax_count == 0, study_dates$firstpossiblevax_date + as.integer(runif(n(), 0, 10)), last_vax_date),
-    last_vax_week = floor_date(last_vax_date, unit = "week", week_start = 1), # starting on a monday
+    # last_vax_week = floor_date(last_vax_date, unit = "week", week_start = 1), # starting on a monday
     last_vax_period = floor_date(last_vax_date, unit = floor_dates), # use floor_dates[findInterval(last_vax_date, floor_dates)] if lubridate isn't working
-
-    # info on first vaccine(s) received after snapshot date
-    next_vax_date = covid_vax_1_date,
-    next_vax_product = covid_vax_1_product,
-    next2_vax_date = covid_vax_2_date,
 
     censor_date = pmin(
       deregistered_date,
@@ -289,7 +288,8 @@ plot_vax_count <- function(subgroup) {
   summary_by <-
     data_combined |>
     mutate(
-      subgroup = .data[[subgroup]]
+      subgroup = .data[[subgroup]],
+      vax_count_group = cut(vax_count, c(-Inf, 0, 2, 4, Inf), labels = c("0", "1-2", "3-4", "5+")),
     ) |>
     lazy_dt() |>
     group_by(subgroup, vax_count_group) |>
@@ -371,6 +371,7 @@ table_prior_vax_summary <- function(...) {
 
   summary_table <-
     data_combined |>
+    mutate(days_since_vax = snapshot_date - last_vax_date) |>
     group_by(across(all_of(group_names))) |>
     lazy_dt() |>
     summarise(

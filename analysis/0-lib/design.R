@@ -396,6 +396,9 @@ standardise_primis_and_extended_characteristics <-
       TRUE ~ "No CKD or RRT"
     ) |> factor(levels = factor_levels$ckd_rrt, ordered = FALSE),
 
+    ckd_stage_3to5 = NULL, # remove ckd stage to save memory
+    rrt_cat = NULL, # remove rrt_cat stage to save memory
+
     learndis_cat = factor(learndis_cat,  levels = factor_levels$learndis_cat, ordered = FALSE),
 
     cns_learndis = (cns | learndis),
