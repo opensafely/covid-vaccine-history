@@ -184,7 +184,7 @@ capture.output(
 
 
 ## _______________________________________________________________________________________
-## Report info on date of last vaccination
+cat("## Report info on date of last vaccination", "\n")
 ## _______________________________________________________________________________________
 
 # This produces data and a plot showing the distribution of most recent prior vaccination date (to the nearest 4 weeks)
@@ -280,7 +280,7 @@ for (group in level1_group) {
 }
 
 ## _______________________________________________________________________________________
-## Report info on prior dose count and product type
+cat("## Report info on prior dose count and product type", "\n")
 ## _______________________________________________________________________________________
 
 plot_vax_count <- function(subgroup) {
@@ -359,7 +359,7 @@ for (group in level1_group) {
 
 
 ## _______________________________________________________________________________________
-## Report info in a standardised table
+cat("## Report info in a standardised table", "\n")
 ## _______________________________________________________________________________________
 
 # function to print table for an abritrary number of grouping variables
@@ -650,6 +650,10 @@ get_all_km_estimates <- function(data, event_name, event_time, event_indicator, 
   return(km_estimates_table)
 }
 
+## _______________________________________________________________________________________
+cat("## Report KM cumulative incidence of vaccination in a standardised table", "\n")
+## _______________________________________________________________________________________
+
 
 km_estimates_vax_table <- get_all_km_estimates(data = data_combined, event_name =  "vax", event_time = "vax_time", event_indicator = "vax_indicator")
 km_estimates_vax_alive_table <- get_all_km_estimates(filter(data_combined, alive_and_registered), "vax_alive", event_time = "vax_time", event_indicator = "vax_indicator")
@@ -663,6 +667,7 @@ km_estimates_vax_alive_table <- get_all_km_estimates(filter(data_combined, alive
 #   summarise(n = n())
 
 
+## function to make KM plots for the data ----
 
 km_plot <- function(km_data, event_name, group1, group2) {
 
@@ -742,7 +747,7 @@ contrasts_reference_levels <- list(
   ageband13 = "65-69"
 )
 
-# Function to output HRs and IRRs for disease burden comparing different subgroups
+## Function to output HRs and IRRs for disease burden comparing different subgroups ----
 # note that parglm is faster, but produces an annoying warning that "'mustart' will not be used"
 # don't know how to get rid of it!
 
@@ -885,6 +890,7 @@ adjusted_estimates <- function(data, subgroup, event_time, event_indicator) {
 
 # adjusted_estimates(data_combined, "ageband4", "covid_admitted_time", "covid_admitted_indicator")
 
+## function to loop over all group combinations and report IRR of level0 versus levelX ----
 # for a given outcome, loop over all groups combinations, obtaining contrasts for each using adjusted_estimates function, and combining into one file
 # specifically, compare level2 groups amongst each other, for all people meeting level1 group criteria
 get_all_estimates <- function(data, event_name, event_time, event_indicator) {
@@ -937,6 +943,11 @@ get_all_estimates <- function(data, event_name, event_time, event_indicator) {
 
 }
 
+
+## _______________________________________________________________________________________
+cat("## Get all IRR contrasts for covid vaccination and burden", "\n")
+## _______________________________________________________________________________________
+
 # IRR for vaccination, in the usual way
 get_all_estimates(data_combined, "vax", "vax_time", "vax_indicator")
 
@@ -953,7 +964,7 @@ get_all_estimates(data_combined, "covid_critcare", "covid_critcare_time", "covid
 get_all_estimates(data_combined, "covid_death", "covid_death_time", "covid_death_indicator")
 
 
-# Function to output length of stay quantiles for different subgroups
+## Function to output length of stay quantiles for different subgroups ----
 los_estimates <- function(data, subgroup, event_los) {
 
   subgroup_name <- deparse(substitute(subgroup))
@@ -995,6 +1006,7 @@ los_estimates <- function(data, subgroup, event_los) {
 
 los_estimates(data_combined, "sex", "covid_admitted_los")
 
+## function to get LoS across all group combinations ----
 # for a given los outcome, loop over all groups combinations, obtaining los summaries for each using los_estimates function, and combining into one file
 get_all_los_estimates <- function(data, event_name, event_los) {
 
@@ -1031,5 +1043,9 @@ get_all_los_estimates <- function(data, event_name, event_los) {
   write_csv(estimates_list, fs::path(output_dir, glue("los_{event_name}.csv")))
 
 }
+
+## _______________________________________________________________________________________
+cat("## Get all LOS values for burden", "\n")
+## _______________________________________________________________________________________
 
 get_all_los_estimates(data_combined, "covid_admitted", "covid_admitted_los")
