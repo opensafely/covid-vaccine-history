@@ -150,9 +150,9 @@
     "age_threshold": 75,
     "clinical_priority": "primis_atrisk",
     "early_milestone_date": "2025-11-23",
-    "final_milestone_date": "2029-12-31",
+    "final_milestone_date": "2026-01-31",
     "early_milestone_days": 56,
     "primary_milestone_days": 153,
-    "final_milestone_days": 1555
+    "final_milestone_days": 125
   }
 }
