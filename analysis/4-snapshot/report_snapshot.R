@@ -797,6 +797,8 @@ adjusted_estimates <- function(data, subgroup, event_time, event_indicator) {
       transmute(
         variable, label, reference_row,
         n_obs, n_event, exposure,
+        ir = n_event / exposure,
+        irr_unadjusted = ir / ir[reference_row],
         irr = exp(estimate),
         irr.low = exp(conf.low),
         irr.high = exp(conf.high),
