@@ -477,8 +477,7 @@ if (!identical(as.integer(times_count), c(0L, 0L, nrow(data_combined)))) {
 
 # group variables are provided as characters via dots (...)
 # resolution argument is the precision used for the time dimension. If zero, then original resolution is used.
-km_estimates <- function(group_name1, group_name2, event_name, event_time, event_indicator, resolution = 0) {
-
+km_estimates <- function(data, group_name1, group_name2, event_name, event_time, event_indicator, resolution = 0) {
 
   group_names <- c(group_name1, group_name2)
 
@@ -487,12 +486,12 @@ km_estimates <- function(group_name1, group_name2, event_name, event_time, event
   # }
 
   data_outcome <-
-    data_combined |>
+    data |>
     select(
       patient_id,
       all_of(group_names),
-      event_time = {{ event_time }},
-      event_indicator = {{ event_indicator }}
+      event_time = any_of(event_time),
+      event_indicator = any_of(event_indicator)
     ) |>
     mutate(event_time = ceiling_any(event_time, resolution))
 
@@ -552,18 +551,142 @@ km_estimates <- function(group_name1, group_name2, event_name, event_time, event
 
   rm(data_outcome)
 
+  # print(data_km)
+
+  # write tables that capture underlying plotting data
+  data_km_nozero <-
+    data_km |>
+    arrange(across(all_of(group_names))) |>
+    ungroup() |>
+    filter(time != 0) |>
+    select(
+      all_of(group_names),
+      time,
+      cmlinc,
+      cmlinc.low,
+      cmlinc.high,
+    )
+
+  # commented out because outputting the entire data creates a dataset that is too large to output-check on it's own
+  # write_csv(data_km_nozero, fs::path(output_dir, glue("km_{event_name}_{paste0(group_names, collapse='_')}.csv")))
+
+  return(data_km_nozero)
+
+}
+
+# for testing function interactively
+# km_estimates_vax <- partial(
+#   km_estimates, data = data_combined, event_name = "vax", event_time = "vax_time", event_indicator = "vax_indicator", resolution = temporal_resolution_km
+# )
+# km_estimates_vax("all", "all")
+# km_estimates_vax("all", "ageband4")
+# km_estimates_vax("ageband4", "all")
+# km_estimates_vax("ageband4", "sex")
+
+## Function to get km estimates over all subgroup combinations ----
+
+get_all_km_estimates <- function(data, event_name, event_time, event_indicator, resolution) {
+  # loop over all group1 and group2 variable combinations and combine into one big dataset
+  km_estimates_table <-
+    level_combos |>
+    mutate(
+      km_summary = map2(
+        group1, group2,
+        .f = \(x, y) {
+
+          if (is.na(y)) y <- NULL
+          lookup <- c(group1_value = x, group2_value = y)
+
+          km_estimates(data = data, group_name1 = x, group_name2 = y, event_name = event_name, event_time = event_time, event_indicator = event_indicator, resolution = temporal_resolution_km) |>
+            mutate(across(c(all_of(c(x, y))), as.character)) |>
+            rename(all_of(c(group1_value = x, group2_value = y)))
+        }
+      )
+    ) |>
+    unnest(km_summary) |>
+    select(group1, group1_value, group2, group2_value, everything()) |>
+    mutate(
+      early_milestone = (time == campaign_info$early_milestone_days) * 1L,
+      primary_milestone = (time == campaign_info$primary_milestone_days) * 1L,
+      final_milestone = (time == campaign_info$final_milestone_days) * 1L,
+    )
+
+
+  # Write table to CSV files
+  # split up by level1 grouping variables, so as not to exceed 5,000 row limit
+  iwalk(
+    split(km_estimates_table, km_estimates_table$group1),
+    ~ write_csv(.x, fs::path(output_dir, glue("km_estimates_{event_name}_table_{.y}.csv")))
+  )
+
+  # Write table to a CSV file containing _only_ reporting milestones
+  km_estimates_milestones <-
+    km_estimates_table |>
+    filter(
+      time %in% (c(campaign_info$early_milestone_days, campaign_info$primary_milestone_days, campaign_info$final_milestone_days) * 1L)
+    ) |>
+    mutate(
+      milestone_date = case_when(
+        early_milestone == 1 ~ campaign_info$early_milestone_date,
+        primary_milestone == 1 ~ campaign_info$primary_milestone_date,
+        final_milestone == 1 ~ campaign_info$final_milestone_date,
+      ),
+      milestone = case_when(
+        early_milestone == 1 ~ "Early",
+        primary_milestone == 1 ~ "Primary",
+        final_milestone == 1 ~ "Final",
+      )
+    ) |>
+    rename(days_since_campaign_start = time) |>
+    select(-early_milestone, -primary_milestone, -final_milestone)
+
+  # extremely irritatingly we have to split this output up because it's too big to be shown (5000 row limit)
+  level1_groups <- unique(level_combos$group1)
+  splitgroup1_1 <- level1_groups[seq(1, floor(length(level1_groups) / 2))]
+  splitgroup1_2 <- level1_groups[seq(floor(length(level1_groups) / 2) + 1, length(level1_groups))]
+  write_csv(km_estimates_milestones |> filter(group1 %in% splitgroup1_1), fs::path(output_dir, glue("km_estimates_{event_name}_milestones_1.csv")))
+  write_csv(km_estimates_milestones |> filter(group1 %in% splitgroup1_2), fs::path(output_dir, glue("km_estimates_{event_name}_milestones_2.csv")))
+
+  return(km_estimates_table)
+}
+
+
+km_estimates_vax_table <- get_all_km_estimates(data = data_combined, event_name =  "vax", event_time = "vax_time", event_indicator = "vax_indicator")
+km_estimates_vax_alive_table <- get_all_km_estimates(filter(data_combined, alive_and_registered), "vax_alive", event_time = "vax_time", event_indicator = "vax_indicator")
+
+# consider raw KM plots for disease burden too
+# km_estimates_covid_admitted_table <- get_all_km_estimates(data = data_combined, event_name = "covid_admitted", event_time = "covid_admitted_time", event_indicator = "covid_admitted_indicator")
+
+
+# km_estimates_vax_table |>
+#   group_by(group1) |>
+#   summarise(n = n())
+
+
+
+km_plot <- function(km_data, event_name, group1, group2) {
+
+  group_names <- c(group1, group2)
 
   # plot km curves locally for checking (but probs not for release as these can be reconstructed from released data)
   coverage_plot <-
-    data_km |>
-    mutate(
-      lagtime = lag(time, 1, 0), # assumes the time-origin is zero
+    bind_rows(
+      # this bit adds an extra row of data so that the firsrt line of the KM plot shows
+      km_data |> summarise(
+        time = 0,
+        cmlinc = 0, cmlinc.low = 0, cmlinc.high = 0, lagtime = 0,
+        .by = c("group1", "group1_value", "group2", "group2_value")
+      ),
+      km_data |> mutate(
+        lagtime = lag(time, 1L, 0L), # assumes the time-origin is zero
+
+        .by = c("group1", "group1_value", "group2", "group2_value")
+      )
     ) |>
     ggplot() +
-    geom_step(aes(x = time, y = cmlinc, group = .data[[group_name2]], colour = .data[[group_name2]]), direction = "vh") +
-    # geom_step(aes(x = time, y = cmlinc, group = {{ subgroup }}, colour = {{ subgroup }}), direction = "vh", linetype = "dashed", alpha = 0.5) +
-    geom_rect(aes(xmin = lagtime, xmax = time, ymin = cmlinc.low, ymax = cmlinc.high, group = .data[[group_name2]], fill = .data[[group_name2]]), alpha = 0.1, colour = "transparent") +
-    facet_grid(rows = group_name1) +
+    geom_step(aes(x = time, y = cmlinc, group = group2_value, colour = group2_value), direction = "vh") +
+    geom_rect(aes(xmin = lagtime, xmax = time, ymin = cmlinc.low, ymax = cmlinc.high, group = group2_value, fill = group2_value), alpha = 0.1, colour = "transparent") +
+    facet_grid(rows = "group1_value") +
     scale_color_brewer(type = "qual", palette = "Set1", na.value = "grey") +
     scale_fill_brewer(type = "qual", palette = "Set1", guide = "none", na.value = "grey") +
     scale_y_continuous(expand = expansion(mult = c(0, 0.01))) +
@@ -584,83 +707,28 @@ km_estimates <- function(group_name1, group_name2, event_name, event_time, event
     )
 
   ggsave(fs::path(output_dir, glue("km_{event_name}_{paste0(group_names, collapse='_')}.png")), plot = coverage_plot)
-
-  # print(data_km)
-
-  # write tables that capture underlying plotting data
-  data_km_nozero <-
-    data_km |>
-    arrange(across(all_of(group_names))) |>
-    ungroup() |>
-    filter(time != 0) |>
-    select(
-      all_of(group_names),
-      time,
-      cmlinc,
-      cmlinc.low,
-      cmlinc.high,
-    )
-
-  # write_csv(data_km_nozero, fs::path(output_dir, glue("km_{event_name}_{paste0(group_names, collapse='_')}.csv")))
-
-  return(data_km_nozero)
-
+  # print(coverage_plot)
 }
 
-# create specific function for vax outcomes
-km_estimates_vax <- partial(
-  km_estimates,
-  event_name = "vax", event_time = vax_time, event_indicator = vax_indicator, resolution = temporal_resolution_km
-)
+# km_plot(km_estimates_all |> filter(group1 == "all", group2 == "crd"), "vax", "all", "crd")
 
-# for testing function interactively
-# km_estimates_vax("all", "all")
-# km_estimates_vax("all", "ageband4")
-# km_estimates_vax("ageband4", "all")
-# km_estimates_vax("ageband4", "sex")
+## _______________________________________________________________________________________
+cat("## Plot KM cumulative incidences of for inspection the server", "\n")
+## _______________________________________________________________________________________
 
 
-# loop over all group1 and group2 variable combinations and combine into one big dataset
-km_estimates_all <-
-  level_combos |>
-  mutate(
-    km_summary = map2(
-      group1, group2,
-      .f = \(x, y) {
-
-        if (is.na(y)) y <- NULL
-        lookup <- c(group1_value = x, group2_value = y)
-
-        km_estimates_vax(x, y) |>
-          mutate(across(c(all_of(c(x, y))), as.character)) |>
-          rename(all_of(c(group1_value = x, group2_value = y)))
-      }
+# plot km estimates for inspection the server
+walk2(
+  level_combos$group1, level_combos$group2,
+  .f = \(x, y) {
+    km_plot(
+      km_data = km_estimates_vax_table |> filter(group1 == x, group2 == y),
+      event_name = "vax",
+      group1 = x,
+      group2 = y
     )
-  ) |>
-  unnest(km_summary) |>
-  select(group1, group1_value, group2, group2_value, everything()) |>
-  mutate(
-    early_milestone = (time == campaign_info$early_milestone_days) * 1L,
-    primary_milestone = (time == campaign_info$primary_milestone_days) * 1L,
-    final_milestone = (time == campaign_info$final_milestone_days) * 1L,
-  )
-
-
-# km_estimates_all |>
-#   group_by(group1) |>
-#   summarise(n = n())
-
-# Write table to a CSV file
-# split up by level1 grouping variables, so as not to exceed 5,000 row limit
-iwalk(
-  split(km_estimates_all, km_estimates_all$group1),
-  ~ write_csv(.x, fs::path(output_dir, glue("km_estimates_table_{.y}.csv")))
+  }
 )
-
-# write_csv(km_estimates_all, fs::path(output_dir, glue("km_estimates_table.csv")))
-
-# consider raw KM plots for disease burden too
-# km_estimates(all, covid_admitted_time, covid_admitted_indicator, temporal_resolution_km)
 
 
 # ________________________________________________________________________________________
