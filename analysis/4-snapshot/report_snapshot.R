@@ -148,6 +148,9 @@ data_combined <-
     # time from snapshot date until deregistration
     deregistration_time = as.integer(pmin(deregistered_date, censor_date, na.rm = TRUE) - snapshot_date) + 1L,
     deregistration_indicator = (deregistered_date <= pmin(censor_date, na.rm = TRUE)) & !is.na(deregistered_date),
+
+    # indicator for if patietn is alive and registered at the end of the campaign (for comparison with UKHSA reporting)
+    alive_and_registered = (!death_indicator) & (!deregistration_indicator)
   ) |>
   as_tibble() |>
   mutate(
@@ -870,7 +873,7 @@ get_all_estimates(data_combined, "vax", "vax_time", "vax_indicator")
 
 # IRR for vaccination, only looking at those who survived or stayed registered to the end of the season (collider bias! but matches UKHSA reports)
 get_all_estimates(
-  filter(data_combined, (!death_indicator) & (!deregistration_indicator)),
+  filter(data_combined, alive_and_registered),
   "vax_alive", "vax_time", "vax_indicator"
 )
 
