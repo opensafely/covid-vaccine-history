@@ -289,7 +289,7 @@ factor_levels <-
     ),
 
     learndis_cat = c(
-      "No Learning disability",
+      "No learning disability",
       "Down's syndrome",
       "Other learning disability",
       "Learning disability register"
@@ -384,6 +384,8 @@ standardise_demographic_characteristics <-
 standardise_primis_and_extended_characteristics <-
   rlang::quos(
 
+    rrt_cat = factor(rrt_cat,  levels = levels(rrt_cat), ordered = FALSE),
+
     ckd_rrt = case_when(
       rrt_cat == "1 dialysis" ~ "RRT (dialysis)",
       rrt_cat == "2 transplant" ~ "RRT (transplant)",
@@ -392,9 +394,9 @@ standardise_primis_and_extended_characteristics <-
       ckd_stage_3to5 == "3" ~ "Stage 3",
       ckd_stage_3to5 == "ckd, without stage 3-5 code" ~ "CKD, without stage 3-5 code",
       TRUE ~ "No CKD or RRT"
-    ) |> factor(levels = factor_levels$ckd_rrt),
+    ) |> factor(levels = factor_levels$ckd_rrt, ordered = FALSE),
 
-    learndis_cat = factor(learndis_cat,  levels = factor_levels$learndis_cat),
+    learndis_cat = factor(learndis_cat,  levels = factor_levels$learndis_cat, ordered = FALSE),
 
     cns_learndis = (cns | learndis),
 
@@ -481,11 +483,16 @@ level2_group <- c(
   "homeless"           # Homeless
 )
 
-level_combos <- expand_grid(group1 = level1_group, group2 = level2_group) |>
+level_combos <-
+  expand_grid(
+    group1 = level1_group,
+    group2 = level2_group
+  ) |>
   filter(
     (group1 == group2) %in% c(FALSE, NA) | (group1 == "all"),
     !((group1 == "ageband4") & (group2 == "ageband13")),
     !((group1 %in% c("age_above_eligiblity_threshold", "clinical_priority_only")) & (group2 %in% c("ageband4", "ageband13"))),
+    !((group1 %in% c("clinical_priority_only")) & (group2 %in% c("primis_atrisk"))),
   )
 
 # Local run flag ----

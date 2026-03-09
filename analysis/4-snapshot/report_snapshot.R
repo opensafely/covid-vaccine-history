@@ -667,6 +667,13 @@ iwalk(
 # Post-snapshot Covid-19 vaccination and disease burden up to final milestone, stratified by characteristics recorded on the snapshot_date ----
 # ________________________________________________________________________________________
 
+
+# list of reference categories, which overwrites default reference category if needed
+contrasts_reference_levels <- list(
+  ageband4 = "65-74",
+  ageband13 = "65-69"
+)
+
 # Function to output HRs and IRRs for disease burden comparing different subgroups
 # note that parglm is faster, but produces an annoying warning that "'mustart' will not be used"
 # don't know how to get rid of it!
@@ -701,6 +708,25 @@ adjusted_estimates <- function(data, subgroup, event_time, event_indicator) {
   # how many possible values of the group are there
   n_values <- n_distinct(data_outcome[[subgroup]])
 
+  # all levels of variable that exist in the data, sorted by factor (or alphanumeric if not)
+  # the first of these is the default reference level
+  all_levels <- unique(as.character(sort(data_outcome[[subgroup]])))
+
+  # explicitly include reference_level, and define contrasts if unusual
+  # for example, if we wanted to use not the default reference level for a factor
+  # this object is used inside a glm() call, to be passed to the `contrasts` argument
+  if (subgroup %in% names(contrasts_reference_levels) & (n_values > 0)) {
+    # create the object passed to `contrasts` argument in glm call to use a different reference category
+    subgroup_contrasts <- list(contr.treatment(all_levels,  which(all_levels == contrasts_reference_levels[[subgroup]])))
+    names(subgroup_contrasts) <- subgroup
+    reference_level <- contrasts_reference_levels[[subgroup]]
+  } else {
+    subgroup_contrasts <- NULL
+    reference_level <- all_levels[1]
+  }
+
+  # cat(subgroup, "-", reference_level, " n=", n_values, " \n")
+
   # summarise total people, events, and person-time
   # and add contrast label for merging with model output later
   data_summary <-
@@ -717,7 +743,7 @@ adjusted_estimates <- function(data, subgroup, event_time, event_indicator) {
     ) |>
     mutate(
       label = as.character(label),
-      reference_row = first(label) == label,
+      reference_row = label == reference_level,
       contrast = glue("{subgroup}{label}")
     )
 
@@ -739,9 +765,11 @@ adjusted_estimates <- function(data, subgroup, event_time, event_indicator) {
               family = poisson,
               offset = log(event_time),
               control = parglm_control,
-              weights = count
+              weights = count,
+              contrasts = subgroup_contrasts
             ) |>
             broom.helpers::tidy_and_attach(tidy_fun = broom.helpers::tidy_parameters, ci_method = "wald") |>
+            # broom.helpers::tidy_add_reference_rows() |>
             broom.helpers::tidy_add_term_labels() |>
             filter(variable == subgroup) |>
             select(variable, label, estimate, std.error, conf.low, conf.high)
@@ -769,6 +797,8 @@ adjusted_estimates <- function(data, subgroup, event_time, event_indicator) {
       transmute(
         variable, label, reference_row,
         n_obs, n_event, exposure,
+        ir = n_event / exposure,
+        irr_unadjusted = ir / ir[reference_row],
         irr = exp(estimate),
         irr.low = exp(conf.low),
         irr.high = exp(conf.high),
@@ -834,6 +864,8 @@ get_all_estimates <- function(data, event_name, event_time, event_indicator) {
     select(group1, label1, group2, label2, everything()) # reorder columns
 
   write_csv(estimates_list, fs::path(output_dir, glue("contrasts_{event_name}.csv")))
+
+  # return(estimates_list)
 
 }
 
