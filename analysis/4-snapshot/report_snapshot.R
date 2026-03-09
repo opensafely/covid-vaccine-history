@@ -149,10 +149,6 @@ data_combined <-
     deregistration_time = as.integer(pmin(deregistered_date, censor_date, na.rm = TRUE) - snapshot_date) + 1L,
     deregistration_indicator = (deregistered_date <= pmin(censor_date, na.rm = TRUE)) & !is.na(deregistered_date),
   ) |>
-  filter(
-    # only consider people with documented eligibility
-    any_eligibility
-  ) |>
   as_tibble() |>
   mutate(
     vax_status = case_when(
