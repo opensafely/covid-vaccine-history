@@ -483,11 +483,16 @@ level2_group <- c(
   "homeless"           # Homeless
 )
 
-level_combos <- expand_grid(group1 = level1_group, group2 = level2_group) |>
+level_combos <-
+  expand_grid(
+    group1 = level1_group,
+    group2 = level2_group
+  ) |>
   filter(
     (group1 == group2) %in% c(FALSE, NA) | (group1 == "all"),
     !((group1 == "ageband4") & (group2 == "ageband13")),
     !((group1 %in% c("age_above_eligiblity_threshold", "clinical_priority_only")) & (group2 %in% c("ageband4", "ageband13"))),
+    !((group1 %in% c("clinical_priority_only")) & (group2 %in% c("primis_atrisk"))),
   )
 
 # Local run flag ----
