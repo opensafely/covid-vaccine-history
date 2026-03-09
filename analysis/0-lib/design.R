@@ -431,7 +431,7 @@ level1_group <- c(
   "clinical_priority_only",
   "carehome_status",
 
-  # Level 1D(clinical risk)
+  # Level 1D (clinical risk)
   "primis_atrisk",
   "crd",
   "chd",
@@ -440,7 +440,7 @@ level1_group <- c(
   "cns_learndis",
   "diabetes",
   "immunosuppressed",
-  # "asplenia",
+  "asplenia",
   "severe_obesity",
   "smi"
 )
