@@ -46,7 +46,7 @@ population_size <- 10000
 all_snapshot_dates <- campaign_info |>
   filter(
     campaign_start_date >= as.Date("2020-12-07"),
-    campaign_start_date <= as.Date("2025-03-31")
+    campaign_start_date <= as.Date("2026-03-31")
   ) |>
   pull(campaign_start_date)
 

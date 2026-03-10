@@ -330,7 +330,7 @@ standardise_demographic_characteristics <-
     ageband13 = cut(
       age,
       breaks = c(-Inf, 12, 18, 30, 40, 50, 55, 60, 65, 70, 75, 80, 85, 90, 105, Inf),
-      labels = c("under 12", "12-17", "18-29", "30-39", "40-49", "50-54", "55-59", "60-64", "65-69", "70-74", "75-79", "80-84", "85-89", "90-104", "105+"), # under 16 and 105+ should be excluded in analysis but include here to ensure nobody slipped through the net
+      labels = c("under 12", "12-17", "18-29", "30-39", "40-49", "50-54", "55-59", "60-64", "65-69", "70-74", "75-79", "80-84", "85-89", "90-104", "105+"), # under 12 and 105+ should be excluded in analysis but include here to ensure nobody slipped through the net
       right = FALSE
     ),
     region = fct_collapse(
@@ -396,6 +396,9 @@ standardise_primis_and_extended_characteristics <-
       TRUE ~ "No CKD or RRT"
     ) |> factor(levels = factor_levels$ckd_rrt, ordered = FALSE),
 
+    ckd_stage_3to5 = NULL, # remove ckd stage to save memory
+    rrt_cat = NULL, # remove rrt_cat stage to save memory
+
     learndis_cat = factor(learndis_cat,  levels = factor_levels$learndis_cat, ordered = FALSE),
 
     cns_learndis = (cns | learndis),
@@ -431,7 +434,7 @@ level1_group <- c(
   "clinical_priority_only",
   "carehome_status",
 
-  # Level 1D(clinical risk)
+  # Level 1D (clinical risk)
   "primis_atrisk",
   "crd",
   "chd",
@@ -440,7 +443,7 @@ level1_group <- c(
   "cns_learndis",
   "diabetes",
   "immunosuppressed",
-  # "asplenia",
+  "asplenia",
   "severe_obesity",
   "smi"
 )
