@@ -788,7 +788,11 @@ adjusted_estimates <- function(data, subgroup, event_time, event_indicator) {
   # explicitly include reference_level, and define contrasts if unusual
   # for example, if we wanted to use not the default reference level for a factor
   # this object is used inside a glm() call, to be passed to the `contrasts` argument
-  if (subgroup %in% names(contrasts_reference_levels) & (n_values > 0) & (contrasts_reference_levels[[subgroup]] %in% all_levels)) {
+  if (
+    (subgroup %in% names(contrasts_reference_levels)) &
+      (n_values > 0) &
+      ifelse(is.null(contrasts_reference_levels[[subgroup]]), FALSE, contrasts_reference_levels[[subgroup]] %in% all_levels)
+  ) {
     # create the object passed to `contrasts` argument in glm call to use a different reference category
     subgroup_contrasts <- list(contr.treatment(all_levels,  which(all_levels == contrasts_reference_levels[[subgroup]])))
     names(subgroup_contrasts) <- subgroup
