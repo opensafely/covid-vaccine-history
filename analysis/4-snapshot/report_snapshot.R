@@ -83,6 +83,14 @@ data_combined <-
     lazy_dt(data_fixed) |> select(patient_id, sex, ethnicity5, ethnicity16, death_date, covid_death_date),
     by = "patient_id"
   ) |>
+  # remove currently unused variables
+  select(
+    -covid_vax_prior_2_date,
+    -covid_vax_prior_2_product,
+    -covid_vax_prior_3_date,
+    -covid_vax_prior_3_product,
+    -stp
+  ) |>
   rename(
     # previous vaccine summary
     # add more variables here based on covid_vax_prior_1_date, covid_vax_prior_2_date,... etc if needed
@@ -148,7 +156,7 @@ data_combined <-
     deregistration_time = as.integer(pmin(deregistered_date, censor_date, na.rm = TRUE) - snapshot_date) + 1L,
     deregistration_indicator = (deregistered_date <= pmin(censor_date, na.rm = TRUE)) & !is.na(deregistered_date),
 
-    # indicator for if patietn is alive and registered at the end of the campaign (for comparison with UKHSA reporting)
+    # indicator for if patient is alive and registered at the end of the campaign (for comparison with UKHSA reporting)
     alive_and_registered = (!death_indicator) & (!deregistration_indicator)
   ) |>
   as_tibble() |>
