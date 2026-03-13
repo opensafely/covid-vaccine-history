@@ -82,13 +82,13 @@ fct_case_when <- function(...) {
 # The dates are saved in json format so they can be read in by R and python scripts
 # - firstpossiblevax_date is the date from which we want to identify covid vaccines. the mass vax programme was 8 Dec 2020 but other people were vaccinated earlier in trials, so want to pick these people up too (and possibly exclude them)
 # - start_date is when we start the observational period proper, at the start of the mass vax programme
-# - end_date is when we stop the observation period. This may be extended as the study progresses
+# - end_date is when we stop the observation period. This must be extended as the study progresses
 
 study_dates <-
   list(
     firstpossiblevax_date = "2020-07-01",
     start_date = "2020-12-07",
-    end_date = "2026-12-31"
+    end_date = "2026-01-04"
   ) |>
   lapply(as.Date)
 
