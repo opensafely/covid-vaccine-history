@@ -131,6 +131,7 @@ data_combined <-
     censor_date = pmin(
       deregistered_date,
       campaign_info$final_milestone_date,
+      study_dates$end_date,
       na.rm = TRUE
     ),
 
