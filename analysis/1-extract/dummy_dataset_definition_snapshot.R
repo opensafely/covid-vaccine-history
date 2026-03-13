@@ -82,6 +82,9 @@ for (snapshot_date in all_snapshot_dates) {
     age = bn_node(
       ~ as.integer(rnormt(n = ..n, mean = 60, sd = 14, range = c(12, 104)))
     ),
+    eligibility_age = bn_node(
+      ~ age + rbernoulli(n = ..n, p = 0.25)
+    ),
     imd = bn_node(
       ~ as.integer(plyr::round_any(runif(n = ..n, 100, 32000), 100)),
       missing = ~0.05

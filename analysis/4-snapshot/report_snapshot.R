@@ -89,9 +89,14 @@ data_combined <-
     -covid_vax_prior_2_product,
     -covid_vax_prior_3_date,
     -covid_vax_prior_3_product,
-    -stp
+    -stp,
+    -age # remove snapshot age  and replace (below) with age_eligibility
   ) |>
   rename(
+
+    # overwrite age to be that of a date later on in the campaign (rather than as at the start date) to allow "operational flexibility"
+    age = eligibility_age,
+
     # previous vaccine summary
     # add more variables here based on covid_vax_prior_1_date, covid_vax_prior_2_date,... etc if needed
     vax_count = covid_vax_prior_count,
@@ -105,6 +110,7 @@ data_combined <-
   ) |>
   mutate(
     all = "All",
+
     !!!standardise_demographic_characteristics,
     !!!standardise_primis_and_extended_characteristics,
 
