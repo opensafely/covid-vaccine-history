@@ -317,6 +317,18 @@
       "url": "https://www.opencodelists.org/codelist/primis-covid19-vacc-uptake/reside_cod/v2.5/",
       "downloaded_at": "2026-01-07 16:52:31.359052Z",
       "sha": "906a866473bd4c99a48ddb1d86c08986d228ba38"
+    },
+    "nhsd-primary-care-domain-refsets-flu_cod.csv": {
+      "id": "nhsd-primary-care-domain-refsets/flu_cod/20250912",
+      "url": "https://www.opencodelists.org/codelist/nhsd-primary-care-domain-refsets/flu_cod/20250912/",
+      "downloaded_at": "2026-03-16 11:59:18.174984Z",
+      "sha": "fc33d0ea49931e2a2b6344a008e903738e021f31"
+    },
+    "nhs-drug-refsets-fludrug_cod.csv": {
+      "id": "nhs-drug-refsets/fludrug_cod/20250912",
+      "url": "https://www.opencodelists.org/codelist/nhs-drug-refsets/fludrug_cod/20250912/",
+      "downloaded_at": "2026-03-16 11:59:18.231179Z",
+      "sha": "2bb60a9958fe4b1cf64541e1dddc445c305effe7"
     }
   }
 }

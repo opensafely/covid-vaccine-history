@@ -116,3 +116,7 @@ nhsd-primary-care-domain-refsets/csflatrisk1_cod/20250912
 # Homeless
 primis-covid19-vacc-uptake/homeless_cod/v2.5
 primis-covid19-vacc-uptake/reside_cod/v2.5
+
+#flu vaccines
+nhsd-primary-care-domain-refsets/flu_cod/20250912
+nhs-drug-refsets/fludrug_cod/20250912
