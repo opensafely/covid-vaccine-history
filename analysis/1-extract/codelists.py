@@ -296,6 +296,8 @@ down_syndrome = codelist_from_csv(
 
 learndis_register = ["416075005"]
 
+learndis_excl_register = set(learndis) - set(learndis_register)
+
 sickle_cell = codelist_from_csv(
     "codelists/nhsd-sickle-spl-atriskv4-snomed-ct.csv", 
     column="code",

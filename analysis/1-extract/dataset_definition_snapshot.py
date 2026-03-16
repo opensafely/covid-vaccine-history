@@ -64,18 +64,20 @@ registered_start_date = registered_patients.start_date
 alive_ONS = (ons_deaths.date>snapshot_date) | ons_deaths.date.is_null()
 alive_GP = (patients.date_of_death>snapshot_date) | patients.date_of_death.is_null()
 alive = (alive_ONS & alive_GP)
-age = patients.age_on(age_calculation_date)
+eligibility_age = patients.age_on(age_calculation_date)
 
 # define dataset poppulation
 dataset.define_population(
   registered 
   & (registered_start_date <= (snapshot_date - weeks(12)))
   & alive
-  & (age >= 12) & (age <= 104)
+  & (eligibility_age >= 12) & (eligibility_age <= 104)
   & (patients.sex.is_in(["male", "female"]))
 )
 
 ## demographic variables ----
+
+dataset.eligibility_age = eligibility_age
 
 demographic_variables(dataset = dataset, index_date = snapshot_date)
 
