@@ -1001,8 +1001,8 @@ los_estimates <- function(data, subgroup, event_los) {
       label = .data[[subgroup]],
     ) |>
     summarise(
-      n = n(),
-      n_at_least_1_event = sum(!is.na(event_los)),
+      n = roundmid_any(n(), sdc_threshold),
+      n_at_least_1_event = roundmid_any(sum(!is.na(event_los)), sdc_threshold),
       median_los = quantile(event_los, 0.5, na.rm = TRUE),
       p10 = quantile(event_los, 0.1, na.rm = TRUE),
       p25 = quantile(event_los, 0.25, na.rm = TRUE),
