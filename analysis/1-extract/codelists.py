@@ -337,3 +337,12 @@ reside = codelist_from_csv(
     column="code",
 )
 
+# flu
+flu_vac_SNOMED = codelist_from_csv(
+    "codelists/nhsd-primary-care-domain-refsets-flu_cod.csv", 
+    column="code",
+)
+flu_vac_drug = codelist_from_csv(
+    "codelists/nhs-drug-refsets-fludrug_cod.csv", 
+    column="code",
+)

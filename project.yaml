@@ -247,3 +247,23 @@ actions:
   #       csv: output/4-snapshot/report_snapshot_20250929/*.csv
   #       png: output/4-snapshot/report_snapshot_20250929/*.png
   #       txt: output/4-snapshot/report_snapshot_20250929/*.txt
+
+
+#########################
+#  Flu vax data quality #
+#########################
+
+  extract_flu:
+    run: ehrql:v1 generate-dataset analysis/1-extract/dataset_definition_varying_flu.py
+      --output output/1-extract/extract_flu:arrow
+      #--dummy-data-file analysis/1-extract/dummy-data/dummy_varying.arrow
+    outputs:
+      highly_sensitive:
+        cohort: output/1-extract/extract_flu/*.arrow
+
+  vax_flu_data_quality:
+    run: r:v2 analysis/2-prepare/flu_data_quality.R
+    needs: [extract_flu]
+    outputs:
+      moderately_sensitive:
+        csv: output/2-prepare/flu_data_quality/*.csv
