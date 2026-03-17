@@ -864,18 +864,23 @@ adjusted_estimates <- function(data, subgroup, event_time, event_indicator) {
             # broom.helpers::tidy_add_reference_rows() |>
             broom.helpers::tidy_add_term_labels() |>
             filter(variable == subgroup) |>
-            select(variable, label, estimate, std.error, conf.low, conf.high)
+            select(variable, label, estimate, std.error, conf.95low = conf.low, conf.95high = conf.high) |>
+            mutate(
+              conf.80low = estimate + qnorm(0.1, sd = std.error),
+              conf.80high = estimate + qnorm(0.9, sd = std.error),
+            )
           # note: the filter above is the same as doing marginaleffects::avg_comparisons(model, type = "link", variables = subgroup, comparison = "difference"),
           # as long as there are no interaction terms between subgroup and anything else
           # we use broom.helpers functions because it gives us the really nice variable and label info formatting for the outputted tidy dataset
           # if we want to use avg_comparisons in future, then attach the nicely formatted meta info onto a broom::tidy(avg_comparisons) object
           # or see "get_estimates_using_marginaleffects.R" script for a clue
+
         },
         error = function(e) {
           cat("error for subgroup", subgroup, ":", conditionMessage(e), "\n")
           data_summary |>
             select(variable, label) |>
-            mutate(estimate = NA_real_, std.error = NA_real_, conf.low = NA_real_, conf.high = NA_real_)
+            mutate(estimate = NA_real_, std.error = NA_real_, conf.95low = NA_real_, conf.95high = NA_real_, conf.80low = NA_real_, conf.80high = NA_real_)
         }
       )
 
@@ -892,8 +897,10 @@ adjusted_estimates <- function(data, subgroup, event_time, event_indicator) {
         ir = n_event / exposure,
         irr_unadjusted = ir / ir[reference_row],
         irr = exp(estimate),
-        irr.low = exp(conf.low),
-        irr.high = exp(conf.high),
+        irr.95low = exp(conf.95low),
+        irr.95high = exp(conf.95high),
+        irr.80low = exp(conf.80low),
+        irr.80high = exp(conf.80high),
         irr.ln.std.error = std.error,
       )
 
