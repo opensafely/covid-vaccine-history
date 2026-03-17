@@ -146,15 +146,22 @@ data_flu_summary_campaign_all <-
 
 # Return TRUE if the two date vectors share at least one exact date
 has_same_day <- function(dates1, dates2) {
-  if (length(dates1) == 0 || length(dates2) == 0) return(FALSE)
-  any(dates1 %in% dates2)
+  if (length(dates1) == 0 || length(dates2) == 0) {
+    return(FALSE)
+  } else {
+    any(dates1 %in% dates2)
+  }
 }
 
 
 # Return TRUE if any date pair across the two vectors is within n_days
 has_within_n_days <- function(dates1, dates2, n_days = 7) {
-  if (length(dates1) == 0 || length(dates2) == 0) return(FALSE)
-  any(abs(outer(dates1, dates2, "-")) <= n_days) # if memory issues rethink outer()
+  if (length(dates1) == 0 || length(dates2) == 0) {
+    return(FALSE)
+  } else {
+    any(abs(outer(dates1, dates2, "-")) <= n_days) # if memory issues rethink outer()
+  }
+
 }
 
 # Create dataset across sources ----
