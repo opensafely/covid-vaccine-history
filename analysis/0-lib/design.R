@@ -102,7 +102,7 @@ sdc_threshold <- 10
 # covid-19 vaccine campaign dates
 campaign_info <-
   tribble(
-    ~campaign_label,        ~campaign_start_date,      ~primary_milestone_date, ~age_date, ~age_threshold, ~clinical_priority,
+    ~campaign_label,  ~campaign_start_date,  ~primary_milestone_date, ~age_date, ~age_threshold, ~clinical_priority,
     "Pre-2020-07-01", "1900-01-01", "1900-01-01", "1900-01-01", 16, "primis_atrisk",
     "Pre-roll-out",   as.character(study_dates$firstpossiblevax_date), as.character(study_dates$firstpossiblevax_date), as.character(study_dates$firstpossiblevax_date), 16, "primis_atrisk",
     "Primary series", "2020-12-07", "2021-06-30", "2021-03-31", 16, "primis_atrisk",
@@ -115,6 +115,7 @@ campaign_info <-
     "Autumn 2024",    "2024-09-30", "2025-02-28", "2025-03-31", 65, "primis_atrisk",
     "Spring 2025",    "2025-03-31", "2025-06-30", "2025-06-30", 75, "immunosuppressed",
     "Autumn 2025",    "2025-09-29", "2026-02-28", "2026-03-31", 75, "primis_atrisk",
+    "Spring 2026",    "2026-03-29", "2026-02-28", "2026-03-31", 75, "primis_atrisk",
   ) |>
   mutate(
     across(c(campaign_start_date, primary_milestone_date, age_date), as.Date),
