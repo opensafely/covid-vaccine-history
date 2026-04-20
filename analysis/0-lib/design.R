@@ -88,7 +88,7 @@ study_dates <-
   list(
     firstpossiblevax_date = "2020-07-01",
     start_date = "2020-12-07",
-    end_date = "2026-01-04"
+    end_date = "2026-03-31"
   ) |>
   lapply(as.Date)
 
