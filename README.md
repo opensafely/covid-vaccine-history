@@ -97,8 +97,9 @@ The structure of the output directory (not tracked via git) is designed to match
   - `contrasts_[outcome].csv` reports and compares rates of Covid-19 vaccination, hospital admission, critical care admission, and death across various subgroups, using Incidence Rates (IRs) and Incidence Rate Ratios (IRRs)
   - `data_combined_skim.scv` a summary of the dataset combining campaign-specific data and other time-invariant data.
   - `data_snapshot_skim.scv` a summary of the dataset containing campaign-specific snapshot data, created by the [`dataset_definition_snapshot.py`](./analysis/1-extract/dataset_definition_snapshot.py) script and imported into R.
-  - `km_estimates_table_[level1_variable].csv` the underlying data for the Kaplan-Meier cumulative incidence curves for each level-1 variable, including further stratification by all level-2 variables.
+  - `km_estimates_vax_table_[level1_variable].csv` the underlying data for the Kaplan-Meier cumulative incidence curves for each level-1 variable, including further stratification by all level-2 variables.
   - `km_vax_[level1_variable]_[level2_variable].png` depicts Kaplan-Meier cumulative incidence curves for vaccine coverage over time, for each combination of level-1 and level-2 variables.
+  - `km_estimates_vax_[outcome]_[milestone].csv` the underlying data for the Kaplan-Meier cumulative incidence curves for each outcome for a specific campaign milestone ("Early", "Primary", "Late"), containing full stratification by each combination of level-1 and level-2 variables.
   - `last_vax_date_[level1_variable].png` depicts a histogram of the interval between the most recent previous Covid-19 vaccination (if any) and start of the vaccination campaign.
   - `prior_vax_tablee.csv` summary data for the interval between the most recent previous Covid-19 vaccination (if any) and start of the vaccination campaign.
   - `vax_count_[level1_variable].csv` summary of the number of prior Covid-19 vaccinations received at the start of the campaign, stratified by level-1 variable.
@@ -116,4 +117,4 @@ To add a new variable for stratifying analyses, searching for the `--VARIABLES--
 
 ## Outputs
 
-A draft version of the protocol is available as [a PDF file](./assets/ECHO-WP1-protocol-draft-v1.1.pdf). 
+The latest version of the protocol is available as [a PDF file](./assets/ECHO-WP1-protocol-v1.2.pdf). 
