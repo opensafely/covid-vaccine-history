@@ -424,17 +424,20 @@ level1_group <- c(
   # Level 1A (all)
   "all",
 
-  # level 1B (age)
+  # level 1B (age4)
   "ageband4",
 
-  # Level 1C (eligibility)
+  # level 1C (age13)
+  "ageband13",
+
+  # Level 1D (eligibility)
   "any_eligibility",
   "age_above_eligiblity_threshold",
   "clinical_priority",
   "clinical_priority_only",
   "carehome_status",
 
-  # Level 1D (clinical risk)
+  # Level 1E (clinical risk)
   "primis_atrisk",
   "crd",
   "chd",
@@ -493,7 +496,7 @@ level_combos <-
   ) |>
   filter(
     (group1 == group2) %in% c(FALSE, NA) | (group1 == "all"),
-    !((group1 == "ageband4") & (group2 == "ageband13")),
+    !((group1 %in% c("ageband4", "ageband13")) & (group2 %in% c("ageband4", "ageband13"))),
     !((group1 %in% c("age_above_eligiblity_threshold", "clinical_priority_only")) & (group2 %in% c("ageband4", "ageband13"))),
     !((group1 %in% c("clinical_priority_only")) & (group2 %in% c("primis_atrisk"))),
   )
