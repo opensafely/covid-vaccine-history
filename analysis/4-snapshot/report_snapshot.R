@@ -656,11 +656,10 @@ get_all_km_estimates <- function(data, event_name, event_time, event_indicator, 
     select(-early_milestone, -primary_milestone, -final_milestone)
 
   # extremely irritatingly we have to split this output up because it's too big to be shown (5000 row limit)
-  level1_groups <- unique(level_combos$group1)
-  splitgroup1_1 <- level1_groups[seq(1, floor(length(level1_groups) / 2))]
-  splitgroup1_2 <- level1_groups[seq(floor(length(level1_groups) / 2) + 1, length(level1_groups))]
-  write_csv(km_estimates_milestones |> filter(group1 %in% splitgroup1_1), fs::path(output_dir, glue("km_estimates_{event_name}_milestones_1.csv")))
-  write_csv(km_estimates_milestones |> filter(group1 %in% splitgroup1_2), fs::path(output_dir, glue("km_estimates_{event_name}_milestones_2.csv")))
+  iwalk(
+    split(km_estimates_milestones, km_estimates_milestones$milestone),
+    ~ write_csv(.x, fs::path(output_dir, glue("km_estimates_{event_name}_milestones_{.y}.csv")))
+  )
 
   return(km_estimates_table)
 }
