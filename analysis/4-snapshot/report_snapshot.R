@@ -492,7 +492,7 @@ if (!identical(as.integer(times_count), c(0L, 0L, nrow(data_combined)))) {
 
 # group variables are provided as characters via dots (...)
 # resolution argument is the precision used for the time dimension. If zero, then original resolution is used.
-km_estimates <- function(data, group_name1, group_name2, event_name, event_time, event_indicator, resolution = 0) {
+km_estimates <- function(data, group_name1, group_name2, event_name, event_time, event_indicator, resolution = 0L) {
 
   group_names <- c(group_name1, group_name2)
 
@@ -524,10 +524,10 @@ km_estimates <- function(data, group_name1, group_name2, event_name, event_time,
           ) |>
             broom::tidy() |>
             add_row(
-              time = 0, # assumes time origin is zero
-              n.risk = 0,
-              n.event = 0,
-              n.censor = 0,
+              time = 0L, # assumes time origin is zero
+              n.risk = 0L,
+              n.event = 0L,
+              n.censor = 0L,
               estimate = 1,
               conf.low = 1,
               conf.high = 1,
@@ -590,13 +590,13 @@ km_estimates <- function(data, group_name1, group_name2, event_name, event_time,
 }
 
 # for testing function interactively
-# km_estimates_vax <- partial(
-#   km_estimates, data = data_combined, event_name = "vax", event_time = "vax_time", event_indicator = "vax_indicator", resolution = temporal_resolution_km
+# km_estimates <- partial(
+#   km_estimates, data = data_combined, event_name = "vax", event_time = "vax_time", event_indicator = "vax_indicator", resolution = 7L
 # )
-# km_estimates_vax("all", "all")
-# km_estimates_vax("all", "ageband4")
-# km_estimates_vax("ageband4", "all")
-# km_estimates_vax("ageband4", "sex")
+# km_estimates(data_combined, "all", "all", "vax", "vax_time", "vax_indicator",)
+# km_estimates(data_combined, "all", "ageband4", "vax", "vax_time", "vax_indicator", resolution = 7L)
+# km_estimates(data_combined, "ageband4", "all", "vax", "vax_time", "vax_indicator",)
+# km_estimates(data_combined, "ageband4", "sex", "vax", "vax_time", "vax_indicator",)
 
 ## Function to get km estimates over all subgroup combinations ----
 
@@ -642,14 +642,14 @@ get_all_km_estimates <- function(data, event_name, event_time, event_indicator, 
     ) |>
     mutate(
       milestone_date = case_when(
-        early_milestone == 1 ~ campaign_info$early_milestone_date,
-        primary_milestone == 1 ~ campaign_info$primary_milestone_date,
-        final_milestone == 1 ~ campaign_info$final_milestone_date,
+        early_milestone == 1L ~ campaign_info$early_milestone_date,
+        primary_milestone == 1L ~ campaign_info$primary_milestone_date,
+        final_milestone == 1L ~ campaign_info$final_milestone_date,
       ),
       milestone = case_when(
-        early_milestone == 1 ~ "Early",
-        primary_milestone == 1 ~ "Primary",
-        final_milestone == 1 ~ "Final",
+        early_milestone == 1L ~ "Early",
+        primary_milestone == 1L ~ "Primary",
+        final_milestone == 1L ~ "Final",
       )
     ) |>
     rename(days_since_campaign_start = time) |>
@@ -692,8 +692,8 @@ km_plot <- function(km_data, event_name, group1, group2) {
     bind_rows(
       # this bit adds an extra row of data so that the firsrt line of the KM plot shows
       km_data |> summarise(
-        time = 0,
-        cmlinc = 0, cmlinc.low = 0, cmlinc.high = 0, lagtime = 0,
+        time = 0L,
+        cmlinc = 0, cmlinc.low = 0, cmlinc.high = 0, lagtime = 0L,
         .by = c("group1", "group1_value", "group2", "group2_value")
       ),
       km_data |> mutate(
@@ -906,7 +906,7 @@ adjusted_estimates <- function(data, subgroup, event_time, event_indicator) {
   gc()
 }
 
-# adjusted_estimates(data_combined, "ageband4", "covid_admitted_time", "covid_admitted_indicator")
+#  adjusted_estimates(data_combined, "ageband4", "covid_admitted_time", "covid_admitted_indicator")
 
 ## function to loop over all group combinations and report IRR of level0 versus levelX ----
 # for a given outcome, loop over all groups combinations, obtaining contrasts for each using adjusted_estimates function, and combining into one file
