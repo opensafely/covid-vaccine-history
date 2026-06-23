@@ -10,16 +10,16 @@ library("tidyverse")
 
 # utility functions ----
 
-roundmid_any <- function(x, to = 1) {
+roundmid_any <- function(x, to = 1L) {
   # like ceiling_any, but centers on (integer) midpoint of the rounding points
   if (to == 0) {
     x
   } else {
-    ceiling(x / to) * to - (floor(to / 2) * (x != 0))
+    as.integer(ceiling(x / to) * to - (floor(to / 2) * (x != 0)))
   }
 }
 
-ceiling_any <- function(x, to = 1) {
+ceiling_any <- function(x, to = 1L) {
   # round to nearest 100 millionth to avoid floating point errors
 
   if (to == 0) {
@@ -31,7 +31,7 @@ ceiling_any <- function(x, to = 1) {
 }
 
 
-floor_any <- function(x, to = 1) {
+floor_any <- function(x, to = 1L) {
   # round to nearest 100 millionth to avoid floating point errors
 
   if (to == 0) {
@@ -97,7 +97,7 @@ study_dates <-
 # list2env(study_dates, globalenv())
 
 # statistical disclosure control rounding precision
-sdc_threshold <- 10
+sdc_threshold <- 10L
 
 # covid-19 vaccine campaign dates
 campaign_info <-
