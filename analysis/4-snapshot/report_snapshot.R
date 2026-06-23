@@ -595,8 +595,8 @@ km_estimates <- function(data, group_name1, group_name2, event_name, event_time,
 # )
 # km_estimates(data_combined, "all", "all", "vax", "vax_time", "vax_indicator",)
 # km_estimates(data_combined, "all", "ageband4", "vax", "vax_time", "vax_indicator", resolution = 7L)
-# km_estimates(data_combined"ageband4", "all", "vax", "vax_time", "vax_indicator",)
-# km_estimates(data_combined"ageband4", "sex", "vax", "vax_time", "vax_indicator",)
+# km_estimates(data_combined, "ageband4", "all", "vax", "vax_time", "vax_indicator",)
+# km_estimates(data_combined, "ageband4", "sex", "vax", "vax_time", "vax_indicator",)
 
 ## Function to get km estimates over all subgroup combinations ----
 
