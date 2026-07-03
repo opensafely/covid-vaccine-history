@@ -4,6 +4,7 @@ model.log
 __pycache__
 .python-version
 /output/*
+/release/*
 metadata/*
 venv/
 .DS_Store

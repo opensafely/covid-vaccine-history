@@ -1,0 +1,337 @@
+---
+title: "ECHO autumn 2024 / Spring 2025 results"
+format: html
+execute:
+  echo: false
+---
+
+```{r}
+#| label: import
+#| warning: false
+#| message: false
+
+
+# Import libraries
+library("tidyverse")
+library("lubridate")
+library("glue")
+library("here")
+library("arrow")
+library("gt")
+library("scales")
+
+# Import custom functions
+source(here("analysis", "0-lib", "design.R"))
+
+campaign_info <-
+  campaign_info |>
+  filter(
+    campaign_start_date >= as.Date("2020-12-07"), # only select actual campaigns
+  ) |>
+  mutate(
+    campaign_start_date_compact = format(campaign_start_date, "%Y%m%d"),
+  ) |>
+  # selection of campaigns for testing
+  filter(
+    campaign_start_date >= as.Date("2023-08-28"),
+    campaign_start_date <= as.Date("2025-03-31"),
+  )
+
+# Import released data ----
+
+#input_dir_snapshot <- here("output", "4-snapshot")
+input_dir_snapshot <- here("release", "4-snapshot")
+
+event_name <- c(
+  "vax",
+  "vax_alive",
+  "covid_admitted",
+  #"covid_admitted_primary",
+  "covid_critcare",
+  "covid_death"
+)
+
+milestone <- fct_inorder(c("Early", "Primary", "Final"))
+
+## import prior vaccine history ----
+
+data_prior_vax <-
+  campaign_info |>
+  mutate(
+    data = map(
+      campaign_start_date_compact, \(.x)
+      read_csv(
+        fs::path(input_dir_snapshot, glue("report_snapshot_{.x}"), glue("prior_vax_table.csv")),
+        col_types = c("cccciiiiiiidddddiiddddddddddddd")
+      )
+    )
+  ) |>
+  unnest(data)
+
+
+## import vaccine cumulative incidence estimates ----
+
+data_uptake <-
+  campaign_info |>
+  select(-age_date, -ends_with("_milestone_date"), -ends_with("_milestone_days"), -starts_with("campaign_start_date"), -age_threshold) |>
+  expand_grid(event_name, milestone) |>
+  filter(
+    event_name %in% c("vax", "vax_alive")
+  ) |>
+  mutate(
+    data = pmap(
+      list(campaign_start_date_compact, event_name, milestone), \(.x, .y, .z)
+        read_csv(
+          fs::path(input_dir_snapshot, glue("report_snapshot_{.x}"), glue("km_estimates_{.y}_milestones_{.z}.csv")),
+          col_types = c("ccccidddDc")
+        ) |>
+        select(-milestone)
+    )
+  ) |>
+  unnest(data)
+
+## import event IR and IRR estimates ----
+
+data_contrasts <-
+  campaign_info |>
+  select(-age_date, -ends_with("_milestone_date"), -ends_with("_milestone_days"), -starts_with("campaign_start_date"), -age_threshold) |>
+  expand_grid(event_name) |>
+  mutate(
+    campaign_start_date_compact = format(campaign_start_date, "%Y%m%d"),
+    data = map2(
+      campaign_start_date_compact, event_name, \(.x,.y)
+        read_csv(
+          fs::path(input_dir_snapshot, glue("report_snapshot_{.x}"), glue("contrasts_{.y}.csv")),
+          col_types = c("cccciidldddddd") # "exposure" should be an integer col but some values exceed the int limit so coding as a double
+        )
+    )
+  ) |>
+  unnest(data) |>
+  mutate(
+    # add confidence limits for incidence rate
+    ir.ln.se = 1/sqrt(n_event),
+    ir.low = exp(log(ir) + ir.ln.se*qnorm(0.025)),
+    ir.high = exp(log(ir) + ir.ln.se*qnorm(0.975)),
+    .after = "ir"
+  ) |>
+  mutate(
+    irr = if_else(reference_row, 1, irr),
+    irr.low = if_else(reference_row, 1, irr.low),
+    irr.high = if_else(reference_row, 1, irr.high),
+  )
+
+## labelling functions for in-line text
+
+lbl_n <- label_comma()
+lbl_pct <- label_percent()
+lbl_n_pct <- function(numer, denom) {
+    glue("{lbl_n(numer)} ({lbl_pct(numer/denom)})")
+}
+
+```
+
+
+# Results
+
+We present results for each bi-yearly vaccination programme separately. 
+
+## Autumn 2024
+
+```{r}
+
+select_campaign <- "Autumn 2024"
+
+data_cohort_summary_autumn2024 <- 
+    data_prior_vax |>
+    filter(campaign_label == select_campaign) 
+
+
+
+
+n_total <- data_cohort_summary_autumn2024 |> 
+    filter(group1=="all", group2=="all") |> 
+    pull(total)
+
+n_age_over <- data_cohort_summary_autumn2024 |> 
+    filter(group1=="age_above_eligiblity_threshold", group1_value == "TRUE", group2=="all") |> 
+    pull(total) |> sum()
+
+n_age_under <- n_total - n_age_over
+
+n_cp_only <- data_cohort_summary_autumn2024 |> 
+    filter(group1=="clinical_priority_only", group1_value == "TRUE", group2=="all") |> 
+    pull(total)
+
+n_eligible <- n_age_over + n_cp_only
+
+n_eligible_both <- data_cohort_summary_autumn2024 |> 
+    filter(group1=="age_above_eligiblity_threshold", group1_value == "TRUE", group2=="primis_atrisk", group2_value == "TRUE") |> #change  to group2=="clinical_priority" once rerun
+    pull(total) |>  sum()
+
+```
+
+
+
+### Cohort
+
+A total of `r lbl_n(n_total)` people aged over 12 were alive and registered on 30 Septmber 2024, the Monday of the first week of the Autumn 2024 programme. Of those, `r lbl_n_pct(n_eligible, n_total)` were eligible for vaccination. `r lbl_n(n_age_over)` were eligible due to age (aged 65 years and over). Of those, `r lbl_n_pct(n_eligible_both, n_age_over)` were also eligible due to clinical vulnerability. Of the `r lbl_n(n_age_under)` people under the age threshold, `r lbl_n_pct(n_cp_only, n_age_under)` were eligible due clinical vulnerability. 
+
+Table X shows characteristics of this cohort, by broad age groups.  
+
+```{r}
+#| label: table-cohort-autumn2024
+
+
+data_cohort_summary_autumn2024 |> 
+    filter(group1 == "ageband4") |>
+    select(
+        ageband4 = group1_value, 
+        group = group2, value = group2_value, n = total
+    ) |>
+    mutate(
+        total = sum(n),
+        prop = n / total,
+        .by = c(ageband4, group)
+    ) |>
+    mutate(prop = if_else(group=="all", NA_real_, prop)) |>
+    pivot_wider(
+        id_cols = c(group, value),
+        names_from = ageband4,
+        values_from = c(n, prop),
+        names_vary = "slowest",
+        names_glue = "{ageband4}__{.value}"
+    ) |>
+    filter(value != "FALSE") |>
+    mutate(
+        row_shade = ((as.integer(fct_inorder(group)))%%2) == 0,
+        value = if_else(value=="TRUE", "", value)
+    ) |>
+    mutate(
+        group = if_else(row_number()==1, group, ""),
+        .by = group
+    ) |>     
+    gt() |>
+    tab_spanner_delim(delim = "__") |>
+    fmt_percent(
+        columns = ends_with("prop")
+    ) |> 
+    fmt_missing(
+        everything(),
+        missing_text="-"
+    ) |>
+    tab_style(
+        style = list(cell_fill(color = "gray96")),
+        locations = cells_body(rows = row_shade)
+    ) |>
+    cols_hide(c("row_shade"))
+```
+
+
+### Coverage
+
+```{r}
+
+data_uptake_autumn2024 <- 
+    data_uptake |>
+    filter(campaign_label == select_campaign) 
+
+# age eligible cohort
+
+cmlinc_primary_age_over <- data_uptake_autumn2024 |> 
+    filter(event_name=="vax", milestone=="Primary", group1=="age_above_eligiblity_threshold", group1_value=="TRUE") |>
+    summarise(
+        total = cmlinc[group2=="all"],
+        female = cmlinc[group2=="sex" & group2_value=="Female"],
+        male = cmlinc[group2=="sex" & group2_value=="Male"],
+        white = cmlinc[group2=="ethnicity5" & group2_value=="White"],
+        black = cmlinc[group2=="ethnicity5" & group2_value=="Black or Black British"],
+        deprivationmost = cmlinc[group2=="imd_quintile" & group2_value=="1 (most deprived)"],
+        deprivationleast = cmlinc[group2=="imd_quintile" & group2_value=="5 (least deprived)"],
+    )
+
+cmlinc_final_age_over <- data_uptake_autumn2024 |> 
+    filter(event_name=="vax", milestone=="Final", group1=="age_above_eligiblity_threshold", group1_value=="TRUE") |> 
+    summarise(
+        total = cmlinc[group2=="all"],
+    )
+
+# under age clinical priority groups
+
+cmlinc_primary_ineligible <- data_uptake_autumn2024 |> 
+    filter(event_name=="vax", milestone=="Primary", group1=="any_eligibility", group1_value=="FALSE") |>
+    summarise(
+        total = cmlinc[group2=="all"],
+        female = cmlinc[group2=="sex" & group2_value=="Female"],
+        male = cmlinc[group2=="sex" & group2_value=="Male"],
+        white = cmlinc[group2=="ethnicity5" & group2_value=="White"],
+        black = cmlinc[group2=="ethnicity5" & group2_value=="Black or Black British"],
+        deprivationmost = cmlinc[group2=="imd_quintile" & group2_value=="1 (most deprived)"],
+        deprivationleast = cmlinc[group2=="imd_quintile" & group2_value=="5 (least deprived)"],
+    )
+
+cmlinc_final_ineligible <- data_uptake_autumn2024 |> 
+    filter(event_name=="vax", milestone=="Final",  group1=="any_eligibility", group1_value=="FALSE") |> 
+    summarise(
+        total = cmlinc[group2=="all"],
+    )
+
+
+
+# not eligible groups
+
+cmlinc_primary_cp <- data_uptake_autumn2024 |> 
+    filter(event_name=="vax", milestone=="Primary", group1=="clinical_priority_only", group1_value=="TRUE") |>
+    summarise(
+        total = cmlinc[group2=="all"],
+        female = cmlinc[group2=="sex" & group2_value=="Female"],
+        male = cmlinc[group2=="sex" & group2_value=="Male"],
+        white = cmlinc[group2=="ethnicity5" & group2_value=="White"],
+        black = cmlinc[group2=="ethnicity5" & group2_value=="Black or Black British"],
+        deprivationmost = cmlinc[group2=="imd_quintile" & group2_value=="1 (most deprived)"],
+        deprivationleast = cmlinc[group2=="imd_quintile" & group2_value=="5 (least deprived)"],
+    )
+
+cmlinc_final_cp <- data_uptake_autumn2024 |> 
+    filter(event_name=="vax", milestone=="Final", group1=="clinical_priority_only", group1_value=="TRUE") |> 
+    summarise(
+        total = cmlinc[group2=="all"],
+    )
+
+```
+
+Amongst the age-eligible cohort, the cumulative incidence of vaccination at 8 weeks was `r lbl_pct(cmlinc_primary_age_over$total)`. Vaccination incidence at 8 weeks was higher in women (`r lbl_pct(cmlinc_primary_age_over$female)`) versus men (`r lbl_pct(cmlinc_primary_age_over$male)`), higher in white (`r lbl_pct(cmlinc_primary_age_over$white)`) versus all other ethnicities, and in those living in areas that were least deprived (`r lbl_pct(cmlinc_primary_age_over$deprivationleast)`) versus most deprived (`r lbl_pct(cmlinc_primary_age_over$deprivationmost)`). Similar patterns remained up to 30 March 2025, the day before the start of the Spring 2025 programme, where the cumulative vaccination incidence of vaccination in age-eligible people was `r lbl_pct(cmlinc_final_age_over$total)`.
+
+In those aged under 65 years who were eligible for vaccination due to clinical vulnerability, the cumulative incidence of vaccination at 8 weeks was `r lbl_pct(cmlinc_primary_cp$total)`. Vaccination incidence at 8 weeks was higher in women (`r lbl_pct(cmlinc_primary_cp$female)`) versus men (`r lbl_pct(cmlinc_primary_cp$male)`), higher in white (`r lbl_pct(cmlinc_primary_cp$white)`) versus all other ethnicities, and in those living in areas that were least deprived (`r lbl_pct(cmlinc_primary_cp$deprivationleast)`) versus most deprived (`r lbl_pct(cmlinc_primary_cp$deprivationmost)`). Similar patterns remained up to 30 March 2025, the day before the start of the Spring 2025 programme, where the cumulative vaccination incidence of vaccination in age-eligible people was `r lbl_pct(cmlinc_final_cp$total)`.
+
+Amongst those under 65 years old who were not eligible for vaccination, the cumulative incidence of vaccination at 8 weeks was `r lbl_pct(cmlinc_primary_ineligible$total)`.  
+
+Table X shows vaccine uptake by eligibility group. 
+
+```{r}
+#| label: table-cohort-autumn2024
+
+data_uptake_autumn2024
+
+```
+
+
+### Disease
+
+
+Table X shows incidence of COVID-19-related disease by eligibility group. 
+
+
+Additional breakdowns for COVID-19 vaccine coverage and disease burden can be explored in an interactive dashboard, published online [link]
+
+## Spring 2025
+
+
+
+
+
+# Discussion
+
+## Limitations
+
+No documented eligibility does not mean that people were not eligible, for instance, we were not able to classify people as pregnant, working in a health or social care setting, or a close relative or contact of vulnerable people. There was also a degree of operational flexibility in how clinical vulnerability could be interpreted. Finally, clinical coding are imperfect, with likely underascertainment of conditions in the electronic record. 
+
