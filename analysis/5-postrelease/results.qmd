@@ -4,6 +4,7 @@ format:
   html:
     fig-width: 10
     fig-height: 10
+    html-table-processing: none # to switch off automatic striping of table rows -- see https://github.com/quarto-dev/quarto-cli/issues/6945
 execute:
   echo: false
 ---
@@ -245,20 +246,16 @@ data_cohort_autumn2024 |>
     mutate(
         group = if_else(row_number()==1, group, ""),
         .by = group
-    ) |>     
+    ) |>  
     gt() |>
     tab_spanner_delim(delim = "__") |>
     fmt_percent(
         columns = ends_with("prop"),
         decimals = 1,
     ) |> 
-    fmt_missing(
+    sub_missing(
         everything(),
         missing_text="-"
-    ) |>
-    tab_style(
-        style = list(cell_fill(color = "gray96")),
-        locations = cells_body(rows = row_shade)
     ) |>
     cols_hide(c("row_shade")) |>
     tab_options(
@@ -266,6 +263,14 @@ data_cohort_autumn2024 |>
       data_row.padding = px(2),
       table.width = pct(100),
       ihtml.use_text_wrapping = FALSE
+    ) |>
+    tab_style(
+      style = list(cell_fill(color = "gray96")),
+      locations = cells_body(rows = row_shade)
+    ) |> 
+    tab_style(
+      style = list(cell_fill(color = "white")),
+      locations = list(cells_body(rows = !row_shade))
     )
 ```
 
@@ -417,21 +422,25 @@ data_uptake_autumn2024 |>
     columns = ends_with(c("irr")),
     decimals = 2
   ) |> 
-  fmt_missing(
+  sub_missing(
     everything(),
     missing_text="-"
   ) |>
-  tab_style(
-    style = list(cell_fill(color = "gray96")),
-    locations = cells_body(rows = row_shade)
-  ) |>
   cols_hide(c("row_shade")) |>
   tab_options(
-    table.font.size = pct(60),
-    data_row.padding = px(2),
-    table.width = pct(100),
-    ihtml.use_text_wrapping = FALSE
-  )
+      table.font.size = pct(60),
+      data_row.padding = px(2),
+      table.width = pct(100),
+      ihtml.use_text_wrapping = FALSE
+    ) |>
+    tab_style(
+      style = cell_fill(color = "gray96"),
+      locations = cells_body(rows = row_shade)
+    ) |> 
+    tab_style(
+      style = cell_fill(color = "white"),
+      locations = cells_body(rows = !row_shade)
+    )
 
 ```
 
@@ -518,7 +527,7 @@ data_contrasts_autumn2024 <-
     mutate(
       group = if_else(row_number()==1, group, ""),
       .by = group
-    ) |>     
+    ) |>
     gt(
       groupname_col = "event_name"
     ) |>
@@ -531,21 +540,24 @@ data_contrasts_autumn2024 <-
       columns = ends_with(c("irr")),
       decimal = 2
       ) |> 
-    fmt_missing(
+    sub_missing(
       everything(),
       missing_text="-"
     ) |>
-    tab_style(
-      style = list(cell_fill(color = "gray96")),
-      locations = cells_body(rows = row_shade)
-    ) |>
     cols_hide(c("row_shade")) |>
-    #opt_table_font(size = pct(60)) |>
     tab_options(
       table.font.size = pct(60),
       data_row.padding = px(2),
       table.width = pct(100),
       ihtml.use_text_wrapping = FALSE
+    ) |>
+    tab_style(
+      style = cell_fill(color = "gray96"),
+      locations = cells_body(rows = row_shade)
+    ) |> 
+    tab_style(
+      style = cell_fill(color = "white"),
+      locations = cells_body(rows = !row_shade)
     )
 
 
