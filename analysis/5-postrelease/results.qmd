@@ -2,6 +2,7 @@
 title: "ECHO autumn 2024 / Spring 2025 results"
 format: 
   html:
+    embed-resources: true
     fig-width: 10
     fig-height: 10
     html-table-processing: none # to switch off automatic striping of table rows -- see https://github.com/quarto-dev/quarto-cli/issues/6945
