@@ -61,10 +61,10 @@ milestone <- fct_inorder(c("Early", "Primary", "Final"))
 eligibility_status <-
   rlang::quos(
     eligibility_status = case_when(
-      group1=="age_above_eligiblity_threshold" & group1_value=="TRUE" ~ "age-eligible",
-      group1=="clinical_priority" & group1_value=="TRUE" ~ "clinical-eligible",
-      group1=="clinical_priority_only" & group1_value=="TRUE" ~ "clinical-eligible-only",
-      group1=="any_eligibility" & group1_value=="FALSE" ~ "not eligible",
+      group1=="age_above_eligiblity_threshold" & group1_value=="TRUE" ~ "Age-eligible",
+      group1=="clinical_priority" & group1_value=="TRUE" ~ "Clinically eligible",
+      group1=="clinical_priority_only" & group1_value=="TRUE" ~ "Clinically eligible only",
+      group1=="any_eligibility" & group1_value=="FALSE" ~ "Not eligible",
       .default = NA_character_
     )
   )
@@ -542,7 +542,7 @@ data_contrasts_autumn2024 <-
     pivot_wider(
       id_cols = c(group, event_name, value),
       names_from = eligibility_status,
-      values_from = c(n_obs, n_event, exposure, irr, irr.ci),
+      values_from = c(n_obs, n_event, exposure, ir, irr, irr.ci),
       names_vary = "slowest",
       names_glue = "{eligibility_status}__{.value}"
     ) |>
@@ -567,6 +567,7 @@ data_contrasts_autumn2024 <-
       ends_with("n_obs") ~ "N",
       ends_with("n_event") ~ "Events",
       ends_with("exposure") ~ "1000 person-years at-risk",
+      ends_with("ir") ~ "IR per 1000 person-years",
       ends_with("irr") ~ "IRR",
       ends_with("irr.ci") ~ "95%CI",
     ) |>
@@ -580,6 +581,11 @@ data_contrasts_autumn2024 <-
     ) |> 
     fmt_number(
       columns = ends_with(c("irr")),
+      decimal = 2
+    ) |> 
+    fmt_number(
+      scale = (1000*365.25),
+      columns = ends_with(c("ir")),
       decimal = 2
     ) |> 
     sub_missing(
