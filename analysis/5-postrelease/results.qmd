@@ -156,13 +156,32 @@ data_contrasts <-
   )
 
 
-## labelling functions for in-line text ----
+## helper functions ----
 
+# labelling functions for in-line text
 lbl_n <- label_comma()
 lbl_pct <- label_percent()
 lbl_n_pct <- function(numer, denom) {
     glue("{lbl_n(numer)} ({lbl_pct(numer/denom)})")
 }
+
+# no expansion used at lower axis
+fix0expansion <- expansion(mult=c(0,NA), add=c(0,NA))
+
+# add striping to rows in gt table
+gt_stripe <- function(data, row_name){
+  data |>  
+  cols_hide({{ row_name }}) |>
+    tab_style(
+      style = cell_fill(color = "gray96"),
+      locations = cells_body(rows = {{ row_name }})
+    ) |> 
+    tab_style(
+      style = cell_fill(color = "white"),
+      locations = cells_body(rows = !{{ row_name }})
+    )
+}
+
 
 ```
 
@@ -250,29 +269,32 @@ data_cohort_autumn2024 |>
     ) |>  
     gt() |>
     tab_spanner_delim(delim = "__") |>
-    fmt_percent(
+    cols_label(
+      "group" ~ "Characteristic",
+      "value" = "",
+      ends_with("n") ~ "N",
+      ends_with("prop") ~ "%",
+    ) |>
+    fmt_integer(
+      columns = ends_with("n")
+    ) |>
+    fmt_number(
         columns = ends_with("prop"),
+        scale = 100,
         decimals = 1,
     ) |> 
     sub_missing(
         everything(),
         missing_text="-"
     ) |>
-    cols_hide(c("row_shade")) |>
+    gt_stripe(row_shade) |>
     tab_options(
       table.font.size = pct(60),
       data_row.padding = px(2),
       table.width = pct(100),
       ihtml.use_text_wrapping = FALSE
-    ) |>
-    tab_style(
-      style = list(cell_fill(color = "gray96")),
-      locations = cells_body(rows = row_shade)
-    ) |> 
-    tab_style(
-      style = list(cell_fill(color = "white")),
-      locations = list(cells_body(rows = !row_shade))
     )
+    
 ```
 
 
@@ -415,8 +437,17 @@ data_uptake_autumn2024 |>
   #   columns = c(cmlinc.low, cmlinc.high),
   #   pattern = "{1} - {2}"
   # ) |>
-  fmt_percent(
+  cols_label(
+    "group" ~ "Characteristic",
+    "value" = "",
+    ends_with("cmlinc") ~ "cml. inc. (%)",
+    ends_with("cmlinc.ci") ~ "95%CI",
+    ends_with("irr") ~ "IRR",
+    ends_with("irr.ci") ~ "95%CI",
+  ) |>
+  fmt_number(
     columns = ends_with(c("cmlinc")),
+    scale = 100,
     decimals = 1,
   ) |> 
   fmt_number(
@@ -427,21 +458,13 @@ data_uptake_autumn2024 |>
     everything(),
     missing_text="-"
   ) |>
-  cols_hide(c("row_shade")) |>
+  gt_stripe(row_shade) |>
   tab_options(
       table.font.size = pct(60),
       data_row.padding = px(2),
       table.width = pct(100),
       ihtml.use_text_wrapping = FALSE
-    ) |>
-    tab_style(
-      style = cell_fill(color = "gray96"),
-      locations = cells_body(rows = row_shade)
-    ) |> 
-    tab_style(
-      style = cell_fill(color = "white"),
-      locations = cells_body(rows = !row_shade)
-    )
+    ) 
 
 ```
 
@@ -468,6 +491,7 @@ data_uptake_autumn2024 |>
   ggplot()+
   geom_pointrange(aes(y=value, x = cmlinc, xmin = cmlinc.low, xmax = cmlinc.high, colour = milestone), position = position_dodge(width=0.5))+
   facet_grid(rows=vars(group), cols=vars(eligibility_status), scales="free_y", space="free_y")+
+  scale_x_continuous(limits=c(0,NA), expand = fix0expansion)+
   theme_bw()+
   theme(
     strip.text.y = element_text(angle = 0),
@@ -503,7 +527,7 @@ data_contrasts_autumn2024 <-
       event_name,
       eligibility_status,
       group = group2, value = group2_value,
-      n_obs, n_event,
+      n_obs, n_event, exposure,
       reference_row,
       ir, irr, irr.low, irr.high
     ) |>
@@ -518,7 +542,7 @@ data_contrasts_autumn2024 <-
     pivot_wider(
       id_cols = c(group, event_name, value),
       names_from = eligibility_status,
-      values_from = c(n_obs, n_event, irr, irr.ci),
+      values_from = c(n_obs, n_event, exposure, irr, irr.ci),
       names_vary = "slowest",
       names_glue = "{eligibility_status}__{.value}"
     ) |>
@@ -537,29 +561,39 @@ data_contrasts_autumn2024 <-
     #   columns = c(cmlinc.low, cmlinc.high),
     #   pattern = "{1} - {2}"
     # ) |>
+    cols_label(
+      "group" ~ "Characteristic",
+      "value" = "",
+      ends_with("n_obs") ~ "N",
+      ends_with("n_event") ~ "Events",
+      ends_with("exposure") ~ "1000 person-years at-risk",
+      ends_with("irr") ~ "IRR",
+      ends_with("irr.ci") ~ "95%CI",
+    ) |>
+    fmt_integer(
+      columns = ends_with(c("n_obs", "n_event")),
+    ) |> 
+    fmt_number(
+      scale = 1/(1000*365.25),
+      columns = ends_with(c("exposure")),
+      decimal = 2
+    ) |> 
     fmt_number(
       columns = ends_with(c("irr")),
       decimal = 2
-      ) |> 
+    ) |> 
     sub_missing(
       everything(),
       missing_text="-"
     ) |>
-    cols_hide(c("row_shade")) |>
+    gt_stripe(row_shade) |>
     tab_options(
       table.font.size = pct(60),
       data_row.padding = px(2),
       table.width = pct(100),
       ihtml.use_text_wrapping = FALSE
-    ) |>
-    tab_style(
-      style = cell_fill(color = "gray96"),
-      locations = cells_body(rows = row_shade)
-    ) |> 
-    tab_style(
-      style = cell_fill(color = "white"),
-      locations = cells_body(rows = !row_shade)
     )
+    
 
 
 
@@ -628,5 +662,43 @@ Continue for future covid-19 biyearly vaccination campaigns.
 Extend to Influenza and RSV.
 
 Full population coverage with EMIS
+
+
+# Supplementary materials
+
+Comparison of vaccine uptake estimates with or without conditioning on being alive at the end of the campaign (as per UKHSA).
+
+```{r}
+#| label: figure-alive-sensitivity-2024
+
+
+data_uptake_autumn2024 |>
+  filter(
+    !is.na(eligibility_status),
+    event_name %in% c("vax", "vax_alive"),
+    group2 != "ageband4",
+    milestone == "Final"
+  ) |>
+  select(
+    event_name,
+    eligibility_status,
+    group = group2, value = group2_value,
+    cmlinc, cmlinc.low, cmlinc.high, 
+  ) |>
+  mutate(
+    group = fct_inorder(group),
+  ) |>
+  arrange(event_name, group, eligibility_status) |>
+  ggplot()+
+  geom_pointrange(aes(y=value, x = cmlinc, xmin = cmlinc.low, xmax = cmlinc.high, colour = event_name), position = position_dodge(width=0.5))+
+  facet_grid(rows=vars(group), cols=vars(eligibility_status), scales="free_y", space="free_y")+
+  scale_x_continuous(limits=c(0,NA), expand = fix0expansion)+
+  theme_bw()+
+  theme(
+    strip.text.y = element_text(angle = 0),
+    strip.background = element_blank()
+  )
+```
+
 
 # References
