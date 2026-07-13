@@ -323,7 +323,6 @@ data_cohort_autumn2024 |>
     group_label = recode_values(group, from = variable_lookup$variable, to = variable_lookup$label),
     row_shade = ((as.integer(group_label))%%2) == 0,
     value_label = if_else(value == "TRUE", group_label, paste0(prefix_label, value)) |>
-    #value_label = if_else(value_label != group_label, paste0(prefix_label, value), false = _) |>
       fct_inorder() |> 
       fct_relevel("(Missing)", after=Inf) |> 
       fct_rev(),
@@ -459,8 +458,8 @@ data_uptake_autumn2024 |>
     cmlinc, cmlinc.low, cmlinc.high, irr, irr.low, irr.high
   ) |>
   mutate(
-    group = fct_inorder(group),
-    value = if_else(value=="All", NA_character_, value),
+    group = recode_values(group, from = variable_lookup$variable, to = variable_lookup$label),
+    value = if_else(value=="All", NA_character_, value) |> replace_values("TRUE" ~ "1", "FALSE" ~ "0"),
     cmlinc.ci = glue("{label_number(accuracy=0.1, scale=100)(cmlinc.low)} - {label_number(accuracy=0.1, scale=100)(cmlinc.high)}"),
     irr.high = if_else(irr.high>100, Inf, irr.high),
     irr.ci = glue("{label_number(accuracy=0.01, scale=1)(irr.low)} - {label_number(accuracy=0.01, scale=1)(irr.high)}"),
@@ -535,17 +534,29 @@ data_uptake_autumn2024 |>
         cmlinc, cmlinc.low, cmlinc.high, 
     ) |>
   mutate(
-    group = fct_inorder(group),
-  ) |>
+    group_type = recode_values(group, from = variable_lookup$variable, to = variable_lookup$type),
+    group_label = recode_values(group, from = variable_lookup$variable, to = variable_lookup$label),
+    value_label = replace_values(
+      value,
+      "TRUE" ~ "1",
+      "FALSE" ~ "0"
+    ) |>
+      fct_inorder() |> 
+      fct_relevel("(Missing)", after=Inf) |> 
+      fct_rev(),
+  ) |> 
   arrange(milestone, group, eligibility_status) |>
   ggplot()+
-  geom_pointrange(aes(y=value, x = cmlinc, xmin = cmlinc.low, xmax = cmlinc.high, colour = milestone), position = position_dodge(width=0.5))+
-  facet_grid(rows=vars(group), cols=vars(eligibility_status), scales="free_y", space="free_y")+
+  geom_vline(aes(xintercept=0))+
+  geom_pointrange(aes(y=value_label, x = cmlinc, xmin = cmlinc.low, xmax = cmlinc.high, colour = milestone), position = position_dodge(width=0.5))+
+  facet_grid(rows=vars(group_label), cols=vars(eligibility_status), scales="free_y", space="free_y", switch="y")+
   scale_x_continuous(limits=c(0,NA), expand = fix0expansion)+
-  theme_bw()+
+  labs(x= "Cumulative incidence", y=NULL, colour = "Milestone")+
+  theme_minimal()+
   theme(
-    strip.text.y = element_text(angle = 0),
-    strip.background = element_blank()
+    strip.text.y.left = element_text(angle = 0),
+    strip.background = element_blank(),
+    strip.placement = "outside"
   )
 
 ```
@@ -582,15 +593,16 @@ data_contrasts_autumn2024 <-
       ir, irr, irr.low, irr.high
     ) |>
     mutate(
-      group = fct_inorder(group),
-      value = if_else(value=="All", NA_character_, value),
+      event = recode_values(event_name, from = event_lookup$variable, to = event_lookup$label),
+      group = recode_values(group, from = variable_lookup$variable, to = variable_lookup$label),
+      value = if_else(value=="All", NA_character_, value) |> replace_values("TRUE" ~ "1", "FALSE" ~ "0"),
       irr.high = if_else(irr.high>100, Inf, irr.high),
       irr.ci = glue("{label_number(accuracy=0.01, scale=1)(irr.low)} - {label_number(accuracy=0.01, scale=1)(irr.high)}"),
       irr.ci = if_else(reference_row, "-", irr.ci),
     ) |>
     arrange(group, eligibility_status) |>
     pivot_wider(
-      id_cols = c(group, event_name, value),
+      id_cols = c(group, event, value),
       names_from = eligibility_status,
       values_from = c(n_obs, n_event, exposure, ir, irr, irr.ci),
       names_vary = "slowest",
@@ -601,10 +613,10 @@ data_contrasts_autumn2024 <-
     ) |>
     mutate(
       group = if_else(row_number()==1, group, ""),
-      .by = group
+      .by = c(group, event),
     ) |>
     gt(
-      groupname_col = "event_name"
+      groupname_col = "event"
     ) |>
     tab_spanner_delim(delim = "__") |>
     # cols_merge(
@@ -675,19 +687,33 @@ data_contrasts_autumn2024 |>
     ) |>
   mutate(
     ir.high = if_else(is.nan(ir.high), Inf, ir.high),
-    group = fct_inorder(group),
   ) |>
-  arrange(event_name, eligibility_status, group) |>
+  mutate(
+    event_label = recode_values(event_name, from = event_lookup$variable, to = event_lookup$label),
+    group_type = recode_values(group, from = variable_lookup$variable, to = variable_lookup$type),
+    group_label = recode_values(group, from = variable_lookup$variable, to = variable_lookup$label),
+    value_label = replace_values(
+      value,
+      "TRUE" ~ "1",
+      "FALSE" ~ "0"
+    ) |>
+      fct_inorder() |> 
+      fct_relevel("(Missing)", after=Inf) |> 
+      fct_rev(),
+  ) |> 
+  arrange(event_label, eligibility_status, group) |>
   ggplot()+
-  geom_pointrange(aes(y=value, x = ir, xmin = ir.low, xmax = ir.high, colour = eligibility_status), position = position_dodge(width=0.5))+
-  facet_grid(rows=vars(group), cols=vars(event_name), scales="free", space="free_y")+
-  scale_x_log10(label = label_number(scale=1000000*7), breaks = c(0.01,0.1,1,10,100,1000)/(1000000*7))+
+  geom_vline(aes(xintercept=0))+
+  geom_pointrange(aes(y=value_label, x = ir, xmin = ir.low, xmax = ir.high, colour = eligibility_status), position = position_dodge(width=0.5))+
+  facet_grid(rows=vars(group_label), cols=vars(event_label), scales="free", space="free_y", switch="y")+
+  #scale_x_log10(label = label_number(scale=1000000*7), breaks = c(0.01,0.1,1,10,100,1000)/(1000000*7))+
   #coord_cartesian(xlim = c(0,0.00002))+
-  labs(x = "Incidence rate, per 1M person-weeks")+
-  theme_bw()+
+  labs(x = "Incidence rate, per 1M person-weeks", y=NULL, colour=NULL)+
+  theme_minimal()+
   theme(
-    strip.text.y = element_text(angle = 0),
-    strip.background = element_blank()
+    strip.text.y.left = element_text(angle = 0),
+    strip.background = element_blank(),
+    strip.placement = "outside"
   )
 
 

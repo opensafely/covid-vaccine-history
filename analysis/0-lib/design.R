@@ -537,6 +537,22 @@ variable_lookup <-
     label = fct_inorder(label),
   )
 
+
+event_lookup <-
+  tribble(
+   ~variable, ~label,
+   "vax", "Vaccination",
+   "vax_alive", "Vaccination (cos)",
+   "covid_admitted", "COVID-19 admission",
+   "covid_admitted_first", "COVID-19 admission (primary reason)",
+   "covid_critcare", "COVID-19 critical care admission",
+   "covid_death", "COVID-19 death",
+  ) |>
+  mutate(
+    variable = fct_inorder(variable),
+    label = fct_inorder(label),
+  )
+
 level_combos <-
   expand_grid(
     group1 = level1_group,
