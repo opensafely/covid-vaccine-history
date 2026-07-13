@@ -6,6 +6,7 @@ __pycache__
 /output/*
 /release/*
 metadata/*
+analysis/5-postrelease/*.html
 venv/
 .DS_Store
 .Rhistory
