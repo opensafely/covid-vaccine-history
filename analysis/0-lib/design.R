@@ -489,6 +489,54 @@ level2_group <- c(
   "homeless"           # Homeless
 )
 
+
+variable_lookup <-
+  tribble(
+    ~type,              ~variable,          ~label,
+    "all",              "all",              "All",
+
+    # sociodemographic subgroups
+    "Demographic",      "ageband4",         "Age (4 levels)",
+    "Demographic",      "ageband13",        "Age (13 levels)",
+    "Demographic",      "sex",              "Sex",
+    "Demographic",      "ethnicity5",       "Ethnicity",
+    #"Demographic",       "ethnicity16",
+    "Demographic",      "region",           "Region",
+    "Demographic",      "imd_quintile",     "Area deprivation",
+    "Demographic",      "carehome_status",  "Carehome Residency",
+
+    # Core clinical risk subgroups
+    "Clinical (core)",  "primis_atrisk",    "Any risk condition",
+    "Clinical (core)",  "crd",              "Chronic Renal Disease",
+    "Clinical (core)",  "chd",              "Chronic Heart Disease",
+    "Clinical (core)",  "ckd",              "Chronic kidney disease",
+    "Clinical (core)",  "cld",              "Chronic liver disease",
+    "Clinical (core)",  "cns_learndis",     "Chronic neuro. disease / LD",
+    "Clinical (core)",  "diabetes",         "Diabetes",
+    "Clinical (core)",  "immunosuppressed", "Immunosuppressed",
+    "Clinical (core)",  "asplenia",         "Asplenia",
+    "Clinical (core)",  "severe_obesity",   "Severe obesity",
+    "Clinical (core)",  "smi",              "Severe mental illness",
+
+    # Extended subgroups
+
+    "Clinical (extended)",  "copd",             "COPD", # Chronic obstructive pulmonary disease
+    "Clinical (extended)",  "sickle_cell_asplenia", "Sickle cell / Asplenia", # Sickle Cell or asplenia
+    "Clinical (extended)",  "cirrhosis",        "Cirrhosis",        # Cirrhosis
+    "Clinical (extended)",  "cochlear_implant", "Cochlear implant",   # Cochlear implant
+    "Clinical (extended)",  "cystic_fibrosis",  "Cystic fibrosis", # Cystic fibrosis
+    "Clinical (extended)",  "csfl",             "Cerebrospinal fluid leak",  # Cerebrospinal fluid leak
+    "Clinical (extended)",  "homeless",          "Homeless", # Homeless
+    "Clinical (extended)",  "ckd_rrt",          "CKD / RRT",  # RRT - CKD3-5
+    "Clinical (extended)",  "learndis_cat",     "Learning disability", # Learning disabilities categories
+
+  ) |>
+  mutate(
+    type = fct_inorder(type),
+    variable = fct_inorder(variable),
+    label = fct_inorder(label),
+  )
+
 level_combos <-
   expand_grid(
     group1 = level1_group,

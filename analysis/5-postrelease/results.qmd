@@ -266,7 +266,7 @@ data_cohort_autumn2024 |>
     mutate(
         group = if_else(row_number()==1, group, ""),
         .by = group
-    ) |>  
+    ) |>
     gt() |>
     tab_spanner_delim(delim = "__") |>
     cols_label(
@@ -294,6 +294,56 @@ data_cohort_autumn2024 |>
       table.width = pct(100),
       ihtml.use_text_wrapping = FALSE
     )
+    
+```
+
+
+```{r}
+#| label: figure-cohort-autumn2024
+
+data_cohort_autumn2024 |> 
+  filter(group1 == "ageband4") |>
+  select(
+    ageband4 = group1_value, 
+    group = group2, value = group2_value, n = total
+  ) |>
+  mutate(
+    total = sum(n),
+    prop = n / total,
+    prefix = if_else(row_number()==1, group, ""),
+    .by = c(ageband4, group)
+  ) |>
+  filter(
+    !(value %in% c("All", "FALSE", "No learning disability", "No CKD or RRT")),
+    group!="all"
+  ) |>
+  mutate(
+    prefix_label = recode_values(prefix, from = variable_lookup$variable, to = paste0(variable_lookup$label,": "), default = ""),
+    group_type = recode_values(group, from = variable_lookup$variable, to = variable_lookup$type),
+    group_label = recode_values(group, from = variable_lookup$variable, to = variable_lookup$label),
+    row_shade = ((as.integer(group_label))%%2) == 0,
+    value_label = if_else(value == "TRUE", group_label, paste0(prefix_label, value)) |>
+    #value_label = if_else(value_label != group_label, paste0(prefix_label, value), false = _) |>
+      fct_inorder() |> 
+      fct_relevel("(Missing)", after=Inf) |> 
+      fct_rev(),
+    group_label = fct_inorder(if_else(str_detect(group_type, "Clinical"), group_type, group_label)),
+  ) |> #View()
+  arrange(group_type, group, value_label) |>
+  ggplot() +
+  geom_vline(aes(xintercept=0))+
+  geom_col(aes(y=value_label, x=n, fill = row_shade), colour="transparent")+
+  facet_grid(cols = vars(ageband4), rows=vars(group_label), scales="free", space="free", switch="y")+
+  scale_x_continuous(limits=c(0,NA), expand = fix0expansion, labels=label_number(scale=1/1000000), breaks = 1000000 * (0:10))+
+  scale_fill_discrete(guide = "none")+
+  labs(x="N (millions)", y=NULL)+
+  theme_minimal()+
+  theme(
+    #strip.text.y.left = element_text(angle = 0),
+    strip.text.y.left = element_blank(),
+    strip.background = element_blank(),
+    strip.placement = "outside"
+  )
     
 ```
 
