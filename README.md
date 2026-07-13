@@ -67,6 +67,8 @@ The analysis scripts in the [`analysis/`](./analysis) directory are organised in
 - [`4-snapshot/`](./analysis/4-snapshot/)
   - [`report_snapshot.R`](./analysis/4-snapshot/report_snapshot.R) reports vaccine history for people on the start of a given vaccine campaign, and subsequent vaccine coverage within this campaign. 
   It imports the vaccination data from the `prepare.R` script, processes date-specific info from the `dataset_definition_snapshot.py` script, combines them, then produces a collection of outputs about the eligible vaccine population and subsequent coverage on that date. 
+- [`5-postrelease/`](./analysis/5-postrelease/) - this directory contains a quarto file that ingests the output data files (either the dummy version or the released version) and generates an html file reporting the results. 
+  This is currently in development.
 
 ## Output files
 
