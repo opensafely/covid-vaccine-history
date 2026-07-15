@@ -15,7 +15,7 @@ library("here")
 library("arrow")
 library("survival")
 library("splines")
-library("parglm")
+library("fastglm")
 
 # Import custom functions
 source(here("analysis", "0-lib", "design.R"))
@@ -762,12 +762,11 @@ contrasts_reference_levels <- list(
 )
 
 ## Function to output HRs and IRRs for disease burden comparing different subgroups ----
-# note that parglm is faster, but produces an annoying warning that "'mustart' will not be used"
-# don't know how to get rid of it!
+# uses fastglm instead of glm for speed
 
 adjusted_estimates <- function(data, subgroup, event_time, event_indicator) {
-  # use age-splines unless age is the subgroup of interest
 
+  # use age-splines unless age is the subgroup of interest
   poisson_formula <- as.formula(glue("event_indicator ~ {subgroup} + sex + ns(age, 3)"))
   if (subgroup == "ageband4") poisson_formula <- as.formula(glue("event_indicator ~ ageband4 + sex"))
   if (subgroup == "ageband13") poisson_formula <- as.formula(glue("event_indicator ~ ageband13 + sex"))
@@ -842,21 +841,22 @@ adjusted_estimates <- function(data, subgroup, event_time, event_indicator) {
 
   if (n_values > 1) {
 
-    parglm_control <- parglm.control(maxit = 40, nthreads = 4)
-
     # fit the model
     # if there is an error, just return an empty dataset rather than fail
     data_poisson0 <-
       tryCatch(
         expr = {
           data_outcome |>
-            parglm(
+            mutate(
+              event_indicator = as.integer(event_indicator)
+            ) |>
+            glm(
               data = _,
               formula = poisson_formula,
               family = poisson,
               offset = log(event_time),
-              control = parglm_control,
               weights = count,
+              method = fastglm_fit,
               contrasts = subgroup_contrasts
             ) |>
             broom.helpers::tidy_and_attach(tidy_fun = broom.helpers::tidy_parameters, ci_method = "wald") |>
