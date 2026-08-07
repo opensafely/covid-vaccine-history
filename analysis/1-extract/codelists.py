@@ -265,7 +265,7 @@ carehome_nhs_refset = codelist_from_csv(
 )
 
 # COVID-19 
-covid_icd10 = ["U071", "U072", "U109"]
+covid_icd10 = ["U071", "U072", "U109", "U075"]
 
 # Extended subgroups
 
