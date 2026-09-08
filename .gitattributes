@@ -4,3 +4,6 @@
 # ensure unix line endings on windows for files that need them.
 *.sh eol=lf
 codelists/* eol=lf
+
+# encrypt draft manuscript materials
+analysis/5-postrelease/** filter=git-crypt diff=git-crypt
