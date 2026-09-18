@@ -19,7 +19,7 @@ actions:
         cohort: output/1-extract/extract_varying/*.arrow
 
   vax_data_quality:
-    run: r:v2 analysis/2-prepare/vax_data_quality.R
+    run: r:v3 analysis/2-prepare/vax_data_quality.R
     needs: [extract_varying]
     outputs:
       moderately_sensitive:
@@ -27,7 +27,7 @@ actions:
         #txt: output/2-prepare/vax_data_quality/*.txt
 
   prepare:
-    run: r:v2 analysis/2-prepare/prepare.R
+    run: r:v3 analysis/2-prepare/prepare.R
     needs: [extract_fixed, extract_varying]
     outputs:
       highly_sensitive:
@@ -38,7 +38,7 @@ actions:
 
 # report vaccine history over entire observational period ---
   report_history:
-    run: r:v2 analysis/3-history/report_history.R
+    run: r:v3 analysis/3-history/report_history.R
     needs: [prepare]
     outputs:
       moderately_sensitive:
@@ -59,7 +59,7 @@ actions:
         cohort: output/1-extract/extract_snapshot_20201207.arrow
 
   report_snapshot_20201207:
-    run: r:v2 analysis/4-snapshot/report_snapshot.R 20201207
+    run: r:v3 analysis/4-snapshot/report_snapshot.R 20201207
     needs: [extract_snapshot_20201207, prepare]
     outputs:
       moderately_sensitive:
@@ -79,7 +79,7 @@ actions:
         cohort: output/1-extract/extract_snapshot_20210906.arrow
 
   report_snapshot_20210906:
-    run: r:v2 analysis/4-snapshot/report_snapshot.R 20210906
+    run: r:v3 analysis/4-snapshot/report_snapshot.R 20210906
     needs: [extract_snapshot_20210906, prepare]
     outputs:
       moderately_sensitive:
@@ -99,7 +99,7 @@ actions:
         cohort: output/1-extract/extract_snapshot_20220321.arrow
 
   report_snapshot_20220321:
-    run: r:v2 analysis/4-snapshot/report_snapshot.R 20220321
+    run: r:v3 analysis/4-snapshot/report_snapshot.R 20220321
     needs: [extract_snapshot_20220321, prepare]
     outputs:
       moderately_sensitive:
@@ -119,7 +119,7 @@ actions:
         cohort: output/1-extract/extract_snapshot_20220829.arrow
 
   report_snapshot_20220829:
-    run: r:v2 analysis/4-snapshot/report_snapshot.R 20220829
+    run: r:v3 analysis/4-snapshot/report_snapshot.R 20220829
     needs: [extract_snapshot_20220829, prepare]
     outputs:
       moderately_sensitive:
@@ -139,7 +139,7 @@ actions:
         cohort: output/1-extract/extract_snapshot_20230403.arrow
 
   report_snapshot_20230403:
-    run: r:v2 analysis/4-snapshot/report_snapshot.R 20230403
+    run: r:v3 analysis/4-snapshot/report_snapshot.R 20230403
     needs: [extract_snapshot_20230403, prepare]
     outputs:
       moderately_sensitive:
@@ -159,7 +159,7 @@ actions:
         cohort: output/1-extract/extract_snapshot_20230828.arrow
 
   report_snapshot_20230828:
-    run: r:v2 analysis/4-snapshot/report_snapshot.R 20230828
+    run: r:v3 analysis/4-snapshot/report_snapshot.R 20230828
     needs: [extract_snapshot_20230828, prepare]
     outputs:
       moderately_sensitive:
@@ -179,7 +179,7 @@ actions:
         cohort: output/1-extract/extract_snapshot_20240415.arrow
 
   report_snapshot_20240415:
-    run: r:v2 analysis/4-snapshot/report_snapshot.R 20240415
+    run: r:v3 analysis/4-snapshot/report_snapshot.R 20240415
     needs: [extract_snapshot_20240415, prepare]
     outputs:
       moderately_sensitive:
@@ -199,7 +199,7 @@ actions:
         cohort: output/1-extract/extract_snapshot_20240930.arrow
 
   report_snapshot_20240930:
-    run: r:v2 analysis/4-snapshot/report_snapshot.R 20240930
+    run: r:v3 analysis/4-snapshot/report_snapshot.R 20240930
     needs: [extract_snapshot_20240930, prepare]
     outputs:
       moderately_sensitive:
@@ -219,7 +219,7 @@ actions:
         cohort: output/1-extract/extract_snapshot_20250331.arrow
 
   report_snapshot_20250331:
-    run: r:v2 analysis/4-snapshot/report_snapshot.R 20250331
+    run: r:v3 analysis/4-snapshot/report_snapshot.R 20250331
     needs: [extract_snapshot_20250331, prepare]
     outputs:
       moderately_sensitive:
@@ -240,7 +240,7 @@ actions:
         cohort: output/1-extract/extract_snapshot_20250929.arrow
 
   report_snapshot_20250929:
-    run: r:v2 analysis/4-snapshot/report_snapshot.R 20250929
+    run: r:v3 analysis/4-snapshot/report_snapshot.R 20250929
     needs: [extract_snapshot_20250929, prepare]
     outputs:
       moderately_sensitive:
