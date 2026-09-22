@@ -128,7 +128,7 @@ data_combined <-
     any_eligibility = age_above_eligiblity_threshold | clinical_priority | carehome_status,
 
     last_vax_product = fct_na_value_to_level(last_vax_product, "Unvaccinated"),
-    last_vax_date = if_else(vax_count == 0, study_dates$firstpossiblevax_date + as.integer(runif(n(), 0, 10)), last_vax_date),
+    
     # last_vax_week = floor_date(last_vax_date, unit = "week", week_start = 1), # starting on a monday
     last_vax_period = floor_date(last_vax_date, unit = floor_dates), # round dates to a period, defined by "temporal_resolution_history" above
     censor_date = pmin(
@@ -225,10 +225,10 @@ plot_date_of_last_dose <- function(subgroup) {
     ungroup() |>
     mutate(
       # if last vaccination date was over 2 years ago, replace with dummy date
-      last_vax_period = if_else(
-        (last_vax_period < over2years_dummy_date)  | is.na(last_vax_period),
-        over2years_dummy_date - 42,
-        last_vax_period
+      last_vax_period = case_when(
+        (last_vax_period < over2years_dummy_date)  ~ over2years_dummy_date - 42,
+        is.na(last_vax_period) ~ over2years_dummy_date - 42,
+        .default = last_vax_period
       )
     ) |>
     as_tibble() |>
@@ -272,7 +272,7 @@ plot_date_of_last_dose <- function(subgroup) {
       breaks = c(over2years_dummy_date - 42, breaks),
       date_minor_breaks = "month",
       # labels = ~{c("Unvaccinated", scales::label_date("%Y")(.x[-1]))},
-      labels = c("+2 years prior)", scales::label_date("%Y-%b")(breaks)),
+      labels = c("+2 years prior or unvaccinated)", scales::label_date("%Y-%b")(breaks)),
     ) +
     theme_minimal() +
     theme(
@@ -292,6 +292,8 @@ plot_date_of_last_dose <- function(subgroup) {
   # write tables that capture underlying plotting data
   # write_csv(summary_by, fs::path(output_dir, glue("last_vax_date_{subgroup}.csv")))
 }
+
+# plot_date_of_last_dose("sex")
 
 for (group in level1_group) {
   plot_date_of_last_dose(group)
