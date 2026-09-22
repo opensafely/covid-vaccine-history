@@ -429,6 +429,7 @@ table_prior_vax_summary <- function(...) {
       .groups = "drop"
     ) |>
     mutate(
+      n_under_sdc_threshold = total <= sdc_threshold,
       # Dose percentages - put this here and not in earlier summarise step so that it works with dtplyr
       count_pct0 = round(count_n0 * 100 / total, 1),
       count_pct1 = round(count_n1 * 100 / total, 1),
@@ -440,6 +441,13 @@ table_prior_vax_summary <- function(...) {
       days_since_pct12m = round(days_since_n12m * 100 / total, 1),
       days_since_pct24m = round(days_since_n24m * 100 / total, 1),
     ) |>
+    mutate(
+      across(
+        starts_with(c("count", "days_since")), 
+        ~ if_else(!n_under_sdc_threshold, .x, NA)
+      )
+    ) |> 
+    select(-n_under_sdc_threshold)  |>
     as_tibble()
 
   # subgroup_name <- map_chr(rlang::quos(...), rlang::as_name) |> paste0(collapse = "_")
