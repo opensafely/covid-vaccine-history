@@ -380,6 +380,7 @@ plot_vax_count <- function(subgroup) {
   write_csv(summary_by, fs::path(output_dir, glue("vax_count_{subgroup}.csv")))
 }
 
+# plot_vax_count("sex")
 
 for (group in level1_group) {
   plot_vax_count(group)
