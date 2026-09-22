@@ -38,6 +38,17 @@ temporal_resolution_history <- 28L
 # how wide are the temporal bins for frequencies over time for Kaplan-Meier plots? in days
 temporal_resolution_km <- 7L
 
+
+# pull out campaign start dates for prior campaigns to help calculate which campaign each person's prior vaccine occurred in
+prior_campaigns <- 
+  campaign_info |>
+  filter(campaign_start_date < snapshot_date & campaign_start_date >= as.Date("2020-12-07")) |>
+  transmute(
+    campaign_start_date, 
+    campaign_label = (n() - row_number() + 1) |> recode_values(from = c(1,2,3), to = c("1 campaign ago", "2 campaigns ago", "3 campaigns ago"), default = "4+ campaigns ago")
+  ) 
+
+# select info for selected campaign
 campaign_info <- campaign_info |> filter(campaign_start_date == snapshot_date)
 
 # list2env(campaign_info, globalenv())
@@ -131,13 +142,18 @@ data_combined <-
     
     # last_vax_week = floor_date(last_vax_date, unit = "week", week_start = 1), # starting on a monday
     last_vax_period = floor_date(last_vax_date, unit = floor_dates), # round dates to a period, defined by "temporal_resolution_history" above
+    # number of days since prior vaccination
     last_vax_time_since = as.numeric(snapshot_date - last_vax_date),
-    last_vax_time_since_fct = cut(
-      last_vax_time_since,
-      breaks = c(0, 39*7 - 1, 65*7 - 1, Inf), 
-      labels = c("0-8 months", "9-14 months", "15+ months"), 
-      right = TRUE
-    ) |> fct_na_value_to_level(level = "none"),
+    # how many campaigns ago did prior vaccine occur
+    last_vax_campaign_fct = floor_date(last_vax_date, unit = prior_campaigns$campaign_start_date) |> recode_values(from = c(prior_campaigns$campaign_start_date, as.Date(NA)), to = c(prior_campaigns$campaign_label, "Unvaccinated")),
+
+    # 
+    # last_vax_time_since_fct = cut(
+    #   last_vax_time_since,
+    #   breaks = c(0, 26*7, 52*7, Inf), 
+    #   labels = c("0-6 months", "9-14 months", "15+ months"), 
+    #   right = TRUE
+    # ) |> fct_na_value_to_level(level = "none"),
     
     censor_date = pmin(
       deregistered_date,

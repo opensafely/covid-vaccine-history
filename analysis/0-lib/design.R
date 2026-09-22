@@ -490,7 +490,7 @@ level2_group <- c(
   "cystic_fibrosis",    # Cystic fibrosis
   "csfl",               # Cerebrospinal fluid leak
   "homeless",           # Homeless
-  "last_vax_time_since_fct" # time since prior vaccination
+  "last_vax_campaign_fct" # time since prior vaccination
 )
 
 level_combos <-
