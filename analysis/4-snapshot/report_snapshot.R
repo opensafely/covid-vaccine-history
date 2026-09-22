@@ -492,7 +492,7 @@ if (!identical(as.integer(times_count), c(0L, 0L, nrow(data_combined)))) {
 
 # group variables are provided as characters via dots (...)
 # resolution argument is the precision used for the time dimension. If zero, then original resolution is used.
-km_estimates <- function(data, group_name1, group_name2, event_name, event_time, event_indicator, resolution = 0L) {
+km_estimates <- function(data, group_name1, group_name2, event_name, event_time, event_indicator, resolution = 1L) {
 
   group_names <- c(group_name1, group_name2)
 
