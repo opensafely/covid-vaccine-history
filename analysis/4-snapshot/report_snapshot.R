@@ -74,6 +74,12 @@ capture.output(
   split = FALSE
 )
 
+## tests ----
+if (any(coalesce((snapshot_date - data_snapshot$covid_vax_prior_1_date)<=0, FALSE))) {
+  stop("'covid_vax_prior_1_date' equals or exceeds 'snapshot_date'")
+}
+
+
 # merge fixed data and vaccine data onto snapshot data
 # note that in dummy data this doesn't work very well because patient IDs might not be matched across all datasets
 data_combined <-
