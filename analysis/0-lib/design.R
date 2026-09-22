@@ -403,10 +403,12 @@ standardise_primis_and_extended_characteristics <-
 
     cns_learndis = (cns | learndis),
 
-    sickle_cell_asplenia = (sickle_cell | asplenia)
+    sickle_cell_asplenia = (sickle_cell | asplenia),
+
+    primis_atrisk_count = immunosuppressed + ckd + diabetes + crd + cld + chd + asplenia + cns + learndis + smi + severe_obesity,
+
+    primis_atrisk_count_fct = cut(primis_atrisk_count, breaks = c(0,1,2,3,4,Inf), labels = c("0", "1", "2", "3", "4+"), right= FALSE)
   )
-
-
 
 # function to convert ethnicity 16 group into 5 group
 ethnicity_16_to_5 <- function(x) {
@@ -438,7 +440,6 @@ level1_group <- c(
   "carehome_status",
 
   # Level 1E (clinical risk)
-  # TODO add number of primis risk groups
   "primis_atrisk",
   "crd",
   "chd",
@@ -467,7 +468,7 @@ level2_group <- c(
 
   # Core clinical risk subgroups
   "primis_atrisk",
-  # TODO add number of primis risk groups
+  "primis_atrisk_count_fct",
   "crd",
   "chd",
   "ckd",
@@ -498,10 +499,12 @@ level_combos <-
     group2 = level2_group
   ) |>
   filter(
-    (group1 == group2) %in% c(FALSE, NA) | (group1 == "all"),
-    !((group1 %in% c("ageband4", "ageband13")) & (group2 %in% c("ageband4", "ageband13"))),
-    !((group1 %in% c("age_above_eligiblity_threshold", "clinical_priority_only")) & (group2 %in% c("ageband4", "ageband13"))),
-    !((group1 %in% c("clinical_priority_only")) & (group2 %in% c("primis_atrisk"))),
+    (group1 == group2) %in% c(FALSE, NA) | (group1 == "all"), # remove if group1 and group2 are the same, unless both are "all"
+    !((group1 != "all") & (group2 == "all")), # remove if group2 is all and group1 is not all (as all*X breakdowns are covered when group1="all")
+    !((group1 %in% c("ageband4", "ageband13")) & (group2 %in% c("ageband4", "ageband13"))), # do not do breakdowns for different age groups
+    !((group1 %in% c("age_above_eligiblity_threshold", "clinical_priority_only")) & (group2 %in% c("ageband4", "ageband13"))), # do not embed age breakdowns inside eligibility as these are aready covered by age alone
+    !((group1 %in% c("clinical_priority_only")) & (group2 %in% c("primis_atrisk"))), # do not embed primis risk yes/no inside clinical priority eligibility 
+    !((group1 %in% c("primis_atrisk")) & (group2 %in% c("primis_atrisk_count_fct"))), # do not embed primis count breakdowns inside primis yes/no
   )
 
 # Local run flag ----
