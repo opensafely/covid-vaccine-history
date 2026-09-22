@@ -930,9 +930,9 @@ get_all_estimates <- function(data, event_name, event_time, event_indicator) {
           summary_data <-
             data |>
             mutate(
-              label1 = data[[group1]],
+              group1_value = data[[group1]],
             ) |>
-            nest(.by = c(label1), .key = "group1_subset") |>
+            nest(.by = c(group1_value), .key = "group1_subset") |>
             mutate(
               estimates = map(group1_subset, \(group1_subset) {
                 adjusted_estimates(group1_subset, group2, event_time, event_indicator)
@@ -941,9 +941,9 @@ get_all_estimates <- function(data, event_name, event_time, event_indicator) {
             select(-group1_subset) |>
             unnest(estimates) |>
             select(-variable) |>
-            rename(label2 = label) |>
+            rename(group2_value = label) |>
             mutate(
-              across(c(label1, label2), as.character) # to ensure the unnest() works later
+              across(c(group1_value, group2_value), as.character) # to ensure the unnest() works later
             )
 
           return(summary_data)
@@ -953,7 +953,7 @@ get_all_estimates <- function(data, event_name, event_time, event_indicator) {
       )
     ) |>
     unnest(estimates) |>
-    select(group1, label1, group2, label2, everything()) # reorder columns
+    select(group1, group1_value, group2, group2_value, everything()) # reorder columns
 
   write_csv(estimates_list, fs::path(output_dir, glue("contrasts_{event_name}.csv")))
 
@@ -1045,9 +1045,9 @@ get_all_los_estimates <- function(data, event_name, event_los) {
 
           data |>
             mutate(
-              label1 = data[[group1]],
+              group1_value = data[[group1]],
             ) |>
-            nest(.by = c(label1), .key = "group1_subset") |>
+            nest(.by = c(group1_value), .key = "group1_subset") |>
             mutate(
               estimates = map(group1_subset, \(group1_subset) {
                 los_estimates(group1_subset, group2, event_los)
@@ -1056,15 +1056,15 @@ get_all_los_estimates <- function(data, event_name, event_los) {
             select(-group1_subset) |>
             unnest(estimates) |>
             select(-variable) |>
-            rename(label2 = label) |>
+            rename(group2_value = label) |>
             mutate(
-              across(c(label1, label2), as.character)
+              across(c(group1_value, group2_value), as.character)
             )
         }
       )
     ) |>
     unnest(estimates) |>
-    select(group1, label1, group2, label2, everything()) # reorder columns
+    select(group1, group1_value, group2, group2_value, everything()) # reorder columns
 
   write_csv(estimates_list, fs::path(output_dir, glue("los_{event_name}.csv")))
 
