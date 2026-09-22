@@ -1007,6 +1007,7 @@ los_estimates <- function(data, subgroup, event_los) {
       label = .data[[subgroup]],
     ) |>
     summarise(
+      n_under_sdc_threshold = n() <= sdc_threshold,
       n = roundmid_any(n(), sdc_threshold),
       n_at_least_1_event = roundmid_any(sum(!is.na(event_los)), sdc_threshold),
       median_los = quantile(event_los, 0.5, na.rm = TRUE),
@@ -1016,13 +1017,20 @@ los_estimates <- function(data, subgroup, event_los) {
       p90 = quantile(event_los, 0.9, na.rm = TRUE),
 
       .by = c(variable, label)
-    )
+    ) |>
+    mutate(
+      across(
+        c( n_at_least_1_event, median_los, p10, p25, p75, p90), 
+        ~ if_else(!n_under_sdc_threshold, .x, NA)
+      )
+    ) |> 
+    select(-n_under_sdc_threshold)
 
   return(data_los)
 }
 
 
-los_estimates(data_combined, "sex", "covid_admitted_los")
+#los_estimates(data_combined, "ckd", "covid_admitted_los")
 
 ## function to get LoS across all group combinations ----
 # for a given los outcome, loop over all groups combinations, obtaining los summaries for each using los_estimates function, and combining into one file

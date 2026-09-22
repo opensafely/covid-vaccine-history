@@ -438,6 +438,7 @@ level1_group <- c(
   "carehome_status",
 
   # Level 1E (clinical risk)
+  # TODO add number of primis risk groups
   "primis_atrisk",
   "crd",
   "chd",
@@ -466,6 +467,7 @@ level2_group <- c(
 
   # Core clinical risk subgroups
   "primis_atrisk",
+  # TODO add number of primis risk groups
   "crd",
   "chd",
   "ckd",
@@ -486,7 +488,8 @@ level2_group <- c(
   "cochlear_implant",   # Cochlear implant
   "cystic_fibrosis",    # Cystic fibrosis
   "csfl",               # Cerebrospinal fluid leak
-  "homeless"           # Homeless
+  "homeless",           # Homeless
+  "last_vax_time_since_fct" # time since prior vaccination
 )
 
 level_combos <-
