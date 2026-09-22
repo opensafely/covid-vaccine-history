@@ -131,6 +131,14 @@ data_combined <-
     
     # last_vax_week = floor_date(last_vax_date, unit = "week", week_start = 1), # starting on a monday
     last_vax_period = floor_date(last_vax_date, unit = floor_dates), # round dates to a period, defined by "temporal_resolution_history" above
+    last_vax_time_since = as.numeric(snapshot_date - last_vax_date),
+    last_vax_time_since_fct = cut(
+      last_vax_time_since,
+      breaks = c(0, 39*7 - 1, 65*7 - 1, Inf), 
+      labels = c("0-8 months", "9-14 months", "15+ months"), 
+      right = TRUE
+    ) |> fct_na_value_to_level(level = "none"),
+    
     censor_date = pmin(
       deregistered_date,
       campaign_info$final_milestone_date,
@@ -391,7 +399,6 @@ table_prior_vax_summary <- function(...) {
 
   summary_table <-
     data_combined |>
-    mutate(days_since_vax = snapshot_date - last_vax_date) |>
     group_by(across(all_of(group_names))) |>
     lazy_dt() |>
     summarise(
@@ -410,14 +417,14 @@ table_prior_vax_summary <- function(...) {
       count_p75 = quantile(vax_count, probs = 0.75, na.rm = TRUE),
       count_p90 = quantile(vax_count, probs = 0.90, na.rm = TRUE),
       # Vaccination in past 12 and 24 months
-      days_since_n12m = roundmid_any(sum(days_since_vax <= 365, na.rm = TRUE), sdc_threshold),
-      days_since_n24m = roundmid_any(sum(days_since_vax <= 365 * 2, na.rm = TRUE), sdc_threshold),
+      days_since_n12m = roundmid_any(sum(last_vax_time_since <= 365, na.rm = TRUE), sdc_threshold),
+      days_since_n24m = roundmid_any(sum(last_vax_time_since <= 365 * 2, na.rm = TRUE), sdc_threshold),
       # Time since last dose
-      days_since_median = quantile(days_since_vax, probs = 0.5, na.rm = TRUE),
-      days_since_p10 = quantile(days_since_vax, probs = 0.10, na.rm = TRUE),
-      days_since_p25 = quantile(days_since_vax, probs = 0.25, na.rm = TRUE),
-      days_since_p75 = quantile(days_since_vax, probs = 0.75, na.rm = TRUE),
-      days_since_p90 = quantile(days_since_vax, probs = 0.90, na.rm = TRUE),
+      days_since_median = quantile(last_vax_time_since, probs = 0.5, na.rm = TRUE),
+      days_since_p10 = quantile(last_vax_time_since, probs = 0.10, na.rm = TRUE),
+      days_since_p25 = quantile(last_vax_time_since, probs = 0.25, na.rm = TRUE),
+      days_since_p75 = quantile(last_vax_time_since, probs = 0.75, na.rm = TRUE),
+      days_since_p90 = quantile(last_vax_time_since, probs = 0.90, na.rm = TRUE),
 
       .groups = "drop"
     ) |>
