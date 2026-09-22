@@ -897,7 +897,12 @@ adjusted_estimates <- function(data, subgroup, event_time, event_indicator) {
       )
 
   } else {
-    data_poisson <- data_summary |> select(-contrast)
+    data_poisson <- data_summary |> 
+      select(-contrast) |>
+      mutate(
+        ir = n_event / exposure,
+        irr_unadjusted = 1,
+      )
   }
 
   return(data_poisson)
