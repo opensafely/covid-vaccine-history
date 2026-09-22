@@ -47,8 +47,6 @@ campaign_info$primary_milestone_days <- ceiling_any(campaign_info$primary_milest
 
 
 # dates to round down to
-# use this with `findInterval` until lubridate package is updated in the opensafely R image
-# (then use `floor_date(date, unit=floor_dates`)
 floor_dates <- seq(
   as.Date("2020-06-01"), # monday
   as.Date("2029-12-31"),  # to monday!
@@ -132,8 +130,7 @@ data_combined <-
     last_vax_product = fct_na_value_to_level(last_vax_product, "Unvaccinated"),
     last_vax_date = if_else(vax_count == 0, study_dates$firstpossiblevax_date + as.integer(runif(n(), 0, 10)), last_vax_date),
     # last_vax_week = floor_date(last_vax_date, unit = "week", week_start = 1), # starting on a monday
-    last_vax_period = floor_date(last_vax_date, unit = floor_dates), # use floor_dates[findInterval(last_vax_date, floor_dates)] if lubridate isn't working
-
+    last_vax_period = floor_date(last_vax_date, unit = floor_dates), # round dates to a period, defined by "temporal_resolution_history" above
     censor_date = pmin(
       deregistered_date,
       campaign_info$final_milestone_date,
