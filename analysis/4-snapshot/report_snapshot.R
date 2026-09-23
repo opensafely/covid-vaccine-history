@@ -49,13 +49,10 @@ prior_campaigns <-
   ) 
 
 # select info for selected campaign
-campaign_info <- campaign_info |> filter(campaign_start_date == snapshot_date)
-
-# list2env(campaign_info, globalenv())
+selected_campaign_info <- campaign_info |> filter(campaign_start_date == snapshot_date)
 
 # overwrite primary milestone to match rounded kaplan meier curve
-campaign_info$primary_milestone_days <- ceiling_any(campaign_info$primary_milestone_days, temporal_resolution_km)
-
+selected_campaign_info$primary_milestone_days <- ceiling_any(selected_campaign_info$primary_milestone_days, temporal_resolution_km)
 
 # dates to round down to
 floor_dates <- seq(
@@ -129,10 +126,10 @@ data_combined <-
     !!!standardise_demographic_characteristics,
     !!!standardise_primis_and_extended_characteristics,
 
-    age_above_eligiblity_threshold = (age >= campaign_info$age_threshold),
+    age_above_eligiblity_threshold = (age >= selected_campaign_info$age_threshold),
 
     # used to chose if the at risk group is all clinical risk variables or just immunosuppressed people
-    clinical_priority = .data[[campaign_info$clinical_priority]],
+    clinical_priority = .data[[selected_campaign_info$clinical_priority]],
 
     clinical_priority_only = clinical_priority & !age_above_eligiblity_threshold,
 
@@ -144,6 +141,7 @@ data_combined <-
     last_vax_period = floor_date(last_vax_date, unit = floor_dates), # round dates to a period, defined by "temporal_resolution_history" above
     # number of days since prior vaccination
     last_vax_time_since = as.numeric(snapshot_date - last_vax_date),
+
     # how many campaigns ago did prior vaccine occur
     last_vax_campaign_fct = floor_date(last_vax_date, unit = prior_campaigns$campaign_start_date) |> recode_values(from = c(prior_campaigns$campaign_start_date, as.Date(NA)), to = c(prior_campaigns$campaign_label, "Unvaccinated")),
 
@@ -157,7 +155,7 @@ data_combined <-
     
     censor_date = pmin(
       deregistered_date,
-      campaign_info$final_milestone_date,
+      selected_campaign_info$final_milestone_date,
       study_dates$end_date,
       na.rm = TRUE
     ),
@@ -571,7 +569,7 @@ km_estimates <- function(data, group_name1, group_name2, event_name, event_time,
               .before = 1L
             ) |>
             complete(
-              time = seq(0L, campaign_info$final_milestone_days, resolution), # fill in 1 row for each period (defined by resolution) of follow up
+              time = seq(0L, selected_campaign_info$final_milestone_days, resolution), # fill in 1 row for each period (defined by resolution) of follow up
               fill = list(n.event = 0L, n.censor = 0L) # fill in zero events on those days
             ) |>
             fill(
@@ -658,9 +656,9 @@ get_all_km_estimates <- function(data, event_name, event_time, event_indicator, 
     unnest(km_summary) |>
     select(group1, group1_value, group2, group2_value, everything()) |>
     mutate(
-      early_milestone = (time == campaign_info$early_milestone_days) * 1L,
-      primary_milestone = (time == campaign_info$primary_milestone_days) * 1L,
-      final_milestone = (time == campaign_info$final_milestone_days) * 1L,
+      early_milestone = (time == selected_campaign_info$early_milestone_days) * 1L,
+      primary_milestone = (time == selected_campaign_info$primary_milestone_days) * 1L,
+      final_milestone = (time == selected_campaign_info$final_milestone_days) * 1L,
     )
 
 
@@ -675,13 +673,13 @@ get_all_km_estimates <- function(data, event_name, event_time, event_indicator, 
   km_estimates_milestones <-
     km_estimates_table |>
     filter(
-      time %in% (c(campaign_info$early_milestone_days, campaign_info$primary_milestone_days, campaign_info$final_milestone_days) * 1L)
+      time %in% (c(selected_campaign_info$early_milestone_days, selected_campaign_info$primary_milestone_days, selected_campaign_info$final_milestone_days) * 1L)
     ) |>
     mutate(
       milestone_date = case_when(
-        early_milestone == 1L ~ campaign_info$early_milestone_date,
-        primary_milestone == 1L ~ campaign_info$primary_milestone_date,
-        final_milestone == 1L ~ campaign_info$final_milestone_date,
+        early_milestone == 1L ~ selected_campaign_info$early_milestone_date,
+        primary_milestone == 1L ~ selected_campaign_info$primary_milestone_date,
+        final_milestone == 1L ~ selected_campaign_info$final_milestone_date,
       ),
       milestone = case_when(
         early_milestone == 1L ~ "Early",
