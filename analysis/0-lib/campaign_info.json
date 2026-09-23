@@ -1,11 +1,11 @@
 {
   "1900-01-01": {
-    "campaign_label": "Pre-2020-07-01",
+    "campaign_label": "Pre-pandemic",
     "campaign_start_date": "1900-01-01",
     "primary_milestone_date": "1900-01-01",
     "age_date": "1900-01-01",
     "age_threshold": 16,
-    "clinical_priority": "primis_atrisk",
+    "clinical_priority": "",
     "early_milestone_date": "1900-02-25",
     "final_milestone_date": "2020-03-01",
     "early_milestone_days": 56,
@@ -18,7 +18,7 @@
     "primary_milestone_date": "2020-03-02",
     "age_date": "2020-03-02",
     "age_threshold": 16,
-    "clinical_priority": "primis_atrisk",
+    "clinical_priority": "",
     "early_milestone_date": "2020-04-26",
     "final_milestone_date": "2020-12-06",
     "early_milestone_days": 56,
