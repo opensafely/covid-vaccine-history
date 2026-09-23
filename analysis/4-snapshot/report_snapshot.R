@@ -42,11 +42,18 @@ temporal_resolution_km <- 7L
 # pull out campaign start dates for prior campaigns to help calculate which campaign each person's prior vaccine occurred in
 prior_campaigns <- 
   campaign_info |>
-  filter(campaign_start_date < snapshot_date & campaign_start_date >= as.Date("2020-12-07")) |>
+  filter(campaign_start_date < snapshot_date & campaign_start_date >= study_dates$firstpossiblevax_date) |>
   transmute(
     campaign_start_date, 
-    campaign_label = (n() - row_number() + 1) |> recode_values(from = c(1,2,3), to = c("1 campaign ago", "2 campaigns ago", "3 campaigns ago"), default = "4+ campaigns ago")
-  ) 
+    campaign_n_reverse = (n() - row_number() + 1),
+    campaign_label = case_when(
+      campaign_n_reverse == 1 & campaign_start_date >= study_dates$start_date ~ "1 campaign ago",
+      campaign_n_reverse == 2 & campaign_start_date >= study_dates$start_date ~ "2 campaigns ago",
+      campaign_n_reverse == 3 & campaign_start_date >= study_dates$start_date ~ "3 campaigns ago",
+      campaign_n_reverse >= 4 & campaign_start_date >= study_dates$firstpossiblevax_date ~ "4+ campaigns ago",
+      .default = campaign_label
+    )
+  )
 
 # select info for selected campaign
 selected_campaign_info <- campaign_info |> filter(campaign_start_date == snapshot_date)
@@ -54,7 +61,7 @@ selected_campaign_info <- campaign_info |> filter(campaign_start_date == snapsho
 # overwrite primary milestone to match rounded kaplan meier curve
 selected_campaign_info$primary_milestone_days <- ceiling_any(selected_campaign_info$primary_milestone_days, temporal_resolution_km)
 
-# dates to round down to
+# dates to round down to for period-specific vax dates
 floor_dates <- seq(
   as.Date("2020-06-01"), # monday
   as.Date("2029-12-31"),  # to monday!
@@ -152,9 +159,13 @@ data_combined <-
     last_vax_time_since = as.numeric(snapshot_date - last_vax_date),
 
     # how many campaigns ago did prior vaccine occur
-    last_vax_campaign_fct = floor_date(last_vax_date, unit = prior_campaigns$campaign_start_date) |> recode_values(from = c(prior_campaigns$campaign_start_date, as.Date(NA)), to = c(prior_campaigns$campaign_label, "Unvaccinated")),
+    last_vax_campaign_fct = last_vax_date |>
+      floor_date(unit = prior_campaigns$campaign_start_date) |> 
+      recode_values(
+        from = c(prior_campaigns$campaign_start_date, as.Date(NA)), 
+        to = c(prior_campaigns$campaign_label, "Unvaccinated")
+      ),
 
-    # 
     # last_vax_time_since_fct = cut(
     #   last_vax_time_since,
     #   breaks = c(0, 26*7, 52*7, Inf), 
