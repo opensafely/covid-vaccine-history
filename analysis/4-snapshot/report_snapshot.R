@@ -85,6 +85,13 @@ if (any(coalesce((snapshot_date - data_snapshot$covid_vax_prior_1_date)<=0, FALS
   stop("'covid_vax_prior_1_date' equals or exceeds 'snapshot_date'")
 }
 
+cat(
+  glue(
+    "To be excluded: number of people with vaccine dates prior to {study_dates$firstpossiblevax_date} = 
+    {data_snapshot |> filter(coalesce(covid_vax_prior_1_date<study_dates$firstpossiblevax_date, FALSE)) |> nrow() |> roundmid_any(sdc_threshold)}
+    "
+  )
+)
 
 # merge fixed data and vaccine data onto snapshot data
 # note that in dummy data this doesn't work very well because patient IDs might not be matched across all datasets
@@ -95,6 +102,8 @@ data_combined <-
     lazy_dt(data_fixed) |> select(patient_id, sex, ethnicity5, ethnicity16, death_date, covid_death_date),
     by = "patient_id"
   ) |>
+  # remove anyone with a vaccination date prior to pandemic, since this indicates a vaccination probably occurred but we don't know when
+  filter(coalesce(covid_vax_prior_1_date>=study_dates$firstpossiblevax_date, TRUE)) |>
   # remove currently unused variables
   select(
     -covid_vax_prior_2_date,
