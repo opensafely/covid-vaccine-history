@@ -86,7 +86,7 @@ fct_case_when <- function(...) {
 
 study_dates <-
   list(
-    firstpossiblevax_date = "2020-07-01",
+    firstpossiblevax_date = "2020-03-02", # approximate date when people started to be included in trials
     start_date = "2020-12-07",
     end_date = "2026-03-31"
   ) |>
@@ -103,8 +103,8 @@ sdc_threshold <- 10L
 campaign_info <-
   tribble(
     ~campaign_label,        ~campaign_start_date,      ~primary_milestone_date, ~age_date, ~age_threshold, ~clinical_priority,
-    "Pre-2020-07-01", "1900-01-01", "1900-01-01", "1900-01-01", 16, "primis_atrisk",
-    "Pre-roll-out",   as.character(study_dates$firstpossiblevax_date), as.character(study_dates$firstpossiblevax_date), as.character(study_dates$firstpossiblevax_date), 16, "primis_atrisk",
+    "Pre-pandemic", "1900-01-01", "1900-01-01", "1900-01-01", 16, "",
+    "Pre-roll-out",   as.character(study_dates$firstpossiblevax_date), as.character(study_dates$firstpossiblevax_date), as.character(study_dates$firstpossiblevax_date), 16, "",
     "Primary series", "2020-12-07", "2021-06-30", "2021-03-31", 16, "primis_atrisk",
     "Autumn 2021",    "2021-09-06", "2022-02-28", "2021-08-31", 16, "primis_atrisk",
     "Spring 2022",    "2022-03-21", "2022-06-30", "2022-06-30", 75, "immunosuppressed",

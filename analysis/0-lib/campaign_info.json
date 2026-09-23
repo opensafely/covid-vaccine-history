@@ -7,23 +7,23 @@
     "age_threshold": 16,
     "clinical_priority": "primis_atrisk",
     "early_milestone_date": "1900-02-25",
-    "final_milestone_date": "2020-06-30",
+    "final_milestone_date": "2020-03-01",
     "early_milestone_days": 56,
     "primary_milestone_days": 1,
-    "final_milestone_days": 44011
+    "final_milestone_days": 43890
   },
-  "2020-07-01": {
+  "2020-03-02": {
     "campaign_label": "Pre-roll-out",
-    "campaign_start_date": "2020-07-01",
-    "primary_milestone_date": "2020-07-01",
-    "age_date": "2020-07-01",
+    "campaign_start_date": "2020-03-02",
+    "primary_milestone_date": "2020-03-02",
+    "age_date": "2020-03-02",
     "age_threshold": 16,
     "clinical_priority": "primis_atrisk",
-    "early_milestone_date": "2020-08-25",
+    "early_milestone_date": "2020-04-26",
     "final_milestone_date": "2020-12-06",
     "early_milestone_days": 56,
     "primary_milestone_days": 1,
-    "final_milestone_days": 159
+    "final_milestone_days": 280
   },
   "2020-12-07": {
     "campaign_label": "Primary series",
