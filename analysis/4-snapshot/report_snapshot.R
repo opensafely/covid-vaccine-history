@@ -182,31 +182,36 @@ data_combined <-
 
     # time from snapshot date until next vaccination
     vax_time = as.integer(pmin(next_vax_date, death_date, censor_date, na.rm = TRUE) - snapshot_date) + 1L, # +1 because vaccination on snapshot date is allowed, but events at time zero are not
-    vax_indicator = (next_vax_date <= pmin(censor_date, death_date, na.rm = TRUE)) & !is.na(next_vax_date),
+    vax_indicator = coalesce(next_vax_date <= pmin(censor_date, death_date, na.rm = TRUE), FALSE),
 
     # time from snapshot date until covid hospital admission
     covid_admitted_time = as.integer(pmin(covid_admitted_date, death_date, censor_date, na.rm = TRUE) - snapshot_date) + 1L,
-    covid_admitted_indicator = (covid_admitted_date <= pmin(censor_date, death_date, na.rm = TRUE)) & !is.na(covid_admitted_date),
+    covid_admitted_indicator = coalesce(covid_admitted_date <= pmin(censor_date, death_date, na.rm = TRUE), FALSE),
 
     # time from snapshot date until covid (primary position only) hospital admission
     covid_admitted_primary_time = as.integer(pmin(covid_admitted_primary_date, death_date, censor_date, na.rm = TRUE) - snapshot_date) + 1L,
-    covid_admitted_primary_indicator = (covid_admitted_primary_date <= pmin(censor_date, death_date, na.rm = TRUE)) & !is.na(covid_admitted_primary_date),
+    covid_admitted_primary_indicator = coalesce(covid_admitted_primary_date <= pmin(censor_date, death_date, na.rm = TRUE), FALSE),
 
     # time from snapshot date until covid critical care admission
     covid_critcare_time = as.integer(pmin(covid_critcare_date, death_date, censor_date, na.rm = TRUE) - snapshot_date) + 1L,
-    covid_critcare_indicator = (covid_critcare_date <= pmin(censor_date, death_date, na.rm = TRUE)) & !is.na(covid_critcare_date),
+    covid_critcare_indicator = coalesce(covid_critcare_date <= pmin(censor_date, death_date, na.rm = TRUE), FALSE),
 
     # time from snapshot date until covid death
     covid_death_time = as.integer(pmin(covid_death_date, death_date, censor_date, na.rm = TRUE) - snapshot_date) + 1L,
-    covid_death_indicator = (covid_death_date <= pmin(censor_date, death_date, na.rm = TRUE)) & !is.na(covid_death_date),
+    covid_death_indicator = coalesce(covid_death_date <= pmin(censor_date, death_date, na.rm = TRUE), FALSE),
+
+    # time from snapshot date until covid critical care admission OR death
+    covid_critcare_death_date = pmin(covid_critcare_date, covid_death_date, na.rm = TRUE),
+    covid_critcare_death_time = as.integer(pmin(covid_critcare_death_date, death_date, censor_date, na.rm = TRUE) - snapshot_date) + 1L,
+    covid_critcare_death_indicator = coalesce(covid_critcare_death_date <= pmin(censor_date, death_date, na.rm = TRUE), FALSE),
 
     # time from snapshot date until death
     death_time = as.integer(pmin(death_date, censor_date, na.rm = TRUE) - snapshot_date) + 1L,
-    death_indicator = (death_date <= pmin(censor_date, death_date, na.rm = TRUE)) & !is.na(death_date),
+    death_indicator = coalesce(death_date <= pmin(censor_date, death_date, na.rm = TRUE), FALSE),
 
     # time from snapshot date until deregistration
     deregistration_time = as.integer(pmin(deregistered_date, censor_date, na.rm = TRUE) - snapshot_date) + 1L,
-    deregistration_indicator = (deregistered_date <= pmin(censor_date, na.rm = TRUE)) & !is.na(deregistered_date),
+    deregistration_indicator = coalesce(deregistered_date <= pmin(censor_date, na.rm = TRUE), FALSE),
 
     # indicator for if patient is alive and registered at the end of the campaign (for comparison with UKHSA reporting)
     alive_and_registered = (!death_indicator) & (!deregistration_indicator)
@@ -989,7 +994,7 @@ get_all_estimates <- function(data, event_name, event_time, event_indicator) {
 
           summary_data <-
             data |>
-            mutate(
+            mutate(            
               group1_value = data[[group1]],
             ) |>
             nest(.by = c(group1_value), .key = "group1_subset") |>
@@ -1040,6 +1045,7 @@ get_all_estimates(data_combined, "covid_admitted", "covid_admitted_time", "covid
 get_all_estimates(data_combined, "covid_admitted_primary", "covid_admitted_primary_time", "covid_admitted_primary_indicator")
 get_all_estimates(data_combined, "covid_critcare", "covid_critcare_time", "covid_critcare_indicator")
 get_all_estimates(data_combined, "covid_death", "covid_death_time", "covid_death_indicator")
+get_all_estimates(data_combined, "covid_critcare_death", "covid_critcare_death_time", "covid_critcare_death_indicator")
 
 
 ## Function to output length of stay quantiles for different subgroups ----
