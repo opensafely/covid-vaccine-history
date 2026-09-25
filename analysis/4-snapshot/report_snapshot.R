@@ -200,7 +200,12 @@ data_combined <-
     covid_death_time = as.integer(pmin(covid_death_date, death_date, censor_date, na.rm = TRUE) - snapshot_date) + 1L,
     covid_death_indicator = coalesce(covid_death_date <= pmin(censor_date, death_date, na.rm = TRUE), FALSE),
 
-    # time from snapshot date until covid critical care admission OR death
+    # time from snapshot date until covid admission OR covid death
+    covid_admitted_death_date = pmin(covid_admitted_date, covid_death_date, na.rm = TRUE),
+    covid_admitted_death_time = as.integer(pmin(covid_admitted_death_date, death_date, censor_date, na.rm = TRUE) - snapshot_date) + 1L,
+    covid_admitted_death_indicator = coalesce(covid_admitted_death_date <= pmin(censor_date, death_date, na.rm = TRUE), FALSE),
+
+    # time from snapshot date until covid critical care admission OR covid death
     covid_critcare_death_date = pmin(covid_critcare_date, covid_death_date, na.rm = TRUE),
     covid_critcare_death_time = as.integer(pmin(covid_critcare_death_date, death_date, censor_date, na.rm = TRUE) - snapshot_date) + 1L,
     covid_critcare_death_indicator = coalesce(covid_critcare_death_date <= pmin(censor_date, death_date, na.rm = TRUE), FALSE),
@@ -1045,6 +1050,7 @@ get_all_estimates(data_combined, "covid_admitted", "covid_admitted_time", "covid
 get_all_estimates(data_combined, "covid_admitted_primary", "covid_admitted_primary_time", "covid_admitted_primary_indicator")
 get_all_estimates(data_combined, "covid_critcare", "covid_critcare_time", "covid_critcare_indicator")
 get_all_estimates(data_combined, "covid_death", "covid_death_time", "covid_death_indicator")
+get_all_estimates(data_combined, "covid_admitted_death", "covid_admitted_death_time", "covid_admitted_death_indicator")
 get_all_estimates(data_combined, "covid_critcare_death", "covid_critcare_death_time", "covid_critcare_death_indicator")
 
 
