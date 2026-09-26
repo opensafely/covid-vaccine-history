@@ -86,7 +86,7 @@ fct_case_when <- function(...) {
 
 study_dates <-
   list(
-    firstpossiblevax_date = "2020-07-01",
+    firstpossiblevax_date = "2020-03-02", # approximate date when people started to be included in trials
     start_date = "2020-12-07",
     end_date = "2026-03-31"
   ) |>
@@ -103,8 +103,8 @@ sdc_threshold <- 10L
 campaign_info <-
   tribble(
     ~campaign_label,        ~campaign_start_date,      ~primary_milestone_date, ~age_date, ~age_threshold, ~clinical_priority,
-    "Pre-2020-07-01", "1900-01-01", "1900-01-01", "1900-01-01", 16, "primis_atrisk",
-    "Pre-roll-out",   as.character(study_dates$firstpossiblevax_date), as.character(study_dates$firstpossiblevax_date), as.character(study_dates$firstpossiblevax_date), 16, "primis_atrisk",
+    "Pre-pandemic", "1900-01-01", "1900-01-01", "1900-01-01", 16, "",
+    "Pre-roll-out",   as.character(study_dates$firstpossiblevax_date), as.character(study_dates$firstpossiblevax_date), as.character(study_dates$firstpossiblevax_date), 16, "",
     "Primary series", "2020-12-07", "2021-06-30", "2021-03-31", 16, "primis_atrisk",
     "Autumn 2021",    "2021-09-06", "2022-02-28", "2021-08-31", 16, "primis_atrisk",
     "Spring 2022",    "2022-03-21", "2022-06-30", "2022-06-30", 75, "immunosuppressed",
@@ -403,10 +403,12 @@ standardise_primis_and_extended_characteristics <-
 
     cns_learndis = (cns | learndis),
 
-    sickle_cell_asplenia = (sickle_cell | asplenia)
+    sickle_cell_asplenia = (sickle_cell | asplenia),
+
+    primis_atrisk_count = crd + chd + ckd + cld + cns_learndis + diabetes + immunosuppressed + asplenia + severe_obesity + smi,
+
+    primis_atrisk_count_fct = cut(primis_atrisk_count, breaks = c(0,1,2,3,4,Inf), labels = c("0", "1", "2", "3", "4+"), right= FALSE)
   )
-
-
 
 # function to convert ethnicity 16 group into 5 group
 ethnicity_16_to_5 <- function(x) {
@@ -466,6 +468,7 @@ level2_group <- c(
 
   # Core clinical risk subgroups
   "primis_atrisk",
+  "primis_atrisk_count_fct",
   "crd",
   "chd",
   "ckd",
@@ -486,7 +489,8 @@ level2_group <- c(
   "cochlear_implant",   # Cochlear implant
   "cystic_fibrosis",    # Cystic fibrosis
   "csfl",               # Cerebrospinal fluid leak
-  "homeless"           # Homeless
+  "homeless",           # Homeless
+  "last_vax_campaign_fct" # time since prior vaccination
 )
 
 level_combos <-
@@ -495,10 +499,12 @@ level_combos <-
     group2 = level2_group
   ) |>
   filter(
-    (group1 == group2) %in% c(FALSE, NA) | (group1 == "all"),
-    !((group1 %in% c("ageband4", "ageband13")) & (group2 %in% c("ageband4", "ageband13"))),
-    !((group1 %in% c("age_above_eligiblity_threshold", "clinical_priority_only")) & (group2 %in% c("ageband4", "ageband13"))),
-    !((group1 %in% c("clinical_priority_only")) & (group2 %in% c("primis_atrisk"))),
+    (group1 == group2) %in% c(FALSE, NA) | (group1 == "all"), # remove if group1 and group2 are the same, unless both are "all"
+    !((group1 != "all") & (group2 == "all")), # remove if group2 is all and group1 is not all (as all*X breakdowns are covered when group1="all")
+    !((group1 %in% c("ageband4", "ageband13")) & (group2 %in% c("ageband4", "ageband13"))), # do not do breakdowns for different age groups
+    !((group1 %in% c("age_above_eligiblity_threshold", "clinical_priority_only")) & (group2 %in% c("ageband4", "ageband13"))), # do not embed age breakdowns inside eligibility as these are aready covered by age alone
+    !((group1 %in% c("clinical_priority_only")) & (group2 %in% c("primis_atrisk"))), # do not embed primis risk yes/no inside clinical priority eligibility 
+    !((group1 %in% c("primis_atrisk")) & (group2 %in% c("primis_atrisk_count_fct"))), # do not embed primis count breakdowns inside primis yes/no
   )
 
 # Local run flag ----
