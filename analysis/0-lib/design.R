@@ -405,7 +405,7 @@ standardise_primis_and_extended_characteristics <-
 
     sickle_cell_asplenia = (sickle_cell | asplenia),
 
-    primis_atrisk_count = immunosuppressed + ckd + diabetes + crd + cld + chd + asplenia + cns + learndis + smi + severe_obesity,
+    primis_atrisk_count = crd + chd + ckd + cld + cns_learndis + diabetes + immunosuppressed + asplenia + severe_obesity + smi,
 
     primis_atrisk_count_fct = cut(primis_atrisk_count, breaks = c(0,1,2,3,4,Inf), labels = c("0", "1", "2", "3", "4+"), right= FALSE)
   )
