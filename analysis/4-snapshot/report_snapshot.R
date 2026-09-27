@@ -970,10 +970,12 @@ adjusted_estimates <- function(data, subgroup, event_time, event_indicator) {
       )
   }
 
-  return(data_poisson)
-
+  
   rm(data_outcome)
   gc()
+  
+  return(data_poisson)
+
 }
 
 #  adjusted_estimates(data_combined, "ageband4", "covid_admitted_time", "covid_admitted_indicator")
