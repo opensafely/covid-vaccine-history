@@ -1057,8 +1057,6 @@ get_all_estimates(data_combined, "covid_critcare_death", "covid_critcare_death_t
 ## Function to output length of stay quantiles for different subgroups ----
 los_estimates <- function(data, subgroup, event_los) {
 
-  subgroup_name <- deparse(substitute(subgroup))
-
   # prepare dataset
   data_outcome <-
     data |>
