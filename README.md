@@ -23,7 +23,7 @@ As standard, research projects have a MIT license.
 
 # Project details
 
-This repository contains code to describe patterns of COVID-19 vaccine receipt in England since December 2020. The are two key strands:
+This repository contains code to describe patterns of COVID-19 vaccine receipt in England since December 2020. There are two key strands:
 
 1. Describing vaccine receipt -- dates and products -- over time across multiple vaccination campaigns, stratified by demographic and clinical characteristics;
 2. Describing vaccine receipt within each campaign (now settled into a regular Spring and Autumn rhythm) stratified by demographic, clinical, and prior COVID-19 vaccine characteristics.
@@ -50,7 +50,7 @@ The analysis scripts in the [`analysis/`](./analysis) directory are organised in
   - [`dataset_definition_fixed.py`](./analysis/1-extract/dataset_definition_fixed.py) is the ehrQL script for selecting all variables that are fixed (e.g., date of death), or assumed to be fixed (e.g., ethnicity), as at the study end date.
   This information is extracted once and then joined onto other datasets where needed, to save computation time.
   - [`dataset_definition_varying.py`](./analysis/1-extract/dataset_definition_varying.py) is the ehrQL script to extract information as at the time of each COVID-19 vaccine event.
-  The outputted dataset includes a set of columns for each vaccination event, with one column for each variable of interest (e.g., vaccination date, product, GP practice, deprivation level, other clinical characteristics).
+  The outputed dataset includes a set of columns for each vaccination event, with one column for each variable of interest (e.g., vaccination date, product, GP practice, deprivation level, other clinical characteristics).
   For instance, region_i (region_1, region_2, region_3, ...) represents the region of the person's registered address at the time of the i-th COVID-19 vaccine. 
   This may be modified in future to use ehrQL's new event-level data features.
   - [`dataset_definition_snapshot.py`](./analysis/1-extract/dataset_definition_snapshot.py) is the ehrQL script to extract information as at the start of a given vaccine campaign, for anyone alive and registered on the snapshot date. 
@@ -61,7 +61,7 @@ The analysis scripts in the [`analysis/`](./analysis) directory are organised in
   - [`variables.py`](./analysis/1-extract/variables_function.py) contains some function and variable definitions to be read in by the dataset definition.
   - [`codelist.py`](./analysis/1-extract/codelists.py) pulls the codelists from the [`codelists/`](./codelists/) directory to be usable in the dataset definition. 
 - [`2-prepare/`](./analysis/2-prepare/):
-  - [`prepare.R`](./analysis/2-prepare/prepare.R) this script imports the extracted database data (or dummy data) from the `fixed` and `varying` datasets, tidies some variables, derives some new ones, and and reshapes the time-varying data to be one-row-per-vaccine.
+  - [`prepare.R`](./analysis/2-prepare/prepare.R) this script imports the extracted database data (or dummy data) from the `fixed` and `varying` datasets, tidies some variables, derives some new ones, and reshapes the time-varying data to be one-row-per-vaccine.
 - [`3-history/`](./analysis/3-history/)
   - [`report_history.R`](./analysis/3-history/report_history.R) collects all processed vaccination data and reports vaccine counts and products, by week, over the observation period, across a number of subgroups.
 - [`4-snapshot/`](./analysis/4-snapshot/)
