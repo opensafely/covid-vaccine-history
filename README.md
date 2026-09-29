@@ -43,7 +43,7 @@ The analysis scripts in the [`analysis/`](./analysis) directory are organised in
 - [`0-lib/`](./analysis/0-lib/):
   - [`design.R`](./analysis/0-lib/design.R) defines the design configurations used throughout the study - start and end dates, eligibility, products, look-up dictionaries, etc.
   It also defines R functions used throughout the codebase.
-  This script is run at the start of all relevant R scripts. 
+  This script is run at the start of each relevant R script. 
   It must also be run manually if values in either of the [`study_dates.json`](./analysis/0-lib/study_dates.json) or [`campaign_info.json`](./analysis/0-lib/campaign_info.json) files need to be updated, 
   so that the ehrQL scripts use the most up-to-date values too. 
 - [`1-extract/`](./analysis/1-extract/):
@@ -52,14 +52,13 @@ The analysis scripts in the [`analysis/`](./analysis) directory are organised in
   - [`dataset_definition_varying.py`](./analysis/1-extract/dataset_definition_varying.py) is the ehrQL script to extract information as at the time of each COVID-19 vaccine event.
   The outputed dataset includes a set of columns for each vaccination event, with one column for each variable of interest (e.g., vaccination date, product, GP practice, deprivation level, other clinical characteristics).
   For instance, region_i (region_1, region_2, region_3, ...) represents the region of the person's registered address at the time of the i-th COVID-19 vaccine. 
-  This may be modified in future to use ehrQL's new event-level data features.
   - [`dataset_definition_snapshot.py`](./analysis/1-extract/dataset_definition_snapshot.py) is the ehrQL script to extract information as at the start of a given vaccine campaign, for anyone alive and registered on the snapshot date. 
   `snapshot_date` is a parameter supplied to this script in the project.yaml file, representing the start date of the campaign of interest, which must be supplied in the format `YYYYMMDD`.
   - [`dummy_dataset_definition_....R`](./analysis/1-extract/) are the corresponding R scripts that create custom dummy data for each of the 3 dataset definitions. 
   Custom dummy data is used instead of the dummy data created by ehrQL as it provides more control over the structure in the data, such as more realistic vaccination dates or event rates.
   If a dataset definition is updated, the dummy dataset definition script must also be updated to ensure all variable names and types match.
-  - [`variables.py`](./analysis/1-extract/variables_function.py) contains some function and variable definitions to be read in by the dataset definition.
-  - [`codelist.py`](./analysis/1-extract/codelists.py) pulls the codelists from the [`codelists/`](./codelists/) directory to be usable in the dataset definition. 
+  - [`variables_function.py`](./analysis/1-extract/variables_function.py) contains some function and variable definitions to be read in by the dataset definition.
+  - [`codelists.py`](./analysis/1-extract/codelists.py) pulls the codelists from the [`codelists/`](./codelists/) directory to be usable in the dataset definition. 
 - [`2-prepare/`](./analysis/2-prepare/):
   - [`prepare.R`](./analysis/2-prepare/prepare.R) this script imports the extracted database data (or dummy data) from the `fixed` and `varying` datasets, tidies some variables, derives some new ones, and reshapes the time-varying data to be one-row-per-vaccine.
 - [`3-history/`](./analysis/3-history/)
@@ -76,7 +75,7 @@ The structure of the output directory (not tracked via git) is designed to match
 - `2-prepare/` - this directory contains outputs from the preparation scripts, which performs some data cleaning, data validation checks, and outputs processed data for analysis:
   - `vax_data_quality/count_product.csv` reports the count of each vaccine product, and the earliest date that this product was given, across the entire history of the Covid-19 vaccination programme. Counts are stratified by adults / children. 
   - `vax_data_quality/count_product_campaign.csv` reports the count of each vaccine product, and the earliest date that this product was given, for each vaccination campaign separately.
-  - `vax_data_quality/count_product_cooccurrence.csv` reports the number of times that a person was recorded as being vaccinated with a particular combination of Covid-19 vaccines on the same day. For instance, "1x pfizer_original" or or "1x pfizer_original AND 2x az_original" on the same day. Co-occurrence of two or more vaccines is almost certainly due to data quality issues, and this table helps determine how best to deal with these issues.
+  - `vax_data_quality/count_product_cooccurrence.csv` reports the number of times that a person was recorded as being vaccinated with a particular combination of Covid-19 vaccines on the same day. For instance, "1x pfizer_original" or "1x pfizer_original AND 2x az_original" on the same day. Co-occurrence of two or more vaccines is almost certainly due to data quality issues, and this table helps determine how best to deal with these issues.
   - `vax_data_quality/count_product_cooccurrence_campaign.csv` as above, for each vaccination campaign separately.
   - `prepare/data_extract_fixed_skim.txt` a summary of the `extract_fixed.arrow` dataset, created by the [`dataset_definition_fixed.py`](./analysis/1-extract/dataset_definition_fixed.py) script and imported into R.
   - `prepare/data_processed_fixed_skim.txt` a summary of the post-processed `extract_fixed` dataset.
@@ -104,6 +103,7 @@ The structure of the output directory (not tracked via git) is designed to match
   - `prior_vax_table.csv` summary data for the interval between the most recent previous Covid-19 vaccination (if any) and start of the vaccination campaign.
   - `vax_count_[level1_variable].csv` summary of the number of prior Covid-19 vaccinations received at the start of the campaign, stratified by level-1 variable.
   - `vax_count_[level1_variable].png` bar-chart depicting the number of prior Covid-19 vaccinations received at the start of the campaign, stratified by level-1 variable.
+  - `los_[outcome]` summary of the length of stay of hospitalisation, aggregated across all hospitalisations beginning in the campaign period, stratified by level-1 and level-2 variables.
 
 
 Examples of output files, using dummy data, are provided in [`assets/output-examples/`](./assets/output-examples) directory.
