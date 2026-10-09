@@ -455,7 +455,6 @@ ethnicity_16_to_5 <- function(x) {
 ## --VARIABLES--
 
 level1_group <- c(
-
   # Level 1A (all)
   "all",
 
@@ -467,7 +466,7 @@ level1_group <- c(
 
   # Level 1D (eligibility)
   "any_eligibility",
-  "age_above_eligiblity_threshold",
+  "age_above_eligibility_threshold",
   "clinical_priority",
   "clinical_priority_only",
   "carehome_status",
@@ -534,10 +533,15 @@ level_combos <-
   filter(
     (group1 == group2) %in% c(FALSE, NA) | (group1 == "all"), # remove if group1 and group2 are the same, unless both are "all"
     !((group1 != "all") & (group2 == "all")), # remove if group2 is all and group1 is not all (as all*X breakdowns are covered when group1="all")
-    !((group1 %in% c("ageband4", "ageband13")) & (group2 %in% c("ageband4", "ageband13"))), # do not do breakdowns for different age groups
-    !((group1 %in% c("age_above_eligiblity_threshold", "clinical_priority_only")) & (group2 %in% c("ageband4", "ageband13"))), # do not embed age breakdowns inside eligibility as these are aready covered by age alone
-    !((group1 %in% c("clinical_priority_only")) & (group2 %in% c("primis_atrisk"))), # do not embed primis risk yes/no inside clinical priority eligibility 
-    !((group1 %in% c("primis_atrisk")) & (group2 %in% c("primis_atrisk_count_fct"))), # do not embed primis count breakdowns inside primis yes/no
+    !((group1 %in% c("ageband4", "ageband13")) &
+      (group2 %in% c("ageband4", "ageband13"))), # do not do breakdowns for different age groups
+    !((group1 %in%
+      c("age_above_eligibility_threshold", "clinical_priority_only")) &
+      (group2 %in% c("ageband4", "ageband13"))), # do not embed age breakdowns inside eligibility as these are aready covered by age alone
+    !((group1 %in% c("clinical_priority_only")) &
+      (group2 %in% c("primis_atrisk"))), # do not embed primis risk yes/no inside clinical priority eligibility
+    !((group1 %in% c("primis_atrisk")) &
+      (group2 %in% c("primis_atrisk_count_fct"))), # do not embed primis count breakdowns inside primis yes/no
   )
 
 # Local run flag ----

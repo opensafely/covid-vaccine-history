@@ -50,7 +50,7 @@ The analysis scripts in the [`analysis/`](./analysis) directory are organised in
   - [`dataset_definition_fixed.py`](./analysis/1-extract/dataset_definition_fixed.py) is the ehrQL script for selecting all variables that are fixed (e.g., date of death), or assumed to be fixed (e.g., ethnicity), as at the study end date.
   This information is extracted once and then joined onto other datasets where needed, to save computation time.
   - [`dataset_definition_varying.py`](./analysis/1-extract/dataset_definition_varying.py) is the ehrQL script to extract information as at the time of each COVID-19 vaccine event.
-  The outputed dataset includes a set of columns for each vaccination event, with one column for each variable of interest (e.g., vaccination date, product, GP practice, deprivation level, other clinical characteristics).
+  The outputted dataset includes a set of columns for each vaccination event, with one column for each variable of interest (e.g., vaccination date, product, GP practice, deprivation level, other clinical characteristics).
   For instance, region_i (region_1, region_2, region_3, ...) represents the region of the person's registered address at the time of the i-th COVID-19 vaccine. 
   - [`dataset_definition_snapshot.py`](./analysis/1-extract/dataset_definition_snapshot.py) is the ehrQL script to extract information as at the start of a given vaccine campaign, for anyone alive and registered on the snapshot date. 
   `snapshot_date` is a parameter supplied to this script in the project.yaml file, representing the start date of the campaign of interest, which must be supplied in the format `YYYYMMDD`.
@@ -108,7 +108,7 @@ The structure of the output directory (not tracked via git) is designed to match
 
 Examples of output files, using dummy data, are provided in [`assets/output-examples/`](./assets/output-examples) directory.
 
-The actual outputed files are available from the [project workspace page on the OpenSAFELY job server site](https://jobs.opensafely.org/echo-evaluation-of-covid-19-vaccine-histories-using-opensafely/covid-vaccine-history/):
+The actual outputted files are available from the [project workspace page on the OpenSAFELY job server site](https://jobs.opensafely.org/echo-evaluation-of-covid-19-vaccine-histories-using-opensafely/covid-vaccine-history/):
 - [Released outputs](https://jobs.opensafely.org/echo-evaluation-of-covid-19-vaccine-histories-using-opensafely/covid-vaccine-history/releases/) are visible to the project team, following strict output-checking processes.
 - [Published outputs](https://jobs.opensafely.org/echo-evaluation-of-covid-19-vaccine-histories-using-opensafely/covid-vaccine-history/releases/) are visible to the public. Outputs can only be published following review by [OpenSAFELY's DATAPAST function](https://docs.opensafely.org/datapast/). 
 
