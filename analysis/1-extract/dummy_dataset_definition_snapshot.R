@@ -93,17 +93,21 @@ for (snapshot_date in all_snapshot_dates) {
       ~ factor(as.integer(runif(n = ..n, 1, 36)), levels = 1:36)
     ),
     region = bn_node(
-      variable_formula = ~ rfactor(n = ..n, levels = c(
-        "North East",
-        "North West",
-        "Yorkshire and The Humber",
-        "East Midlands",
-        "West Midlands",
-        "East",
-        "London",
-        "South East",
-        "South West"
-      ), p = c(0.2, 0.2, 0.3, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05))
+      variable_formula = ~ rfactor(
+        n = ..n,
+        levels = c(
+          "North East",
+          "North West",
+          "Yorkshire and The Humber",
+          "East Midlands",
+          "West Midlands",
+          "East",
+          "London",
+          "South East",
+          "South West"
+        ),
+        p = c(0.2, 0.2, 0.3, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05)
+      )
     ),
     carehome_status = bn_node(
       ~ rbernoulli(n = ..n, p = if_else(age < 65, 0.01, 0.2)),
@@ -143,25 +147,43 @@ for (snapshot_date in all_snapshot_dates) {
       ~ rbernoulli(n = ..n, p = 0.02),
     ),
     primis_atrisk = bn_node(
-      ~ crd | chd | ckd | cld | cns | learndis | diabetes | immunosuppressed | asplenia | severe_obesity | smi,
+      ~ crd |
+        chd |
+        ckd |
+        cld |
+        cns |
+        learndis |
+        diabetes |
+        immunosuppressed |
+        asplenia |
+        severe_obesity |
+        smi,
     ),
     # extended subgroups
     rrt_cat = bn_node(
-      variable_formula = ~ rfactor(n = ..n, levels = c(
-        "0 no RRT",
-        "1 dialysis",
-        "2 transplant"),
-      p = c(0.98, 0.01, 0.01)
-      )),
+      variable_formula = ~ rfactor(
+        n = ..n,
+        levels = c(
+          "0 no RRT",
+          "1 dialysis",
+          "2 transplant"
+        ),
+        p = c(0.98, 0.01, 0.01)
+      )
+    ),
     ckd_stage_3to5 = bn_node(
-      variable_formula = ~ rfactor(n = ..n, levels = c(
-        "no CKD",
-        "3",
-        "4",
-        "5",
-        "CKD, without stage 3-5 code"),
-      p = c(0.90, 0.06, 0.02, 0.01, 0.01)
-      )),
+      variable_formula = ~ rfactor(
+        n = ..n,
+        levels = c(
+          "no CKD",
+          "3",
+          "4",
+          "5",
+          "CKD, without stage 3-5 code"
+        ),
+        p = c(0.90, 0.06, 0.02, 0.01, 0.01)
+      )
+    ),
     # creatinine_umol = bn_node(
     #   ~ as.numeric(runif(n = ..n, 20.0, 3000.0)),
     #   missing_rate = ~0.60
@@ -172,13 +194,17 @@ for (snapshot_date in all_snapshot_dates) {
       ~ rbernoulli(n = ..n, p = 0.02),
     ),
     learndis_cat = bn_node(
-      variable_formula = ~ rfactor(n = ..n, levels = c(
-        "No learning disability",
-        "Down's syndrome",
-        "Other learning disability",
-        "Learning disability register"),
-      p = c(0.80, 0.05, 0.1, 0.05)
-      )),
+      variable_formula = ~ rfactor(
+        n = ..n,
+        levels = c(
+          "No learning disability",
+          "Down's syndrome",
+          "Other learning disability",
+          "Learning disability register"
+        ),
+        p = c(0.80, 0.05, 0.1, 0.05)
+      )
+    ),
     sickle_cell = bn_node(
       ~ rbernoulli(n = ..n, p = 0.02),
     ),
@@ -207,8 +233,14 @@ for (snapshot_date in all_snapshot_dates) {
       missing_rate = ~0.95,
       needs = "covid_vax_1_day"
     ),
-    covid_vax_1_product = bn_node(~ rcat(n = ..n, c("pfizer", "az", "moderna"), c(0.5, 0.3, 0.2)), needs = "covid_vax_1_day"),
-    covid_vax_2_product = bn_node(~ if_else(runif(..n) < 0.98, covid_vax_1_product, "pfizer"), needs = "covid_vax_2_day"),
+    covid_vax_1_product = bn_node(
+      ~ rcat(n = ..n, c("pfizer", "az", "moderna"), c(0.5, 0.3, 0.2)),
+      needs = "covid_vax_1_day"
+    ),
+    covid_vax_2_product = bn_node(
+      ~ if_else(runif(..n) < 0.98, covid_vax_1_product, "pfizer"),
+      needs = "covid_vax_2_day"
+    ),
 
     covid_vax_prior_1_day = bn_node(
       ~ runif(n = ..n, snapshot_day - 400, snapshot_day - 200),
@@ -216,19 +248,36 @@ for (snapshot_date in all_snapshot_dates) {
       needs = "covid_vax_1_day"
     ),
     covid_vax_prior_2_day = bn_node(
-      ~ runif(n = ..n, covid_vax_prior_1_day - 400, covid_vax_prior_1_day - 200),
+      ~ runif(
+        n = ..n,
+        covid_vax_prior_1_day - 400,
+        covid_vax_prior_1_day - 200
+      ),
       missing_rate = ~0.1,
       needs = "covid_vax_prior_1_day"
     ),
     covid_vax_prior_3_day = bn_node(
-      ~ runif(n = ..n, covid_vax_prior_2_day - 400, covid_vax_prior_2_day - 200),
+      ~ runif(
+        n = ..n,
+        covid_vax_prior_2_day - 400,
+        covid_vax_prior_2_day - 200
+      ),
       missing_rate = ~0.1,
       needs = "covid_vax_prior_2_day"
     ),
 
-    covid_vax_prior_1_product = bn_node(~ rcat(n = ..n, c("pfizer", "az", "moderna"), c(0.5, 0.3, 0.2)), needs = "covid_vax_prior_1_day"),
-    covid_vax_prior_2_product = bn_node(~ rcat(n = ..n, c("pfizer", "az", "moderna"), c(0.5, 0.3, 0.2)), needs = "covid_vax_prior_2_day"),
-    covid_vax_prior_3_product = bn_node(~ rcat(n = ..n, c("pfizer", "az", "moderna"), c(0.5, 0.3, 0.2)), needs = "covid_vax_prior_3_day"),
+    covid_vax_prior_1_product = bn_node(
+      ~ rcat(n = ..n, c("pfizer", "az", "moderna"), c(0.5, 0.3, 0.2)),
+      needs = "covid_vax_prior_1_day"
+    ),
+    covid_vax_prior_2_product = bn_node(
+      ~ rcat(n = ..n, c("pfizer", "az", "moderna"), c(0.5, 0.3, 0.2)),
+      needs = "covid_vax_prior_2_day"
+    ),
+    covid_vax_prior_3_product = bn_node(
+      ~ rcat(n = ..n, c("pfizer", "az", "moderna"), c(0.5, 0.3, 0.2)),
+      needs = "covid_vax_prior_3_day"
+    ),
 
     covid_vax_prior_count = bn_node(~ as.integer(runif(n = ..n, 0, 15))), # in  dummy data, this will not match total vax count in "time-varying" dataset, but that's ok
 
@@ -243,7 +292,11 @@ for (snapshot_date in all_snapshot_dates) {
     ),
 
     covid_admitted_primary_day = bn_node(
-      ~ if_else(rbernoulli(n = ..n, p = 0.5) == 1, covid_admitted_day, NA_integer_)
+      ~ if_else(
+        rbernoulli(n = ..n, p = 0.5) == 1,
+        covid_admitted_day,
+        NA_integer_
+      )
     ),
 
     covid_critcare_day = bn_node(

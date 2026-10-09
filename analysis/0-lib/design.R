@@ -318,7 +318,6 @@ factor_levels <-
 # using this in mutate like this: `mutate(!!!standardise_demographic_characteristics)`
 standardise_demographic_characteristics <-
   rlang::quos(
-
     ## --VARIABLES--
     ## demographics
     ageband4 = cut(
@@ -329,8 +328,42 @@ standardise_demographic_characteristics <-
     ),
     ageband13 = cut(
       age,
-      breaks = c(-Inf, 12, 18, 30, 40, 50, 55, 60, 65, 70, 75, 80, 85, 90, 105, Inf),
-      labels = c("under 12", "12-17", "18-29", "30-39", "40-49", "50-54", "55-59", "60-64", "65-69", "70-74", "75-79", "80-84", "85-89", "90-104", "105+"), # under 12 and 105+ should be excluded in analysis but include here to ensure nobody slipped through the net
+      breaks = c(
+        -Inf,
+        12,
+        18,
+        30,
+        40,
+        50,
+        55,
+        60,
+        65,
+        70,
+        75,
+        80,
+        85,
+        90,
+        105,
+        Inf
+      ),
+      labels = c(
+        # under 12 and 105+ should be excluded in analysis but include here to ensure nobody slipped through the net
+        "under 12",
+        "12-17",
+        "18-29",
+        "30-39",
+        "40-49",
+        "50-54",
+        "55-59",
+        "60-64",
+        "65-69",
+        "70-74",
+        "75-79",
+        "80-84",
+        "85-89",
+        "90-104",
+        "105+"
+      ),
       right = FALSE
     ),
     region = fct_collapse(
