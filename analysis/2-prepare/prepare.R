@@ -183,13 +183,13 @@ data_vax_ELD_cleaned <-
     is.na(vax_interval) | vax_interval >= 14,
   )
 
-  # save to disk and rename to original vaccination table names
+  # save to disk and select original columns with original names
   data_vax_ELD_cleaned |>
     as_tibble() |>
     transmute(
       patient_id,
+      vaccination_id = vax_id,
       date = vax_date,
       product_name = vax_product
     ) |>
-    write_feather(fs::path(output_dir, "data_vax_ELD_cleaned.arrow"))
-
+    write_feather(fs::path(output_dir, "table_vax_ELD_cleaned.arrow"))

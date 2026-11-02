@@ -25,6 +25,7 @@ from ehrql import (
 from ehrql.tables.tpp import (
   patients,
   practice_registrations, 
+  vaccinations,
   apcs,
   ons_deaths,
 )
@@ -96,11 +97,18 @@ extended_subgroups(dataset = dataset, index_date = snapshot_date)
 
 # import cleaned vaccination table
 covid_vaccinations_cleaned = table_from_file(
-    "output/2-prepare/prepare/data_vax_ELD_cleaned.arrow",
+    "output/2-prepare/prepare/table_vax_ELD_cleaned.arrow",
     columns={
+        "vaccination_id": int,
         "date": datetime.date,
         "product_name": str,
     }
+)
+
+covid_vaccinations = (
+  vaccinations
+  .where(vaccinations.vaccination_id.is_in(covid_vaccinations_cleaned.vaccination_id))
+  .sort_by(vaccinations.date)
 )
 
 # retrieve first 3 vaccines before and first 2 vaccines on or after snapshot date
@@ -108,7 +116,7 @@ covid_vaccinations_cleaned = table_from_file(
 # add next 2 recorded covid vaccination
 add_n_vaccines(
     dataset = dataset, 
-    table = covid_vaccinations_cleaned,
+    table = covid_vaccinations,
     index_date = snapshot_date, 
     name = "covid_vax", 
     direction = "on_or_after",
@@ -119,7 +127,7 @@ add_n_vaccines(
 # add most recent 3 vaccines prior to snapshot date
 add_n_vaccines(
     dataset = dataset, 
-    table = covid_vaccinations_cleaned,
+    table = covid_vaccinations,
     index_date = snapshot_date, 
     name = "covid_vax_prior", 
     direction = "before",
@@ -129,7 +137,7 @@ add_n_vaccines(
 
 # count total number of vaccines prior to vaccine date
 dataset.covid_vax_prior_count = (
-    covid_vaccinations_cleaned
+    covid_vaccinations
     .where(covid_vaccinations_cleaned.date.is_before(snapshot_date))
     .count_for_patient()
 )
