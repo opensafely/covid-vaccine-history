@@ -76,113 +76,36 @@ data_processed_fixed |>
   write_feather(fs::path(output_dir, "data_fixed.arrow"))
 
 
-
 ## delete in-memory objects to save space
 rm(data_processed_fixed)
 rm(data_extract_fixed)
 
 
-# Import and process fixed dataset ----
-
-# import
-# data_extract_varying <-
-#  import_extract(
-#    here("lib", "dummydata", "dummyinput_varying.arrow"),
-#    here("output", "extracts", "extract_varying.arrow")
-#  )
-
-data_extract_varying <- read_feather(here("output", "1-extract", "extract_varying", "dataset.arrow"))
-
-# Reshape vaccination data
-data_vax <-
-  data_extract_varying |>
-  # lazy_dt() |>
-  select(
-    patient_id,
-    matches("covid_vax\\_\\d+\\_date"),
-    matches("covid_vax_product_\\d+"),
-    matches("registered_\\d+"),
-    matches("deregistered_\\d+"),
-    matches("age_\\d+"),
-    matches("region_\\d+"),
-    matches("stp_\\d+"),
-    matches("imd_\\d+"),
-    matches("imd_quintile_\\d+"),
-  ) |>
-  pivot_longer(
-    cols = -patient_id,
-    names_to = c(".value", "vax_index"),
-    names_pattern = "^(.*)_(\\d+)",
-    # values_drop_na = TRUE, # this causes an error in dtplyr - replace with filter(!is_na(covid_vax))
-    # names_transform = list(vax_index = as.integer) # not supported by dtplyr - use vax_index = as.integer(vax_index) in a mutate step
-  ) |>
-  filter(!is.na(covid_vax)) |>
-  mutate(
-    vax_index = as.integer(vax_index)
-  ) |>
-  rename(
-    vax_date = covid_vax,
-    vax_product = covid_vax_product,
-  ) |>
-  # as_tibble() |> # insert this here to revert to standard dplyr as `cut` function doesn't work with dtplyr
-  mutate(
-    !!!standardise_demographic_characteristics,
-    vax_campaign = cut(
-      vax_date,
-      breaks = c(campaign_info$campaign_start_date, study_dates$end_date),
-      labels = campaign_info$campaign_label,
-      include.lowest = TRUE, right = FALSE
-    )
-  ) |>
-  arrange(patient_id, vax_date) |>
-  mutate(
-    vax_product_raw = vax_product,
-    vax_product = fct_recode(factor(vax_product, vax_product_lookup), !!!vax_product_lookup) |> fct_na_value_to_level("UNMAPPED")
-  ) |>
-  group_by(patient_id) |>
-  mutate(
-    vax_interval = as.integer(vax_date - lag(vax_date, 1))
-  ) |>
-  ungroup()
-
-capture.output(
-  skimr::skim_without_charts(data_vax),
-  file = fs::path(output_dir, "data_vax_skim.txt"),
-  split = FALSE
-)
-
-# save dataset with all vaccines
-write_feather(data_vax, fs::path(output_dir, "data_vax.arrow"))
-
-# remove vaccinations occurring within 14 days of a previous vaccination
-data_vax_clean <-
-  # remove vaccine events occurring within 14 days of a previous vaccine event
-  data_vax |>
-  filter(
-    !is.na(vax_date),
-    is.na(vax_interval) | vax_interval >= 14,
-    vax_date >= study_dates$start_date,
-    vax_date <= study_dates$end_date
-  ) |>
-  group_by(patient_id) |>
-  mutate(
-    vax_index = row_number()
-  ) |>
-  ungroup()
-
-capture.output(
-  skimr::skim_without_charts(data_vax_clean),
-  file = fs::path(output_dir, "data_vax_clean_skim.txt"),
-  split = FALSE
-)
-
-# save dataset with <14-day vaccines removed
-write_feather(data_vax_clean, fs::path(output_dir, "data_vax_clean.arrow"))
-
 
 # extract event level data for vaccines ----
 
-data_vax_ELD0 <- read_feather(here("output", "1-extract", "extract_varying", "vaccinations.arrow"))
+data_vax_ELD0 <- read_feather(here(
+  "output",
+  "1-extract",
+  "extract_varying",
+  "vaccinations.arrow"
+))
+
+# when running locally, create some dummy data to make outputs more sensible
+# this should NOT EVER be run on the real data, as it will overwrite real data
+if (localrun) {
+  data_vax_ELD0 <-
+    data_vax_ELD0 |>
+    mutate(
+      vax_date = as.Date(runif(
+        n(),
+        as.Date("2019-01-12"),
+        max(campaign_info$early_milestone_date)
+      )),
+      vax_product = sample(product_info$product_tpp_name, n(), replace = TRUE)
+    )
+}
+
 
 # - remove rows where vaccination date is missing
 # - attach info about the campaign during which the vaccination was given
@@ -191,93 +114,82 @@ data_vax_ELD <-
   data_vax_ELD0 |>
   lazy_dt() |>
   arrange(patient_id, vax_date) |>
+  # undated vaccines are a pain, but as v low frequency the easiest thing is to remove them
   filter(!is.na(vax_date)) |>
-  # distinct(.keep_all = TRUE) |> # remove exact duplicates # or use
-  count(patient_id, vax_date, vax_product, age) |> # or alternatively, capture how many duplicate vaccines there are. This creates a new variable `n` counting the duplicates
+  # remove exact duplicates, as these are extremely likely to be duplicates rather than multiple same-product vaccines on the same day
+  distinct(.keep_all = TRUE) |>
   as_tibble() |>
   mutate(
+    # convert long product name to short version for ease
     vax_product_raw = vax_product,
-    vax_product = fct_recode(factor(vax_product, vax_product_lookup), !!!vax_product_lookup) |> fct_na_value_to_level("UNMAPPED"),
+    vax_product = factor(
+      vax_product,
+      levels = product_info$product_tpp_name,
+      labels = product_info$product_short_name
+    ) |>
+      fct_na_value_to_level("UNMAPPED"),
+    # in which campaign did the vaccine occur
     campaign = cut(
       vax_date,
       breaks = c(campaign_info$campaign_start_date, as.Date(Inf)),
       labels = campaign_info$campaign_label
     ),
-    campaign_start = cut(
-      vax_date,
-      breaks = c(campaign_info$campaign_start_date, as.Date(Inf)),
-      labels = campaign_info$campaign_start_date
-    ),
-  ) |>
-  lazy_dt()
+    # what is the campaign start date
+    campaign_start = recode_values(
+      campaign,
+      from = campaign_info$campaign_label,
+      to = campaign_info$campaign_start_date
+    )
+  ) 
 
-
-# Test equivalence of ELD extract ----
-
-data_vax_ELD_filtered <-
-  data_vax_ELD |>
-  filter(vax_date > as.Date("1899-01-01")) |>
-  group_by(patient_id) |>
-  filter((vax_date != lag(vax_date)) | row_number() == 1) |>
-  mutate(vax_index = row_number()) |>
-  filter(vax_index <= 16) |>
-  ungroup() |>
-  as_tibble()
-
+# print details about dataset
 capture.output(
-  skimr::skim_without_charts(data_vax_ELD_filtered),
+  skimr::skim_without_charts(data_vax_ELD),
   file = fs::path(output_dir, "data_vax_ELD_skim.txt"),
   split = FALSE
 )
-write_feather(data_vax_ELD_filtered, fs::path(output_dir, "data_vax_ELD.arrow"))
-
-data_vax_PLD <-
-  data_vax |>
-  select(patient_id, vax_date, vax_product = vax_product_raw, age, vax_index)
-
-capture.output(
-  skimr::skim_without_charts(data_vax_PLD),
-  file = fs::path(output_dir, "data_vax_PLD_skim.txt"),
-  split = FALSE
-)
-write_feather(data_vax_PLD, fs::path(output_dir, "data_vax_PLD.arrow"))
+write_feather(data_vax_ELD, fs::path(output_dir, "data_vax_ELD.arrow"))
 
 
-# check equality of datasets
-cat(
-  "\n",
-  "are datasets from ELD versus PLD identical after some standardisation? \n"
-)
-
-all.equal(data_vax_ELD_filtered, data_vax_PLD)
-
-# report multiple vaccinations on the same day
-cat(
-  "\n",
-  "number of occassions where a person is vaccinated more than once in a day:\n",
+data_vax_ELD_cleaned <-
   data_vax_ELD |>
-    group_by(patient_id, vax_date) |>
-    summarise(n = n()) |>
-    filter(n > 1) |>
-    nrow()
-)
+  lazy_dt() |>
+  mutate(
+    uk_approval_date = recode_values(
+      vax_product,
+      from = product_info$product_short_name,
+      to = product_info$uk_approval_date
+    ),
+    first_campaign_date = recode_values(
+      vax_product,
+      from = product_info$product_short_name,
+      to = product_info$first_campaign_date
+    )
+  ) |>
+  # Clean vaccine data for analysis where we care about uptake of vaccines in UK vaccine porgrammes
+  # - not interested in product-specific uptake, but want to exclude vaccines definitely given outside of UK
+  # - exlcude vaccines that are almost certainly duplicates (eg if recorded as given on the same day or near the same day)
+  filter(
+    # remove vaccines not approved for use in the UK
+    # for now, ignore if approved vaccine is dated before first use (or after last use). This could mean [correct product wrong date] or [wrong date correct product]
+    !is.na(uk_approval_date)
+  ) |>
+  mutate(
+    vax_interval = as.integer(vax_date - lag(vax_date, 1)),
+    .by = patient_id
+  ) |>
+  filter(
+    # remove vaccines occurring with 14 days of previous vaccine
+    is.na(vax_interval) | vax_interval >= 14,
+  )
 
-# report no vax date
-cat(
-  "\n",
-  "number of occassions where a person is vaccinated with a null date:\n",
-  data_vax_ELD |>
+  # save to disk and rename to original vaccination table names
+  data_vax_ELD_cleaned |>
     as_tibble() |>
-    nrow()
-)
+    transmute(
+      patient_id,
+      date = vax_date,
+      product_name = vax_product
+    ) |>
+    write_feather(fs::path(output_dir, "data_vax_ELD_cleaned.arrow"))
 
-
-# report no vax date
-cat(
-  "\n",
-  "number of occassions where a person is vaccinated on or before 1899:\n",
-  data_vax_ELD |>
-    filter(vax_date <= as.Date("1899-01-01")) |>
-    as_tibble() |>
-    nrow()
-)
