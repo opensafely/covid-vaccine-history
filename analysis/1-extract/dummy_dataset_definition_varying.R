@@ -342,8 +342,8 @@ dummydata_processed <- dummydata %>%
     starts_with("covid_vax_product_"),
     ~ factor(
       .,
-      levels = names(vax_product_lookup),
-      labels = unname(vax_product_lookup)
+      levels = product_info$product_short_name,
+      labels = product_info$product_tpp_name
     )
   ))
 
@@ -352,3 +352,4 @@ write_feather(
   dummydata_processed,
   sink = here("analysis", "1-extract", "dummy-data", "dummy_varying.arrow")
 )
+
