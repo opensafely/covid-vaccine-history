@@ -54,6 +54,7 @@ actions:
       --dummy-data-file analysis/1-extract/dummy-data/dummy_snapshot_20201207.arrow
       --
       --snapshot_date 20201207
+    needs: [prepare]
     outputs:
       highly_sensitive:
         cohort: output/1-extract/extract_snapshot_20201207.arrow
@@ -74,6 +75,7 @@ actions:
       --dummy-data-file analysis/1-extract/dummy-data/dummy_snapshot_20210906.arrow
       --
       --snapshot_date 20210906
+    needs: [prepare]
     outputs:
       highly_sensitive:
         cohort: output/1-extract/extract_snapshot_20210906.arrow
@@ -94,6 +96,7 @@ actions:
       --dummy-data-file analysis/1-extract/dummy-data/dummy_snapshot_20220321.arrow
       --
       --snapshot_date 20220321
+    needs: [prepare]
     outputs:
       highly_sensitive:
         cohort: output/1-extract/extract_snapshot_20220321.arrow
@@ -114,6 +117,7 @@ actions:
       --dummy-data-file analysis/1-extract/dummy-data/dummy_snapshot_20220829.arrow
       --
       --snapshot_date 20220829
+    needs: [prepare]
     outputs:
       highly_sensitive:
         cohort: output/1-extract/extract_snapshot_20220829.arrow
@@ -134,6 +138,7 @@ actions:
       --dummy-data-file analysis/1-extract/dummy-data/dummy_snapshot_20230403.arrow
       --
       --snapshot_date 20230403
+    needs: [prepare]
     outputs:
       highly_sensitive:
         cohort: output/1-extract/extract_snapshot_20230403.arrow
@@ -154,6 +159,7 @@ actions:
       --dummy-data-file analysis/1-extract/dummy-data/dummy_snapshot_20230828.arrow
       --
       --snapshot_date 20230828
+    needs: [prepare]
     outputs:
       highly_sensitive:
         cohort: output/1-extract/extract_snapshot_20230828.arrow
@@ -174,6 +180,7 @@ actions:
       --dummy-data-file analysis/1-extract/dummy-data/dummy_snapshot_20240415.arrow
       --
       --snapshot_date 20240415
+    needs: [prepare]
     outputs:
       highly_sensitive:
         cohort: output/1-extract/extract_snapshot_20240415.arrow
@@ -194,6 +201,7 @@ actions:
       --dummy-data-file analysis/1-extract/dummy-data/dummy_snapshot_20240930.arrow
       --
       --snapshot_date 20240930
+    needs: [prepare]
     outputs:
       highly_sensitive:
         cohort: output/1-extract/extract_snapshot_20240930.arrow
@@ -214,6 +222,7 @@ actions:
       --dummy-data-file analysis/1-extract/dummy-data/dummy_snapshot_20250331.arrow
       --
       --snapshot_date 20250331
+    needs: [prepare]
     outputs:
       highly_sensitive:
         cohort: output/1-extract/extract_snapshot_20250331.arrow
@@ -235,6 +244,7 @@ actions:
       --dummy-data-file analysis/1-extract/dummy-data/dummy_snapshot_20250929.arrow
       --
       --snapshot_date 20250929
+    needs: [prepare]
     outputs:
       highly_sensitive:
         cohort: output/1-extract/extract_snapshot_20250929.arrow

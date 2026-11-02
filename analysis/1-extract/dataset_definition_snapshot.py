@@ -8,13 +8,14 @@
 
 from json import loads
 from pathlib import Path
-from datetime import datetime
+import datetime
 
 from ehrql import (
 #    show,
     get_parameter,
 #    case,
     create_dataset,
+    table_from_file,
     days,
     weeks,
 #    when,
@@ -35,7 +36,7 @@ from variables_function import *
 
 # get arguments supplied in the yaml file, stored in argv[1], argv[2], etc
 snapshot_date_string = get_parameter(name="snapshot_date")
-snapshot_date = datetime.strptime(get_parameter(name="snapshot_date"), '%Y%m%d').strftime('%Y-%m-%d') 
+snapshot_date = datetime.datetime.strptime(get_parameter(name="snapshot_date"), '%Y%m%d').strftime('%Y-%m-%d') 
 
 # extract campaign-specific dates
 all_campaign_info = loads(
@@ -93,41 +94,43 @@ extended_subgroups(dataset = dataset, index_date = snapshot_date)
 
 # COVID-19 vaccination history ----
 
-covid_vaccinations = (
-  vaccinations
-  .where(vaccinations.target_disease.is_in(["SARS-2 CORONAVIRUS"]))
-  .sort_by(vaccinations.date)
+# import cleaned vaccination table
+covid_vaccinations_cleaned = table_from_file(
+    "output/2-prepare/prepare/data_vax_ELD_cleaned.arrow",
+    columns={
+        "date": datetime.date,
+        "product_name": str,
+    }
 )
 
 # retrieve first 3 vaccines before and first 2 vaccines on or after snapshot date
 
-
 # add next 2 recorded covid vaccination
 add_n_vaccines(
     dataset = dataset, 
+    table = covid_vaccinations_cleaned,
     index_date = snapshot_date, 
-    target_disease = "SARS-2 CORONAVIRUS", 
     name = "covid_vax", 
     direction = "on_or_after",
     number_of_vaccines = 2,
-    minimum_gap = 13
+    minimum_gap = 1
 )
 
 # add most recent 3 vaccines prior to snapshot date
 add_n_vaccines(
     dataset = dataset, 
+    table = covid_vaccinations_cleaned,
     index_date = snapshot_date, 
-    target_disease = "SARS-2 CORONAVIRUS", 
     name = "covid_vax_prior", 
     direction = "before",
     number_of_vaccines = 3,
-    minimum_gap = 13
+    minimum_gap = 1
 )
 
 # count total number of vaccines prior to vaccine date
 dataset.covid_vax_prior_count = (
-    covid_vaccinations
-    .where(vaccinations.date.is_before(snapshot_date))
+    covid_vaccinations_cleaned
+    .where(covid_vaccinations_cleaned.date.is_before(snapshot_date))
     .count_for_patient()
 )
 
