@@ -1,0 +1,53 @@
+manufacturer,product_short_name,product_full_name,product_report_name,uk_approval_date,first_campaign,product_tpp_name
+pfizer,pfizer_original,Pfizer–BioNTech vaccine,BNT162b2,02/12/2020,Primary series,COVID-19 mRNA Vaccine Comirnaty 30micrograms/0.3ml dose conc for susp for inj MDV (Pfizer)
+pfizer,pfizer_BA1,Bivalent Pfizer–BioNTech Original/Omicron BA.1 vaccine,BNT162b2/BA.1,03/09/2022,Autumn 2022,Comirnaty Original/Omicron BA.1 COVID-19 Vacc md vials
+pfizer,pfizer_BA45,Bivalent Pfizer–BioNTech Original/Omicron BA.4-5 vaccine,BNT162b2/BA.4-5,09/11/2022,Spring 2023,Comirnaty Original/Omicron BA.4-5 COVID-19 Vacc md vials
+pfizer,pfizer_XBB15,Monovalent Pfizer–BioNTech XBB.1.5 vaccine,BNT162b2.XBB.1.5,05/09/2023,Autumn 2023,Comirnaty Omicron XBB.1.5 COVID-19 Vacc md vials
+pfizer,pfizer_JN1,Monovalent Pfizer–BioNTech JN.1 vaccine,BNT162b2.JN.1,24/07/2024,Autumn 2024,Comirnaty JN.1 COVID-19 mRNA Vaccine 0.3ml inj md vials (Pfizer Ltd)
+pfizer,pfizer_LP81,Monovalent Pfizer–BioNTech LP.8.1 vaccine,BNT162b2.LP.8.1,,Spring 2025,Comirnaty LP.8.1 COVID-19 Vacc 30microg/0.3ml dose inj pfs (Pfizer Ltd)
+pfizer,pfizer_KP2,Monovalent Pfizer–BioNTech KP.2 vaccine,BNT162b2.KP.2,10/10/2024,Autumn 2025,Comirnaty KP.2 COVID-19 Vacc 30microg/0.3ml dose inj md vial (Pfizer Ltd)
+pfizer,pfizer_KP2_pfs,Monovalent Pfizer–BioNTech KP.2 vaccine,BNT162b2.KP.2,10/10/2024,Autumn 2025,Comirnaty KP.2 COVID-19 Vacc 30microg/0.3ml dose inj pfs (Pfizer Ltd)
+pfizer,pfizer_XFG,Monovalent Pfizer–BioNTech XFG vaccine,BNT162b2.XFG,,,Comirnaty XFG COVID-19 Vacc 30microg/0.3ml dose inj pfs (Pfizer Ltd)
+pfizer,pfizer_unspecified,,,,,Comirnaty COVID-19 mRNA Vacc ready to use 0.3ml inj md vials
+pfizer,pfizer_original_children,,BNT162b2 (5-11yo),22/12/2021,Autumn 2021,COVID-19 mRNA Vaccine Comirnaty Children 5-11yrs 10mcg/0.2ml dose conc for disp for inj MDV (Pfizer)
+pfizer,pfizer_JN1_children,,BNT162b2.JN.1 (5-11yo),24/07/2024,Autumn 2024,Comirnaty JN.1 Children 5-11yrs COVID-19 Vacc 0.3ml sd vials (Pfizer Ltd)
+pfizer,pfizer_XBB15_children,,BNT162b2.XBB.1.5 (5-11yo),13/10/2023,Autumn 2023,Comirnaty Omicron XBB.1.5 Child 5-11y COVID-19 Vacc md vials
+pfizer,pfizer_LP81_children,,BNT162b2.LP.8.1 (5-11yo),,Spring 2025,Comirnaty LP.8.1 Children 5-11y COVID-19 Vacc 0.3ml sd vials (Pfizer Ltd)
+pfizer,pfizer_XFG_under12,,BNT162b2.FXG (<12yo),,,Comirnaty XFG children 6m-11yrs COVID-19 Vacc 0.3ml sd vials (Pfizer Ltd)
+pfizer,pfizer_original_under5,,BNT162b2 (<5yo),06/12/2022,Autumn 2024,Comirnaty Children 6m-4yrs COVID-19 mRNA Vacc 0.2ml md vials
+pfizer,pfizer_JN1_under5,,BNT162b2.JN.1 (<5yo),24/07/2024,Autumn 2024,Comirnaty JN.1 Children 6m-4yrs COVID-19 Vacc 0.3ml md vials (Pfizer Ltd)
+pfizer,pfizer_XBB15_under5,,BNT162b2.XBB.1.5 (<5yo),05/09/2023,Autumn 2023,Comirnaty Omicron XBB.1.5 Child 6m-4y COVID-19 Vacc md vials
+pfizer,pfizer_LP81_under5,,BNT162b2.LP.8.1 (<5yo),,Spring 2025,Comirnaty LP.8.1 Children 6m-4y COVID-19 Vacc 0.3m md vials (Pfizer Ltd)
+az,az_original,AstraZeneca COVID-19 vaccine,ChAdOx1-S,30/12/2020,Primary series,COVID-19 Vaccine Vaxzevria 0.5ml inj multidose vials (AstraZeneca)
+az,az_original2,,,,Primary series,COVID-19 Vac AZD2816 (ChAdOx1 nCOV-19) 3.5x10*9 viral part/0.5ml dose sol for inj MDV (AstraZeneca)
+moderna,moderna_original,Moderna COVID-19 vaccine,mRNA-1273,08/01/2021,Primary series,COVID-19 mRNA Vaccine Spikevax (nucleoside modified) 0.1mg/0.5mL dose disp for inj MDV (Moderna)
+moderna,moderna_omicron,Bivalent Moderna Original/Omicron vaccine,mRNA-1273/BA.1,15/08/2022,Autumn 2022,COVID-19 Vac Spikevax (Zero)/(Omicron) inj md vials
+moderna,moderna_omicron2,,,,,COVID-19 Vaccine Moderna (mRNA-1273.529) 50micrograms/0.25ml dose sol for inj MDV
+moderna,moderna_BA45,Bivalent Moderna Original/Omicron BA.4-5 vaccine,mRNA-1273/BA.4-5,21/02/2023,Spring 2023,COVID-19 Vacc Spikevax Orig/Omicron BA.4/BA.5 inj md vials
+moderna,moderna_XBB15,Monovalent Moderna XBB.1.5 vaccine,mRNA-1273.XBB.1.5,15/09/2023,Autumn 2023,COVID-19 Vacc Spikevax (XBB.1.5) 0.1mg/1ml inj md vials
+moderna,moderna_JN1,Monovalent Moderna JN.1 vaccine,mRNA-1273.JN.1,02/09/2024,Autumn 2024,"Spikevax JN.1 COVID-19 Vacc 0.1mg/ml inj md vials (Moderna, Inc)"
+moderna,moderna_LP81,Monovalent Moderna LP.8.1,mRNA-1273.LP.8.1,,Spring 2026,Spikevax LP.8.1 COVID-19 Vacc 0.1mg/ml inj md vials
+moderna,moderna_XFG,Monovalent Moderna XFG,mRNA-1273.XFG,,,Spikevax XFG COVID-19 mRNA Vacc 0.1mg/1ml inj md vials (Moderna Biotech Distributor UK Ltd)
+moderna,moderna_unspecified,,,,,COVID-19 Vaccine Moderna 0.5ml dispersion for inj vials
+sanofigsk,sanofigsk_B1,Sanofi Pasteur COVID-19 vaccine,Vidprevtyn,21/12/2022,Spring 2023,COVID-19 Vacc VidPrevtyn (B.1.351) 0.5ml inj multidose vials
+sanofigsk,sanofigsk_D614,,,,Not approved,COVID-19 Vac Sanofi (CoV2 preS dTM monovalent D614 (recombinant)) 5mcg/0.5ml dose susp for inj MDV
+sanofigsk,sanofigsk_D614B1,,,,Not approved,COVID-19 Vacc Sanofi (D614+B.1.351) 0.5ml inj md vials
+novavax,nuvaxovid,Nuvaxovid COVID-19 vaccine,Nuvaxovid,03/02/2022,Not deployed,"COVID-19 Vac Nuvaxovid (recombinant, adj) 5micrograms/0.5ml dose susp for inj MDV (Novavax CZ a.s.)"
+novavax,nuvaxovid_XBB15,Nuvaxovid COVID-19 XBB.1.1 vaccine,Nuvaxovid.XBB.1.1,09/02/2024,,NO TPP PRODUCT CODE
+novavax,nuvaxovid_JN1,Nuvaxovid COVID-19 JN.1 vaccine,Nuvaxovid.JN.1,15/11/2024,Spring 2026,Nuvaxovid JN.1 COVID-19 Vaccine 0.5ml dispersion inj vials
+novavax,nuvaxovid_JN1_pfs,Nuvaxovid COVID-19 JN.1 vaccine,Nuvaxovid.JN.1,15/11/2024,Spring 2026,Nuvaxovid JN.1 COVID-19 Vaccine 0.5ml dose inj pfs
+hipra,bimervax,Bimervax COVID-19 LP.8.1 vaccine,Bimervax.LP.8.1,01/08/2023,Autumn 2026,Bimervax LP.8.1 COVID-19 Vaccine 0.5ml inj vials (Hipra Human Health S.L.U.)
+jansenn,jansenn,,Janssen,28/05/2021,Not deployed,COVID-19 Vaccine Janssen (Ad26.COV2-S (recomb)) 0.5ml dose solution for injection multidose vials
+valneva,valneva,,Valneva,14/04/2022,Not deployed,COVID-19 Vaccine Valneva (inactivated adj whole virus) 40antigen units/0.5ml dose susp for inj MDV
+gamaleya,sputnik_i_multi,,,,Not approved,COVID-19 Vacc Sputnik V Component I 0.5ml multidose vials
+gamaleya,sputnik_ii_multi,,,,Not approved,COVID-19 Vacc Sputnik V Component II 0.5ml multidose vials
+gamaleya,sputnik_i_inj,,,,Not approved,COVID-19 Vaccine Sputnik V Component I 0.5ml inj vials
+gamaleya,sputnik_ii_inj,,,,Not approved,COVID-19 Vaccine Sputnik V Component II 0.5ml inj vials
+sinopharm,sinopharm,,,,Not approved,COVID-19 Vac Sinopharm BIBP (inactivated adjuvanted) 6.5U/0.5ml dose susp for inj vials
+medicago,medicago,,,,Not approved,COVID-19 Vaccine Medicago (CoVLP) 3.75micrograms/0.5ml dose emulsion for injection multidose vials
+cansino,convidecia,,,,Not approved,COVID-19 Vaccine Convidecia 0.5ml inj vials
+bharat,covaxin,,,,Not approved,COVID-19 Vac Covaxin (NIV-2020-770 inactivated) 6micrograms/0.5ml dose susp for inj MDV
+sinovac,coronavac,,,,Not approved,COVID-19 Vac CoronaVac (adjuvanted) 600U/0.5ml dose susp for inj vials
+serum,covishield,,,,Not approved,COVID-19 Vac Covishield (ChAdOx1 S recombinant) 5x10*9 viral particles/0.5ml dose sol for inj MDV
+novavax,covovax,,,,Not approved,COVID-19 Vac Covovax (adjuvanted) 5micrograms/0.5ml dose susp for inj MDV (Serum Institute of India)
+unspecified,unspecified,,,,,SARS-2 Coronavirus vaccine
