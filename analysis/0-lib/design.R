@@ -7,6 +7,7 @@
 # _________________________________________________
 
 library("tidyverse")
+library("arrow")
 
 # utility functions ----
 
@@ -85,7 +86,7 @@ sdc_threshold <- 10L
 # import processed campaign info
 campaign_info <-
   read_feather(
-    file = fs::path("analysis/0-lib/campaign_info"),
+    file = fs::path("analysis/0-lib/campaign_info.arrow"),
   ) |>
   mutate(
     early_milestone_days = as.integer(
