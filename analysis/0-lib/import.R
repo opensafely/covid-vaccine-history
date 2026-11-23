@@ -30,13 +30,12 @@ jsonlite::write_json(
 # so we don't have to use `study_dates$start_date` or `start_date <- study_dates$start_date` in each script
 # list2env(study_dates, globalenv())
 
-
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # covid-19 vaccine campaign dates ----
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
 # when authentication is resolves use this, instead of copy-pasting into the repo
-# campaign_info <- 
+# campaign_info <-
 #   read_sheet(
 #     ss = "1CsioktjYJAb8ngU_wqh8hJF8Px4x4j3xvwQfNZdQbBQ",
 #     sheet = "campaigns",
@@ -45,23 +44,41 @@ jsonlite::write_json(
 #   )
 
 # use this until googlesheets authentication is sorted
-campaign_info0 <- 
+campaign_info0 <-
   read_csv(
     file = fs::path("analysis/0-lib/campaign_info0.csv"),
-    col_types = "cccccccdd"
+    col_types = "ccccccccdd"
   ) |>
   mutate(
-    across(c("campaign_start_date","early_milestone_date", "primary_milestone_date", "final_milestone_date", "age_date"), \(x) as.Date(x, "%d/%m/%Y"))
+    across(
+      c(
+        "campaign_start_date",
+        "early_milestone_date",
+        "primary_milestone_date",
+        "final_milestone_date",
+        "age_date"
+      ),
+      \(x) as.Date(x, "%d/%m/%Y")
+    )
   ) 
 
 campaign_info_pre <-
   tribble(
-    ~campaign_label,  ~campaign_start_date, ~early_milestone_date, ~primary_milestone_date, ~final_milestone_date, ~clinical_priority, ~age_date, ~age_threshold,
-    "Pre-pandemic", "1900-01-01", "1900-01-01", "1900-01-01", "1900-01-01", NA, NA, 16,
-    "Pre-roll-out",  as.character(study_dates$firstpossiblevax_date), as.character(study_dates$firstpossiblevax_date), as.character(study_dates$firstpossiblevax_date), as.character(study_dates$firstpossiblevax_date), NA, as.character(study_dates$firstpossiblevax_date), 16, 
+    ~campaign_label , ~campaign_start_date                            , ~early_milestone_date                           , ~primary_milestone_date                         , ~final_milestone_date                           , ~clinical_priority_descr , ~clinical_priority , ~age_date                                       , ~age_threshold ,
+    "Pre-pandemic"  , "1900-01-01"                                    , "1900-01-01"                                    , "1900-01-01"                                    , "1900-01-01"                                    , NA                       , NA                 , NA                                              ,             16 ,
+    "Pre-roll-out"  , as.character(study_dates$firstpossiblevax_date) , as.character(study_dates$firstpossiblevax_date) , as.character(study_dates$firstpossiblevax_date) , as.character(study_dates$firstpossiblevax_date) , NA                       , NA                 , as.character(study_dates$firstpossiblevax_date) ,             16 ,
   ) |>
   mutate(
-    across(c("campaign_start_date", "early_milestone_date", "primary_milestone_date", "final_milestone_date", "age_date"), as.Date)
+    across(
+      c(
+        "campaign_start_date",
+        "early_milestone_date",
+        "primary_milestone_date",
+        "final_milestone_date",
+        "age_date"
+      ),
+      as.Date
+    )
   )
 
 campaign_info <-
