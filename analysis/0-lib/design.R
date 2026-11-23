@@ -10,6 +10,11 @@ library("tidyverse")
 
 # utility functions ----
 
+print_interactive <- function(x) {
+  # if running scripts interactively, then print them to console / viewer. Otherwise do not print.
+  if (interactive()) print(x)
+}
+
 roundmid_any <- function(x, to = 1L) {
   # like ceiling_any, but centers on (integer) midpoint of the rounding points
   if (to == 0) {
@@ -563,3 +568,4 @@ if (localrun) {
     pretty = TRUE, auto_unbox = TRUE,
   )
 }
+    
