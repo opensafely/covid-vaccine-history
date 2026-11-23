@@ -142,6 +142,13 @@ data_vax_ELD <-
     )
   ) 
 
+# report any unmapped product names
+# and stop if there are any
+unmapped_products <- data_vax_ELD |> filter(vax_product %in% "UNMAPPED") |> pull(vax_product_raw) |> unique()
+cat("Unmapped product names: \n")
+cat(paste0(unmapped_products, collapse = "\n"))
+stopifnot("There are unmapped product names" = length(unmapped_products) == 0)
+
 # print details about dataset
 capture.output(
   skimr::skim_without_charts(data_vax_ELD),
