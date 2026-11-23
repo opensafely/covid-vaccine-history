@@ -15,20 +15,22 @@ plot_date_of_last_dose <- function(data, subgroup) {
     lazy_dt() |>
     group_by(subgroup, last_vax_product, last_vax_period) |>
     summarise(
-      n = roundmid_any(n(), sdc_threshold)
+      n = round_any(n(), sdc_threshold)
     ) |>
     ungroup() |>
     mutate(
       # if last vaccination date was over 2 years ago, replace with dummy date
       last_vax_period = case_when(
-        (last_vax_period < over2years_dummy_date)  ~ over2years_dummy_date - 42,
+        (last_vax_period < over2years_dummy_date) ~ over2years_dummy_date - 42,
         is.na(last_vax_period) ~ over2years_dummy_date - 42,
         .default = last_vax_period
       )
     ) |>
     as_tibble() |>
     complete(
-      subgroup, last_vax_product, last_vax_period,
+      subgroup,
+      last_vax_product,
+      last_vax_period,
       fill = list(n = 0)
     )
 
@@ -107,12 +109,13 @@ plot_vax_count <- function(data, subgroup) {
     lazy_dt() |>
     group_by(subgroup, vax_count_group) |>
     summarise(
-      n = roundmid_any(n(), sdc_threshold),
+      n = round_any(n(), sdc_threshold),
     ) |>
     ungroup() |>
     as_tibble() |>
     complete(
-      subgroup, vax_count_group,
+      subgroup,
+      vax_count_group,
       fill = list(n = 0)
     ) |>
     group_by(subgroup) |>
@@ -183,13 +186,13 @@ table_prior_vax_summary <- function(...) {
     lazy_dt() |>
     summarise(
       # Dose counts
-      total = roundmid_any(n(), sdc_threshold),
-      count_n0 = roundmid_any(sum(vax_count == 0, na.rm = TRUE), sdc_threshold),
-      count_n1 = roundmid_any(sum(vax_count == 1, na.rm = TRUE), sdc_threshold),
-      count_n2 = roundmid_any(sum(vax_count == 2, na.rm = TRUE), sdc_threshold),
-      count_n3 = roundmid_any(sum(vax_count == 3, na.rm = TRUE), sdc_threshold),
-      count_n4 = roundmid_any(sum(vax_count == 4, na.rm = TRUE), sdc_threshold),
-      count_n5plus = roundmid_any(sum(vax_count >= 5, na.rm = TRUE), sdc_threshold),
+      total = round_any(n(), sdc_threshold),
+      count_n0 = round_any(sum(vax_count == 0, na.rm = TRUE), sdc_threshold),
+      count_n1 = round_any(sum(vax_count == 1, na.rm = TRUE), sdc_threshold),
+      count_n2 = round_any(sum(vax_count == 2, na.rm = TRUE), sdc_threshold),
+      count_n3 = round_any(sum(vax_count == 3, na.rm = TRUE), sdc_threshold),
+      count_n4 = round_any(sum(vax_count == 4, na.rm = TRUE), sdc_threshold),
+      count_n5plus = round_any(sum(vax_count >= 5, na.rm = TRUE), sdc_threshold),
       # Dose summary
       count_median = quantile(vax_count, probs = 0.5, na.rm = TRUE),
       count_p10 = quantile(vax_count, probs = 0.10, na.rm = TRUE),
@@ -197,8 +200,8 @@ table_prior_vax_summary <- function(...) {
       count_p75 = quantile(vax_count, probs = 0.75, na.rm = TRUE),
       count_p90 = quantile(vax_count, probs = 0.90, na.rm = TRUE),
       # Vaccination in past 12 and 24 months
-      days_since_n12m = roundmid_any(sum(last_vax_time_since <= 365, na.rm = TRUE), sdc_threshold),
-      days_since_n24m = roundmid_any(sum(last_vax_time_since <= 365 * 2, na.rm = TRUE), sdc_threshold),
+      days_since_n12m = round_any(sum(last_vax_time_since <= 365, na.rm = TRUE), sdc_threshold),
+      days_since_n24m = round_any(sum(last_vax_time_since <= 365 * 2, na.rm = TRUE), sdc_threshold),
       # Time since last dose
       days_since_median = quantile(last_vax_time_since, probs = 0.5, na.rm = TRUE),
       days_since_p10 = quantile(last_vax_time_since, probs = 0.10, na.rm = TRUE),
@@ -223,11 +226,11 @@ table_prior_vax_summary <- function(...) {
     ) |>
     mutate(
       across(
-        starts_with(c("count", "days_since")), 
+        starts_with(c("count", "days_since")),
         ~ if_else(!n_under_sdc_threshold, .x, NA)
       )
-    ) |> 
-    select(-n_under_sdc_threshold)  |>
+    ) |>
+    select(-n_under_sdc_threshold) |>
     as_tibble()
 
   # subgroup_name <- map_chr(rlang::quos(...), rlang::as_name) |> paste0(collapse = "_")
@@ -495,9 +498,9 @@ adjusted_estimates <- function(data, subgroup, event_time, event_indicator) {
     arrange(label) |>
     summarise(
       variable = subgroup,
-      n_obs = roundmid_any(sum(count), sdc_threshold),
-      n_event = roundmid_any(sum(event_indicator * count), sdc_threshold),
-      exposure = roundmid_any(sum(event_time * count), sdc_threshold),
+      n_obs = round_any(sum(count), sdc_threshold),
+      n_event = round_any(sum(event_indicator * count), sdc_threshold),
+      exposure = round_any(sum(event_time * count), sdc_threshold),
 
       .by = label
     ) |>
@@ -619,8 +622,8 @@ los_estimates <- function(data, subgroup, event_los) {
     ) |>
     summarise(
       n_under_sdc_threshold = n() <= sdc_threshold,
-      n = roundmid_any(n(), sdc_threshold),
-      n_at_least_1_event = roundmid_any(sum(!is.na(event_los)), sdc_threshold),
+      n = round_any(n(), sdc_threshold),
+      n_at_least_1_event = round_any(sum(!is.na(event_los)), sdc_threshold),
       median_los = quantile(event_los, 0.5, na.rm = TRUE),
       p10 = quantile(event_los, 0.1, na.rm = TRUE),
       p25 = quantile(event_los, 0.25, na.rm = TRUE),
@@ -631,10 +634,10 @@ los_estimates <- function(data, subgroup, event_los) {
     ) |>
     mutate(
       across(
-        c( n_at_least_1_event, median_los, p10, p25, p75, p90), 
+        c(n_at_least_1_event, median_los, p10, p25, p75, p90),
         ~ if_else(!n_under_sdc_threshold, .x, NA)
       )
-    ) |> 
+    ) |>
     select(-n_under_sdc_threshold)
 
   return(data_los)

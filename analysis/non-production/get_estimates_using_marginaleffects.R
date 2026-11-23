@@ -34,9 +34,9 @@ adjusted_estimates <- function(data, subgroup, event_time, event_indicator) {
     arrange(label) |>
     summarise(
       variable = subgroup,
-      n_obs = roundmid_any(n(), sdc_threshold),
-      n_event = roundmid_any(sum(event_indicator), sdc_threshold),
-      exposure = roundmid_any(sum(event_time), sdc_threshold),
+      n_obs = round_any(n(), sdc_threshold),
+      n_event = round_any(sum(event_indicator), sdc_threshold),
+      exposure = round_any(sum(event_time), sdc_threshold),
 
       .by = label
     ) |>
