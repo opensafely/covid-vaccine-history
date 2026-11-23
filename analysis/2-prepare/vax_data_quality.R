@@ -34,8 +34,12 @@ if (localrun) {
   data_vax_ELD0 <-
     data_vax_ELD0 |>
     mutate(
-      vax_date = as.Date(runif(n(), as.Date("2019-01-12"), max(campaign_info$early_milestone_date))),
-      vax_product = sample(vax_product_lookup, n(), replace = TRUE)
+      vax_date = as.Date(runif(
+        n(),
+        as.Date("2019-01-12"),
+        max(campaign_info$early_milestone_date)
+      )),
+      vax_product = sample(product_info$product_full_name, n(), replace = TRUE)
     )
 }
 
@@ -52,7 +56,12 @@ data_vax_ELD <-
   as_tibble() |>
   mutate(
     vax_product_raw = vax_product,
-    vax_product = fct_recode(factor(vax_product, vax_product_lookup), !!!vax_product_lookup) |> fct_na_value_to_level("UNMAPPED"),
+    vax_product = factor(
+      vax_product,
+      level = product_info$product_tpp_name,
+      labels = product_info$product_short_name
+    ) |>
+      fct_na_value_to_level("UNMAPPED"),
     campaign = cut(
       vax_date,
       breaks = c(campaign_info$campaign_start_date, as.Date(Inf)),
