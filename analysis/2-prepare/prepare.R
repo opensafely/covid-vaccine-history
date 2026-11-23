@@ -192,4 +192,6 @@ data_vax_ELD_cleaned <-
       date = vax_date,
       product_name = vax_product
     ) |>
-    write_feather(fs::path(output_dir, "table_vax_ELD_cleaned.arrow"))
+    write_feather(fs::path(output_dir, "data_vax_ELD_cleaned.arrow"))
+
+

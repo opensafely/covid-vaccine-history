@@ -95,52 +95,52 @@ extended_subgroups(dataset = dataset, index_date = snapshot_date)
 
 # COVID-19 vaccination history ----
 
-# import cleaned vaccination table
-covid_vaccinations_cleaned = table_from_file(
-    "output/2-prepare/prepare/table_vax_ELD_cleaned.arrow",
-    columns={
-        "vaccination_id": int,
-        "date": datetime.date,
-        "product_name": str,
-    }
-)
+# # import cleaned vaccination table
+# covid_vaccinations_cleaned = table_from_file(
+#     "output/2-prepare/prepare/data_vax_ELD_cleaned.arrow",
+#     columns={
+#         "vaccination_id": int,
+#         "date": datetime.date,
+#         "product_name": str,
+#     }
+# )
 
-covid_vaccinations = (
-  vaccinations
-  .where(vaccinations.vaccination_id.is_in(covid_vaccinations_cleaned.vaccination_id))
-  .sort_by(vaccinations.date)
-)
+# covid_vaccinations = (
+#   vaccinations
+#   .where(vaccinations.vaccination_id.is_in(covid_vaccinations_cleaned.vaccination_id))
+#   .sort_by(vaccinations.date)
+# )
 
-# retrieve first 3 vaccines before and first 2 vaccines on or after snapshot date
+# # retrieve first 3 vaccines before and first 2 vaccines on or after snapshot date
 
-# add next 2 recorded covid vaccination
-add_n_vaccines(
-    dataset = dataset, 
-    table = covid_vaccinations,
-    index_date = snapshot_date, 
-    name = "covid_vax", 
-    direction = "on_or_after",
-    number_of_vaccines = 2,
-    minimum_gap = 1
-)
+# # add next 2 recorded covid vaccination
+# add_n_vaccines(
+#     dataset = dataset, 
+#     table = covid_vaccinations,
+#     index_date = snapshot_date, 
+#     name = "covid_vax", 
+#     direction = "on_or_after",
+#     number_of_vaccines = 2,
+#     minimum_gap = 1
+# )
 
-# add most recent 3 vaccines prior to snapshot date
-add_n_vaccines(
-    dataset = dataset, 
-    table = covid_vaccinations,
-    index_date = snapshot_date, 
-    name = "covid_vax_prior", 
-    direction = "before",
-    number_of_vaccines = 3,
-    minimum_gap = 1
-)
+# # add most recent 3 vaccines prior to snapshot date
+# add_n_vaccines(
+#     dataset = dataset, 
+#     table = covid_vaccinations,
+#     index_date = snapshot_date, 
+#     name = "covid_vax_prior", 
+#     direction = "before",
+#     number_of_vaccines = 3,
+#     minimum_gap = 1
+# )
 
 # count total number of vaccines prior to vaccine date
-dataset.covid_vax_prior_count = (
-    covid_vaccinations
-    .where(covid_vaccinations_cleaned.date.is_before(snapshot_date))
-    .count_for_patient()
-)
+# dataset.covid_vax_prior_count = (
+#     covid_vaccinations
+#     .where(covid_vaccinations_cleaned.date.is_before(snapshot_date))
+#     .count_for_patient()
+# )
 
 # Deregistration dates after the snapshot date
 dataset.deregistered_date = registered_patients.end_date

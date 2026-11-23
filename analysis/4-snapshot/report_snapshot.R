@@ -63,6 +63,72 @@ output_dir <- here("output", "4-snapshot", glue("report_snapshot_{snapshot_date_
 fs::dir_create(output_dir)
 options(width = 200) # set output width for capture.output
 
+# Import and process cleaned vaccination data ----
+# ideally we would do this step in ehrQL, but table_from_file doesn't work for eventFrames (ie, event level data), so we'll do it here instead
+data_vax <- read_feather(here(
+  "output",
+  "2-prepare",
+  "prepare",
+  "data_vax_ELD_cleaned.arrow"
+))
+
+# rank vax date order
+signed_index <- function(x) {
+  rnk <- rank(x, ties.method = "first")
+  xnonneg <- x >= 0
+  anyxnonneg <- any(xnonneg)
+  if (anyxnonneg) {
+    index <- min(which(xnonneg))
+  }
+  if (!anyxnonneg) {
+    index <- length(x) + 1
+  }
+
+  rnk - index
+}
+
+# select previous 3 and next 2 vaccines
+data_vax_at_snapshot <-
+  data_vax |>
+  arrange(patient_id, date) |>
+  mutate(
+    vax_index_relative = signed_index(date - snapshot_date),
+    .by = patient_id
+  ) |>
+  filter(
+    between(vax_index_relative, -3, 2)
+  ) |>
+  mutate(
+    name = if_else(
+      vax_index_relative < 0,
+      glue("covid_vax_prior_{-vax_index_relative}"),
+      glue("covid_vax_{vax_index_relative+1}"),
+    )
+  )
+
+# tranform to wide format
+data_vax_wide <-
+  data_vax_at_snapshot |>
+  rename(product = product_name) |>
+  pivot_wider(
+    id_cols = c(patient_id),
+    names_from = name,
+    names_glue = "{name}_{.value}",
+    values_from = c(date, product),
+    names_vary = "slowest"
+  )
+
+# count total number of documented prior vaccines
+data_vax_prior_count <-
+  data_vax |>
+  filter(date < snapshot_date) |>
+  summarise(
+    covid_vax_prior_count = n(),
+    .by = patient_id
+  )
+
+# remove to release memory
+rm(data_vax_at_snapshot)
 
 # Import processed data ----
 data_snapshot <- read_feather(here("output", "1-extract", glue("extract_snapshot_{snapshot_date_compact}.arrow")))
@@ -74,13 +140,30 @@ capture.output(
   split = FALSE
 )
 
+
 # merge fixed data and vaccine data onto snapshot data
 # note that in dummy data this doesn't work very well because patient IDs might not be matched across all datasets
 data_combined <-
   data_snapshot |>
   lazy_dt() |>
   left_join(
-    lazy_dt(data_fixed) |> select(patient_id, sex, ethnicity5, ethnicity16, death_date, covid_death_date),
+    lazy_dt(data_fixed) |>
+      select(
+        patient_id,
+        sex,
+        ethnicity5,
+        ethnicity16,
+        death_date,
+        covid_death_date
+      ),
+    by = "patient_id"
+  ) |>
+  left_join(
+    lazy_dt(data_vax_wide),
+    by = "patient_id"
+  ) |>
+  left_join(
+    lazy_dt(data_vax_prior_count),
     by = "patient_id"
   ) |>
   # remove currently unused variables
@@ -90,10 +173,9 @@ data_combined <-
     -covid_vax_prior_3_date,
     -covid_vax_prior_3_product,
     -stp,
-    -age # remove snapshot age  and replace (below) with age_eligibility
+    -age # remove snapshot age and replace (below) with age_eligibility
   ) |>
   rename(
-
     # overwrite age to be that of a date later on in the campaign (rather than as at the start date) to allow "operational flexibility"
     age = eligibility_age,
 
@@ -119,12 +201,19 @@ data_combined <-
     # used to chose if the at risk group is all clinical risk variables or just immunosuppressed people
     clinical_priority = .data[[campaign_info$clinical_priority]],
 
-    clinical_priority_only = clinical_priority & !age_above_eligiblity_threshold,
+    clinical_priority_only = clinical_priority &
+      !age_above_eligiblity_threshold,
 
-    any_eligibility = age_above_eligiblity_threshold | clinical_priority | carehome_status,
+    any_eligibility = age_above_eligiblity_threshold |
+      clinical_priority |
+      carehome_status,
 
     last_vax_product = fct_na_value_to_level(last_vax_product, "Unvaccinated"),
-    last_vax_date = if_else(vax_count == 0, study_dates$firstpossiblevax_date + as.integer(runif(n(), 0, 10)), last_vax_date),
+    last_vax_date = if_else(
+      vax_count == 0,
+      study_dates$firstpossiblevax_date + as.integer(runif(n(), 0, 10)),
+      last_vax_date
+    ),
     # last_vax_week = floor_date(last_vax_date, unit = "week", week_start = 1), # starting on a monday
     last_vax_period = floor_date(last_vax_date, unit = floor_dates), # use floor_dates[findInterval(last_vax_date, floor_dates)] if lubridate isn't working
 
@@ -136,32 +225,71 @@ data_combined <-
     ),
 
     # time from snapshot date until next vaccination
-    vax_time = as.integer(pmin(next_vax_date, death_date, censor_date, na.rm = TRUE) - snapshot_date) + 1L, # +1 because vaccination on snapshot date is allowed, but events at time zero are not
-    vax_indicator = (next_vax_date <= pmin(censor_date, death_date, na.rm = TRUE)) & !is.na(next_vax_date),
+    vax_time = as.integer(
+      pmin(next_vax_date, death_date, censor_date, na.rm = TRUE) - snapshot_date
+    ) +
+      1L, # +1 because vaccination on snapshot date is allowed, but events at time zero are not
+    vax_indicator = (next_vax_date <=
+      pmin(censor_date, death_date, na.rm = TRUE)) &
+      !is.na(next_vax_date),
 
     # time from snapshot date until covid hospital admission
-    covid_admitted_time = as.integer(pmin(covid_admitted_date, death_date, censor_date, na.rm = TRUE) - snapshot_date) + 1L,
-    covid_admitted_indicator = (covid_admitted_date <= pmin(censor_date, death_date, na.rm = TRUE)) & !is.na(covid_admitted_date),
+    covid_admitted_time = as.integer(
+      pmin(covid_admitted_date, death_date, censor_date, na.rm = TRUE) -
+        snapshot_date
+    ) +
+      1L,
+    covid_admitted_indicator = (covid_admitted_date <=
+      pmin(censor_date, death_date, na.rm = TRUE)) &
+      !is.na(covid_admitted_date),
 
     # time from snapshot date until covid (primary position only) hospital admission
-    covid_admitted_primary_time = as.integer(pmin(covid_admitted_primary_date, death_date, censor_date, na.rm = TRUE) - snapshot_date) + 1L,
-    covid_admitted_primary_indicator = (covid_admitted_primary_date <= pmin(censor_date, death_date, na.rm = TRUE)) & !is.na(covid_admitted_primary_date),
+    covid_admitted_primary_time = as.integer(
+      pmin(covid_admitted_primary_date, death_date, censor_date, na.rm = TRUE) -
+        snapshot_date
+    ) +
+      1L,
+    covid_admitted_primary_indicator = (covid_admitted_primary_date <=
+      pmin(censor_date, death_date, na.rm = TRUE)) &
+      !is.na(covid_admitted_primary_date),
 
     # time from snapshot date until covid critical care admission
-    covid_critcare_time = as.integer(pmin(covid_critcare_date, death_date, censor_date, na.rm = TRUE) - snapshot_date) + 1L,
-    covid_critcare_indicator = (covid_critcare_date <= pmin(censor_date, death_date, na.rm = TRUE)) & !is.na(covid_critcare_date),
+    covid_critcare_time = as.integer(
+      pmin(covid_critcare_date, death_date, censor_date, na.rm = TRUE) -
+        snapshot_date
+    ) +
+      1L,
+    covid_critcare_indicator = (covid_critcare_date <=
+      pmin(censor_date, death_date, na.rm = TRUE)) &
+      !is.na(covid_critcare_date),
 
     # time from snapshot date until covid death
-    covid_death_time = as.integer(pmin(covid_death_date, death_date, censor_date, na.rm = TRUE) - snapshot_date) + 1L,
-    covid_death_indicator = (covid_death_date <= pmin(censor_date, death_date, na.rm = TRUE)) & !is.na(covid_death_date),
+    covid_death_time = as.integer(
+      pmin(covid_death_date, death_date, censor_date, na.rm = TRUE) -
+        snapshot_date
+    ) +
+      1L,
+    covid_death_indicator = (covid_death_date <=
+      pmin(censor_date, death_date, na.rm = TRUE)) &
+      !is.na(covid_death_date),
 
     # time from snapshot date until death
-    death_time = as.integer(pmin(death_date, censor_date, na.rm = TRUE) - snapshot_date) + 1L,
-    death_indicator = (death_date <= pmin(censor_date, death_date, na.rm = TRUE)) & !is.na(death_date),
+    death_time = as.integer(
+      pmin(death_date, censor_date, na.rm = TRUE) - snapshot_date
+    ) +
+      1L,
+    death_indicator = (death_date <=
+      pmin(censor_date, death_date, na.rm = TRUE)) &
+      !is.na(death_date),
 
     # time from snapshot date until deregistration
-    deregistration_time = as.integer(pmin(deregistered_date, censor_date, na.rm = TRUE) - snapshot_date) + 1L,
-    deregistration_indicator = (deregistered_date <= pmin(censor_date, na.rm = TRUE)) & !is.na(deregistered_date),
+    deregistration_time = as.integer(
+      pmin(deregistered_date, censor_date, na.rm = TRUE) - snapshot_date
+    ) +
+      1L,
+    deregistration_indicator = (deregistered_date <=
+      pmin(censor_date, na.rm = TRUE)) &
+      !is.na(deregistered_date),
 
     # indicator for if patient is alive and registered at the end of the campaign (for comparison with UKHSA reporting)
     alive_and_registered = (!death_indicator) & (!deregistration_indicator)
@@ -173,16 +301,24 @@ data_combined <-
       (death_date <= censor_date) & !is.na(death_date) ~ "died",
       (censor_date < death_date) | is.na(death_date) ~ "censored",
       .default = NA_character_
-    ) |> factor(levels = c("censored", "vaccinated", "death")),
+    ) |>
+      factor(levels = c("censored", "vaccinated", "death")),
     vax_status_product = if_else(vax_indicator, next_vax_product, vax_status),
-    next_vax_product_uncensored = if_else(vax_indicator, next_vax_product, NA_character_),
+    next_vax_product_uncensored = if_else(
+      vax_indicator,
+      next_vax_product,
+      NA_character_
+    ),
 
     # setting missing values to explicit missing
-    across(where(is.factor) | where(is.character), ~ fct_drop(fct_na_value_to_level(.x, level = "(Missing)")))
+    across(
+      where(is.factor) | where(is.character),
+      ~ fct_drop(fct_na_value_to_level(.x, level = "(Missing)"))
+    )
   )
 
-# remove snapshot and fixed datasets to save memory, as these is all captured in the data_combiend dataset.
-rm(data_snapshot, data_fixed)
+# remove snapshot and fixed datasets to release memory, as these are all captured in the data_combiend dataset.
+rm(data_snapshot, data_fixed, data_vax_wide, data_vax_prior_count)
 # recover memory
 gc()
 
