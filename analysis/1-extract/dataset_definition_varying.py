@@ -114,7 +114,7 @@ claim_permissions("event_level_data")
 covid_vaccinations_ELD = covid_vaccinations 
 dataset.add_event_table(
     "vaccinations",
-    vax_id = covid_vaccinations.vaccination_id,
+    vax_id = covid_vaccinations_ELD.vaccination_id,
     vax_date = covid_vaccinations_ELD.date,
     vax_product = covid_vaccinations_ELD.product_name,
     age = patients.age_on(covid_vaccinations_ELD.date),
