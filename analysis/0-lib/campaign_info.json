@@ -66,10 +66,10 @@
     "primary_milestone_date": "2023-02-28",
     "final_milestone_date": "2023-04-02",
     "clinical_priority_descr": "All clinical risk groups",
-    "clinical_priority": null,
-    "age_date": null,
-    "age_threshold": "NA",
-    "age_nonCV_threshold": "NA"
+    "clinical_priority": "primis_atrisk",
+    "age_date": "2023-03-31",
+    "age_threshold": 50,
+    "age_nonCV_threshold": 5
   },
   "2023-04-03": {
     "campaign_label": "Spring 2023",
@@ -90,10 +90,10 @@
     "primary_milestone_date": "2024-02-28",
     "final_milestone_date": "2024-04-14",
     "clinical_priority_descr": "All clinical risk groups",
-    "clinical_priority": null,
-    "age_date": null,
-    "age_threshold": "NA",
-    "age_nonCV_threshold": "NA"
+    "clinical_priority": "primis_atrisk",
+    "age_date": "2024-03-31",
+    "age_threshold": 65,
+    "age_nonCV_threshold": 0.5
   },
   "2024-04-15": {
     "campaign_label": "Spring 2024",
@@ -114,10 +114,10 @@
     "primary_milestone_date": "2025-02-28",
     "final_milestone_date": "2025-03-30",
     "clinical_priority_descr": "All clinical risk groups",
-    "clinical_priority": null,
-    "age_date": null,
-    "age_threshold": "NA",
-    "age_nonCV_threshold": "NA"
+    "clinical_priority": "primis_atrisk",
+    "age_date": "2025-03-31",
+    "age_threshold": 65,
+    "age_nonCV_threshold": 0.5
   },
   "2025-03-31": {
     "campaign_label": "Spring 2025",
