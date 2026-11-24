@@ -342,7 +342,7 @@ plot_vax_intervals <- function(rows, cols) {
   summary_by <- data_vax |>
     filter(vax_index != 1) |>
     mutate(
-      vax_interval = plyr::round_sdc(vax_interval + 1, 7), # to split into 0-6, 7-13, 14-20, 21-28, ....
+      vax_interval = plyr::round_any(vax_interval + 1, 7), # to split into 0-6, 7-13, 14-20, 21-28, ....
       vax_dosenumber = factor(
         vax_index,
         levels = sort(unique(vax_index)),
