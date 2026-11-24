@@ -25,7 +25,22 @@ options(width = 200) # set output width for capture.output
 # Import and process fixed dataset ----
 
 # Import fixed dataset
-data_extract_fixed <- read_feather(here("output", "1-extract", "extract_fixed.arrow"))
+
+if (localrun) {
+  data_extract_fixed <- read_feather(here(
+    "analysis",
+    "1-extract",
+    "dummy-data",
+    "dummy_fixed.arrow"
+  ))
+} else {
+  data_extract_fixed <- read_feather(here(
+    "output",
+    "1-extract",
+    "extract_fixed",
+    "dataset.arrow"
+  ))
+}
 
 stopifnot(
   "inconsistency between ethnicity5 and ethnicity 16" = identical(data_extract_fixed$ethnicity5, ethnicity_16_to_5(data_extract_fixed$ethnicity16))
@@ -87,7 +102,7 @@ rm(data_extract_fixed)
 data_vax_ELD0 <- read_feather(here(
   "output",
   "1-extract",
-  "extract_varying",
+  "extract_fixed",
   "vaccinations.arrow"
 ))
 
