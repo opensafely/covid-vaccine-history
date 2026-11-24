@@ -16,7 +16,7 @@ library("here")
 library("arrow")
 library("survival")
 library("splines")
-library("parglm")
+library("fastglm")
 
 # Import design functions
 source(here("analysis", "0-lib", "design.R"))

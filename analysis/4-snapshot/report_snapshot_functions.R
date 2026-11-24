@@ -699,25 +699,26 @@ adjusted_estimates <- function(data, subgroup, event_time, event_indicator) {
 
   if (n_values > 1) {
 
-    parglm_control <- parglm.control(maxit = 40, nthreads = 4)
-
     # fit the model
     # if there is an error, just return an empty dataset rather than fail
     data_poisson0 <-
       tryCatch(
         expr = {
           data_outcome |>
-            parglm(
+            mutate(
+              event_indicator = as.integer(event_indicator)
+            ) |>
+            glm(
               data = _,
               formula = poisson_formula,
               family = poisson,
               offset = log(event_time),
-              control = parglm_control,
+              method = fastglm_fit,
               weights = count,
               contrasts = subgroup_contrasts
             ) |>
             broom.helpers::tidy_and_attach(
-              tidy_fun = broom.helpers::tidy_parameters, 
+              tidy_fun = broom.helpers::tidy_parameters,
               ci_method = "wald"
             ) |>
             # broom.helpers::tidy_add_reference_rows() |>
@@ -735,9 +736,9 @@ adjusted_estimates <- function(data, subgroup, event_time, event_indicator) {
           data_summary |>
             select(variable, label) |>
             mutate(
-              estimate = NA_real_, 
-              std.error = NA_real_, 
-              conf.low = NA_real_, 
+              estimate = NA_real_,
+              std.error = NA_real_,
+              conf.low = NA_real_,
               conf.high = NA_real_
             )
         }
