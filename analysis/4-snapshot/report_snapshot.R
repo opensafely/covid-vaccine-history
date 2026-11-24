@@ -459,6 +459,21 @@ if (!identical(as.integer(times_count), c(0L, 0L, nrow(data_combined)))) {
 }
 
 
+
+# ________________________________________________________________________________________
+# Summarise cohort ----
+# ________________________________________________________________________________________
+
+## quicker way to obtain cohort summaries rather than using the "plot_vax_count" function below
+# consider this in future when vax_count is obsolete...
+
+  # table1_summary(
+  #   data_combined,
+  #   .by = all,
+  #   variables = level1_group,
+  #   rounding.function = round_sdc
+  # )
+
 # ________________________________________________________________________________________
 # Pre-snapshot date vaccine history, stratified by characteristic recorded on the snapshot_date ----
 # ________________________________________________________________________________________

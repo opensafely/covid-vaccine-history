@@ -1,4 +1,193 @@
 
+
+
+
+# Functions for summarising the dataset / cohort ----
+
+## Function to create a tibble that summarises a single vector ----
+## this is later used in the table1_summary function
+
+summarise_vector <- function(x, x_class = c("continuous", "cateogrical")) {
+  # get Ns for total observations, and total missing and non-missing
+  counts_overall <-
+    tibble(
+      N_obs = length(x),
+      N_nonmiss = sum(!is.na(x)),
+      N_miss = sum(is.na(x))
+    )
+
+  if (x_class == "categorical") {
+    # get all possible values for categorical variable
+    if (is.factor(x)) {
+      levels <- levels(x)
+    } else if (is.logical(x)) {
+      levels <- c("FALSE", "TRUE")
+    } else {
+      levels <- sort(unique(as.character(x[!is.na(x)])))
+    }
+
+    # add NA values if any are present
+    if (any(is.na(x))) {
+      levels <- c(levels, NA_character_)
+    }
+
+    # count frequency of each value
+    counts <-
+      tibble(
+        variable_level = as.character(x)
+      ) |>
+      count(variable_level, name = "n")
+
+    # combine all
+    summary <-
+      # one row per possible value (including those not represented)
+      tibble(variable_level = levels) |>
+      # add counts
+      left_join(counts, by = "variable_level") |>
+      # add overall counts
+      bind_cols(counts_overall) |>
+      mutate(
+        n = coalesce(n, 0L),
+        prop_nonmiss = if_else(!is.na(variable_level), n / N_nonmiss, NA_real_),
+        prop_obs = n / N_obs
+      )
+  }
+
+  if (x_class == "continuous") {
+    x <- x[!is.na(x)]
+
+    summary <-
+      tibble(
+        variable_level = NA_character_,
+        mean = mean(x),
+        sd = sd(x),
+        median = median(x),
+        # use type=1 as it plays nicely with dates
+        p10 = unname(quantile(x, .10, type = 1)),
+        p25 = unname(quantile(x, .25, type = 1)),
+        p75 = unname(quantile(x, .75, type = 1)),
+        p90 = unname(quantile(x, .90, type = 1))
+      ) |>
+      # add overall counts
+      bind_cols(counts_overall)
+  }
+
+  if (x_class == "unsupported") {
+    summary <-
+      counts_overall |>
+      mutate(
+        variable_level = NA_character_
+      )
+  }
+
+  summary |>
+    # reorder columns
+    select(
+      variable_level,
+      N_obs,
+      N_nonmiss,
+      N_miss,
+      everything()
+    )
+}
+
+
+## Create table1-style summary of characteristics, with SDC applied ----
+
+table1_summary <- function(
+  data,
+  .by,
+  variables,
+  rounding.function
+) {
+  # find out what class each variable is
+  variable_class_lookup <-
+    data |>
+    select(any_of(variables)) |>
+    (\(df) {
+      tibble(
+        variable = names(df),
+        logical = map_lgl(df, is.logical),
+        factor = map_lgl(df, is.factor),
+        character = map_lgl(df, is.character),
+        integer = map_lgl(df, is.integer),
+        numeric = map_lgl(df, is.numeric),
+        Date = map_lgl(df, is.Date),
+      ) |>
+        mutate(
+          categorical = logical | factor | character,
+          continuous = integer | numeric,
+          cat_or_cont = case_when(
+            categorical ~ "categorical",
+            continuous ~ "continuous",
+            .default = "unsupported"
+          ),
+          variable_class = case_when(
+            logical ~ "logical",
+            factor ~ "factor",
+            character ~ "character",
+            integer ~ "integer",
+            numeric ~ "numeric",
+            Date ~ "Date",
+            .default = ""
+          )
+        )
+    })()
+
+  # should we use cateogrical or continuous summaries
+  cat_or_cont <- variable_class_lookup |> pull(cat_or_cont)
+
+  # loop through all selected variables in the dataset and summarise each one
+  summary_unredacted <-
+    data |>
+    dplyr::group_by({{ .by }}) |>
+    dplyr::group_map(
+      \(group_data, group_keys) {
+        # apply summarise_vector function to each column, for each selected group separately
+        map2(
+          group_data[variables],
+          cat_or_cont,
+          ~ summarise_vector(x = .x, x_class = .y)
+        ) |>
+          # combine the list into a single tibble
+          list_rbind(names_to = "variable") |>
+          mutate(group_keys, .before = 1)
+      },
+      .keep = TRUE
+    ) |>
+    # combine across groups
+    list_rbind() |>
+    # add variable class
+    left_join(
+      variable_class_lookup |> select(variable, variable_class),
+      by = "variable"
+    )
+
+  # apply disclosure control if a rounding function is supplied
+  if (!missing(rounding.function)) {
+    summary_unredacted |>
+      mutate(
+        N_obs = rounding.function(N_obs),
+        N_nonmiss = rounding.function(N_nonmiss),
+        N_miss = rounding.function(N_miss),
+        n = rounding.function(n),
+        prop_nonmiss = n / N_nonmiss,
+        prop_obs = n / N_obs,
+        across(
+          any_of(c("mean", "sd", "p10", "p25", "median", "p75", "p90")),
+          ~if_else(N_nonmiss == 0, NA_real_, .)
+        )
+      )
+  } else {
+    summary_unredacted
+  }
+}
+
+
+
+
+
+
 # Distribution of most recent prior dose ----
 # This produces data and a plot showing the distribution of most recent prior vaccination date (to the nearest 4 weeks)
 # if no documented prior vaccination, then values are stacked on the LHS of the chart
