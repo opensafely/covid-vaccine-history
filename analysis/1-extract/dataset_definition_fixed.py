@@ -17,7 +17,8 @@ from ehrql import (
     days,
     when,
 #    minimum_of,
-#    maximum_of
+#    maximum_of,
+    claim_permissions
 )
 from ehrql.tables.tpp import (
   patients,
@@ -99,3 +100,16 @@ dataset.covid_death_date = case(
 )
 # number of covid vaccines as at end of observation period
 dataset.covid_vax_count = covid_vaccinations.count_for_patient()
+
+# put all covid-19 vaccination events in an ELD dataset
+
+claim_permissions("event_level_data")
+
+covid_vaccinations_ELD = covid_vaccinations 
+dataset.add_event_table(
+    "vaccinations",
+    vax_id = covid_vaccinations_ELD.vaccination_id,
+    vax_date = covid_vaccinations_ELD.date,
+    vax_product = covid_vaccinations_ELD.product_name,
+    age = patients.age_on(covid_vaccinations_ELD.date),
+)

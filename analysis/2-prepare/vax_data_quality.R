@@ -34,8 +34,12 @@ if (localrun) {
   data_vax_ELD0 <-
     data_vax_ELD0 |>
     mutate(
-      vax_date = as.Date(runif(n(), as.Date("2019-01-12"), max(campaign_info$early_milestone_date))),
-      vax_product = sample(vax_product_lookup, n(), replace = TRUE)
+      vax_date = as.Date(runif(
+        n(),
+        as.Date("2019-01-12"),
+        max(campaign_info$early_milestone_date)
+      )),
+      vax_product = sample(product_info$product_full_name, n(), replace = TRUE)
     )
 }
 
@@ -52,7 +56,12 @@ data_vax_ELD <-
   as_tibble() |>
   mutate(
     vax_product_raw = vax_product,
-    vax_product = fct_recode(factor(vax_product, vax_product_lookup), !!!vax_product_lookup) |> fct_na_value_to_level("UNMAPPED"),
+    vax_product = factor(
+      vax_product,
+      level = product_info$product_tpp_name,
+      labels = product_info$product_short_name
+    ) |>
+      fct_na_value_to_level("UNMAPPED"),
     campaign = cut(
       vax_date,
       breaks = c(campaign_info$campaign_start_date, as.Date(Inf)),
@@ -86,12 +95,14 @@ count_product <-
   ) |>
   group_by(under12, vax_product) |>
   summarise(
-    count_total = roundmid_any(n(), sdc_threshold),
-    count_before20200101 = roundmid_any(sum(vax_date < as.Date("2020-01-01")), sdc_threshold),
-    count_onorafter20200101 = roundmid_any(sum(vax_date >= as.Date("2020-01-01")), sdc_threshold),
-    count_onorafter20201201 = roundmid_any(sum(vax_date >= as.Date("2020-12-01")), sdc_threshold),
+    count_total = round_sdc(n()),
+    count_before20200101 = round_sdc(sum(vax_date < as.Date("2020-01-01"))),
+    count_onorafter20200101 = round_sdc(sum(vax_date >= as.Date("2020-01-01"))),
+    count_onorafter20201201 = round_sdc(sum(vax_date >= as.Date("2020-12-01"))),
     earliest_date_onorafter20201201 = min(vax_date_onorafter20201201, na.rm = TRUE),
-    count_on_earlier_date = sum(vax_date_onorafter20201201 %in% min(vax_date_onorafter20201201, na.rm = TRUE))
+    count_on_earlier_date = sum(
+      vax_date_onorafter20201201 %in% min(vax_date_onorafter20201201, na.rm = TRUE)
+    )
   ) |>
   as_tibble()
 
@@ -106,7 +117,7 @@ count_product_campaign <-
   ) |>
   group_by(under12, campaign, vax_product) |>
   summarise(
-    count_total = roundmid_any(n(), sdc_threshold),
+    count_total = round_sdc(n()),
     earliest_date = min(vax_date),
     count_on_earliest_date = sum(vax_date %in% min(vax_date))
   ) |>
@@ -147,7 +158,6 @@ products_cooccurrence_flat <-
 #     values_fill = 0L
 #   ) |> as_tibble()
 
-
 # count overall
 
 count_products_cooccurrence <-
@@ -157,12 +167,14 @@ count_products_cooccurrence <-
   ) |>
   group_by(vax_product) |>
   summarise(
-    count_total = roundmid_any(n(), sdc_threshold),
-    count_before20200101 = roundmid_any(sum(vax_date < as.Date("2020-01-01")), sdc_threshold),
-    count_onorafter20200101 = roundmid_any(sum(vax_date >= as.Date("2020-01-01")), sdc_threshold),
-    count_onorafter20201201 = roundmid_any(sum(vax_date >= as.Date("2020-12-01")), sdc_threshold),
+    count_total = round_sdc(n()),
+    count_before20200101 = round_sdc(sum(vax_date < as.Date("2020-01-01"))),
+    count_onorafter20200101 = round_sdc(sum(vax_date >= as.Date("2020-01-01"))),
+    count_onorafter20201201 = round_sdc(sum(vax_date >= as.Date("2020-12-01"))),
     earliest_date_onorafter20201201 = min(vax_date_onorafter20201201, na.rm = TRUE),
-    count_on_earliest_date = sum(vax_date_onorafter20201201 %in% min(vax_date_onorafter20201201, na.rm = TRUE))
+    count_on_earliest_date = sum(
+      vax_date_onorafter20201201 %in% min(vax_date_onorafter20201201, na.rm = TRUE)
+    )
   ) |>
   as_tibble()
 
@@ -174,10 +186,10 @@ count_products_cooccurrence_campaign <-
   products_cooccurrence_flat |>
   group_by(vax_product, campaign) |>
   summarise(
-    count_total = roundmid_any(n(), sdc_threshold),
-    count_before20200101 = roundmid_any(sum(vax_date < as.Date("2020-01-01")), sdc_threshold),
-    count_onorafter20200101 = roundmid_any(sum(vax_date >= as.Date("2020-01-01")), sdc_threshold),
-    count_onorafter20201201 = roundmid_any(sum(vax_date >= as.Date("2020-12-01")), sdc_threshold),
+    count_total = round_sdc(n()),
+    count_before20200101 = round_sdc(sum(vax_date < as.Date("2020-01-01"))),
+    count_onorafter20200101 = round_sdc(sum(vax_date >= as.Date("2020-01-01"))),
+    count_onorafter20201201 = round_sdc(sum(vax_date >= as.Date("2020-12-01"))),
     earliest_date = min(vax_date, na.rm = TRUE),
     count_on_earliest_date = sum(vax_date %in% min(vax_date, na.rm = TRUE))
   ) |>

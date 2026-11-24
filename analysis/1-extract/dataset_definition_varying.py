@@ -56,7 +56,7 @@ dataset.configure_dummy_data(population_size=1000)
 # define dataset poppulation
 dataset.define_population(
    covid_vaccinations.exists_for_patient()
-   & (patients.age_on(end_date) >= 12) # only include people who are aged 2 or over during at least one season
+   & (patients.age_on(end_date) >= 12) # only include people who are aged 12 or over during at least one season
 )
 
 
@@ -114,6 +114,7 @@ claim_permissions("event_level_data")
 covid_vaccinations_ELD = covid_vaccinations 
 dataset.add_event_table(
     "vaccinations",
+    vax_id = covid_vaccinations_ELD.vaccination_id,
     vax_date = covid_vaccinations_ELD.date,
     vax_product = covid_vaccinations_ELD.product_name,
     age = patients.age_on(covid_vaccinations_ELD.date),

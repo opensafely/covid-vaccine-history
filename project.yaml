@@ -4,31 +4,31 @@ actions:
 
   extract_fixed:
     run: ehrql:v1 generate-dataset analysis/1-extract/dataset_definition_fixed.py
-      --output output/1-extract/extract_fixed.arrow
-      --dummy-data-file analysis/1-extract/dummy-data/dummy_fixed.arrow
+      --output output/1-extract/extract_fixed:arrow
+    #  --dummy-data-file analysis/1-extract/dummy-data/dummy_fixed.arrow
     outputs:
       highly_sensitive:
-        cohort: output/1-extract/extract_fixed.arrow
+        cohort: output/1-extract/extract_fixed/*.arrow
 
-  extract_varying:
-    run: ehrql:v1 generate-dataset analysis/1-extract/dataset_definition_varying.py
-      --output output/1-extract/extract_varying:arrow
-      #--dummy-data-file analysis/1-extract/dummy-data/dummy_varying.arrow
-    outputs:
-      highly_sensitive:
-        cohort: output/1-extract/extract_varying/*.arrow
+  # extract_varying:
+  #   run: ehrql:v1 generate-dataset analysis/1-extract/dataset_definition_varying.py
+  #     --output output/1-extract/extract_varying:arrow
+  #     #--dummy-data-file analysis/1-extract/dummy-data/dummy_varying.arrow
+  #   outputs:
+  #     highly_sensitive:
+  #       cohort: output/1-extract/extract_varying/*.arrow
 
-  vax_data_quality:
-    run: r:v3 analysis/2-prepare/vax_data_quality.R
-    needs: [extract_varying]
-    outputs:
-      moderately_sensitive:
-        csv: output/2-prepare/vax_data_quality/*.csv
-        #txt: output/2-prepare/vax_data_quality/*.txt
+  # vax_data_quality:
+  #   run: r:v3 analysis/2-prepare/vax_data_quality.R
+  #   needs: [extract_varying]
+  #   outputs:
+  #     moderately_sensitive:
+  #       csv: output/2-prepare/vax_data_quality/*.csv
+  #       #txt: output/2-prepare/vax_data_quality/*.txt
 
   prepare:
     run: r:v3 analysis/2-prepare/prepare.R
-    needs: [extract_fixed, extract_varying]
+    needs: [extract_fixed]
     outputs:
       highly_sensitive:
         arrow: output/2-prepare/prepare/*.arrow

@@ -518,11 +518,7 @@ def demographic_variables(dataset, index_date, var_name_suffix=""):
 # this is an adpated version that only selects vaccines _near_ the index date 
 # without extracting the entire vacciantion history
 
-from ehrql.tables.tpp import (
-  vaccinations
-)
-
-def add_n_vaccines(dataset, index_date, target_disease, name, direction = None, number_of_vaccines = 3, minimum_gap = 1):
+def add_n_vaccines(dataset, table, index_date, name, direction = None, number_of_vaccines = 3, minimum_gap = 1):
 
     assert direction in ["after", "on_or_after", "before", "on_or_before"], "direction value must be after, on_or_after, before, on_or_before"
     
@@ -539,22 +535,15 @@ def add_n_vaccines(dataset, index_date, target_disease, name, direction = None, 
     else:
         raise ValueError("direction must be 'before' or 'after'") 
     
-    # select all vaccination events that target {target_disease}
-    covid_vaccinations = (
-        vaccinations
-        .where(vaccinations.target_disease == target_disease)
-        .sort_by(vaccinations.date)
-    )
-
     # loop over first, second, ..., nth vaccination event ON OR AFTER or ON OR BEFORE index date for each person
     # extract info on vaccination date and product
     for i in range(1, number_of_vaccines + 1):
 
         # vaccine variables
         if direction in ["after", "on_or_after"]:
-            current_vax = covid_vaccinations.where(covid_vaccinations.date > (current_date + days(minimum_gap-1))).first_for_patient()
+            current_vax = table.where(table.date > (current_date + days(minimum_gap-1))).first_for_patient()
         if direction in ["before", "on_or_before"]:
-            current_vax = covid_vaccinations.where(covid_vaccinations.date < (current_date - days(minimum_gap-1))).last_for_patient()
+            current_vax = table.where(table.date < (current_date - days(minimum_gap-1))).last_for_patient()
         
         dataset.add_column(f"{name}_{i}_date", current_vax.date)
         dataset.add_column(f"{name}_{i}_product", current_vax.product_name)
