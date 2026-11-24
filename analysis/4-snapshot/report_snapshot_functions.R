@@ -555,16 +555,27 @@ adjusted_estimates <- function(data, subgroup, event_time, event_indicator) {
         by = c("variable", "label"),
       ) |>
       transmute(
-        variable, label, reference_row,
+        variable,
+        label,
+        reference_row,
         n_obs_under_sdc_threshold,
         n_event_under_sdc_threshold,
-        n_obs, n_event, exposure,
+        n_obs,
+        n_event,
+        exposure,
         ir = n_event / exposure,
         irr_unadjusted = ir / ir[reference_row],
         irr = exp(estimate),
         irr.low = exp(conf.low),
         irr.high = exp(conf.high),
         irr.ln.std.error = std.error,
+      ) |>
+      # redact estimates if counts are low
+      mutate(
+        across(
+          any_of(c("irr", "irr.low", "irr.high", "irr.ln.std.error")),
+          ~ if_else(!(n_obs_under_sdc_threshold) & !(n_event_under_sdc_threshold), .x, NA_real_)
+        )
       ) 
 
   } else {
@@ -580,20 +591,11 @@ adjusted_estimates <- function(data, subgroup, event_time, event_indicator) {
   rm(data_outcome)
   gc()
   
-  data_poisson_redacted <- 
-    data_poisson |>
-      mutate(
-        across(
-          c(ir, irr_unadjusted, irr, irr.low, irr.high, irr.ln.std.error), 
-          ~ if_else(!(n_obs_under_sdc_threshold) & !(n_event_under_sdc_threshold), .x, NA)
-        )
-      ) 
-
-  return(data_poisson_redacted)
+  return(data_poisson)
 
 }
 
-#  adjusted_estimates(data_combined, "ageband4", "covid_admitted_time", "covid_admitted_indicator")
+#  adjusted_estimates(data_combined, "ageband13", "covid_admitted_time", "covid_admitted_indicator")
 
 
 # Length of stay ----
