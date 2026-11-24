@@ -71,10 +71,9 @@ campaign_info <-
   bind_rows(
     campaign_info_pre,
     campaign_info0,
-    
   ) |>
   arrange(campaign_start_date) |>
-   mutate(
+  mutate(
     campaign_label = fct_inorder(campaign_label),
     across(c(campaign_start_date, primary_milestone_date, age_date), as.Date),
   )
