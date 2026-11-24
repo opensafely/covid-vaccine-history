@@ -20,8 +20,9 @@ roundmid_any <- function(x, to = 1L) {
   # like ceiling_any, but centers on (integer) midpoint of the rounding points
   if (to == 0) {
     x
+  } else {
+    as.integer(ceiling(x / to) * to - (floor(to / 2) * (x != 0)))
   }
-  as.integer(ceiling(x / to) * to - (floor(to / 2) * (x != 0)))
 }
 
 ceiling_any <- function(x, to = 1L) {
@@ -29,8 +30,9 @@ ceiling_any <- function(x, to = 1L) {
 
   if (to == 0) {
     x
+  } else {
+    ceiling(plyr::round_any(x / to, 1 / 100000000)) * to
   }
-  ceiling(plyr::round_any(x / to, 1 / 100000000)) * to
   # return(plyr::round_any(x, to, f=ceiling))
 }
 
@@ -40,17 +42,17 @@ floor_any <- function(x, to = 1L) {
 
   if (to == 0) {
     x
+  } else {
+    floor(plyr::round_any(x / to, 1 / 100000000)) * to
   }
-  floor(plyr::round_any(x / to, 1 / 100000000)) * to
   # return(plyr::round_any(x, to, f=floor))
 }
-
 
 round_any <- function(x, to = 1) {
   if (to == 0) {
     x
   }
-  if_else(x != 5, plyr::round_any(x, accuracy = to), 0)
+  plyr::round_any(x, accuracy = sdc_precision)
 }
 
 # get nth largest value from list
@@ -85,8 +87,8 @@ sdc_threshold <- 5L # descriptions of groups of size equal or less than this val
 sdc_precision <- 10L # the rounding precision for counts
 
 # select SDC method for entire project, with rounding precision baked in
-round_sdc <- function(x) {
-  round_any(x, to = sdc_precision)
+round_sdc <- function(x, to = sdc_precision) {
+  if_else(x > sdc_threshold, round_any(x, to = to), 0)
 }
 
 # study dates

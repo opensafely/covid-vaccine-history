@@ -80,7 +80,6 @@ data_vax <-
 # _______________________________________________________________________________________
 
 ## output vax date validation info ----
-
 summary_validation <-
   data_vax |>
   # group_by(vax_campaign) |>
