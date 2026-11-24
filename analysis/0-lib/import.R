@@ -1,5 +1,5 @@
 library("tidyverse")
-library("googlesheets4")
+#library("googlesheets4")
 
 
 
@@ -47,40 +47,26 @@ jsonlite::write_json(
 campaign_info0 <-
   read_csv(
     file = fs::path("analysis/0-lib/campaign_info0.csv"),
-    col_types = "ccccccccdd"
-  ) |>
-  mutate(
-    across(
-      c(
-        "campaign_start_date",
-        "early_milestone_date",
-        "primary_milestone_date",
-        "final_milestone_date",
-        "age_date"
-      ),
-      \(x) as.Date(x, "%d/%m/%Y")
-    )
-  ) 
-
-campaign_info_pre <-
-  tribble(
-    ~campaign_label , ~campaign_start_date                            , ~early_milestone_date                           , ~primary_milestone_date                         , ~final_milestone_date                           , ~clinical_priority_descr , ~clinical_priority , ~age_date                                       , ~age_threshold ,
-    "Pre-pandemic"  , "1900-01-01"                                    , "1900-01-01"                                    , "1900-01-01"                                    , "1900-01-01"                                    , NA                       , NA                 , NA                                              ,             16 ,
-    "Pre-roll-out"  , as.character(study_dates$firstpossiblevax_date) , as.character(study_dates$firstpossiblevax_date) , as.character(study_dates$firstpossiblevax_date) , as.character(study_dates$firstpossiblevax_date) , NA                       , NA                 , as.character(study_dates$firstpossiblevax_date) ,             16 ,
-  ) |>
-  mutate(
-    across(
-      c(
-        "campaign_start_date",
-        "early_milestone_date",
-        "primary_milestone_date",
-        "final_milestone_date",
-        "age_date"
-      ),
-      as.Date
+    col_types = cols(
+      campaign_label = col_character(),
+      campaign_start_date = col_date(format = "%d/%m/%Y"),
+      early_milestone_date = col_date(format = "%d/%m/%Y"),
+      primary_milestone_date = col_date(format = "%d/%m/%Y"),
+      final_milestone_date = col_date(format = "%d/%m/%Y"),
+      clinical_priority_descr = col_character(),
+      clinical_priority = col_character(),
+      age_date = col_date(format = "%d/%m/%Y"),
+      age_threshold = col_double(),
+      age_nonCV_threshold = col_double()
     )
   )
 
+campaign_info_pre <-
+  tribble(
+    ~campaign_label , ~campaign_start_date                       , ~early_milestone_date                      , ~primary_milestone_date                    , ~final_milestone_date                      , ~clinical_priority_descr , ~clinical_priority , ~age_date                                  , ~age_threshold ,
+    "Pre-pandemic"  , as.Date("1900-01-01")                      , as.Date("1900-01-01")                      , as.Date("1900-01-01")                      , as.Date("1900-01-01")                      , NA                       , NA                 , NA                                         ,             16 ,
+    "Pre-roll-out"  , as.Date(study_dates$firstpossiblevax_date) , as.Date(study_dates$firstpossiblevax_date) , as.Date(study_dates$firstpossiblevax_date) , as.Date(study_dates$firstpossiblevax_date) , NA                       , NA                 , as.Date(study_dates$firstpossiblevax_date) ,             16 ,
+  )
 campaign_info <-
   bind_rows(
     campaign_info_pre,
