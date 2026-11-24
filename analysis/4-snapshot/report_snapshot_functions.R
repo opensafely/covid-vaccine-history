@@ -463,7 +463,8 @@ km_estimates <- function(data, group_name1, group_name2, event_name, event_time,
     nest() |>
     mutate(
       surv_obj_tidy = map(
-        data, ~ {
+        data,
+        ~ {
           survfit(
             Surv(event_time, event_indicator) ~ 1,
             data = .x,
@@ -489,7 +490,9 @@ km_estimates <- function(data, group_name1, group_name2, event_name, event_time,
               .direction = "up"
             ) |>
             fill(
-              estimate, conf.low, conf.high,
+              estimate,
+              conf.low,
+              conf.high,
               .direction = "down"
             )
         }
@@ -498,12 +501,16 @@ km_estimates <- function(data, group_name1, group_name2, event_name, event_time,
     select(-data) |>
     unnest(surv_obj_tidy) |>
     mutate(
-
       # disclosure control
+      # here we round KM estimates to multiples of r / n_r
+      # where r is the rounding precision, and n_r is the number at risk a t=0, rounded to a precision of r
+      # so if the rounding precision is 10, we get a step for every 10 _estimated_ events,
+      # where the estimated number of events is the the estimated incidence time the number at risk at t=0
+      # ie, estimated total events including those unobserved due to censoring      #
       n.risk = round_sdc(n.risk),
-      estimate = round_any(estimate, sdc_threshold / nth(n.risk, 2)), # use 2nd value as this skips the t=0 row where n.risk=0
-      conf.low = round_any(conf.low, sdc_threshold / nth(n.risk, 2)),
-      conf.high = round_any(conf.high, sdc_threshold / nth(n.risk, 2)),
+      estimate = round_any(estimate, sdc_precision / nth(n.risk, 2)), # use 2nd value as this skips the t=0 row where n.risk=0
+      conf.low = round_any(conf.low, sdc_precision / nth(n.risk, 2)),
+      conf.high = round_any(conf.high, sdc_precision / nth(n.risk, 2)),
 
       # cumulative incidence
       cmlinc = 1 - estimate,
