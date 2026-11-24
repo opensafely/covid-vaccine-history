@@ -79,6 +79,14 @@ fct_case_when <- function(...) {
 sdc_threshold <- 10L
 
 
+# study dates
+
+study_dates <- 
+  jsonlite::read_json(
+    path = here::here("analysis", "0-lib", "study_dates.json")
+  ) |>
+  lapply(as.Date)
+
 # import processed campaign info
 campaign_info <-
   read_feather(
