@@ -609,8 +609,6 @@ km_plot <- function(km_data, event_name, group1, group2) {
 
 # HRs and IRRs for events within different groups ----
 # Function to output HRs and IRRs for disease burden comparing different subgroups
-# note that parglm is faster, but produces an annoying warning that "'mustart' will not be used"
-# don't know how to get rid of it!
 adjusted_estimates <- function(data, subgroup, event_time, event_indicator) {
     
   # list of reference categories, which overwrites default reference category if needed
