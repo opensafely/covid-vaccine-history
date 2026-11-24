@@ -15,20 +15,18 @@ roundmid_any <- function(x, to = 1L) {
   # like ceiling_any, but centers on (integer) midpoint of the rounding points
   if (to == 0) {
     x
-  } else {
-    as.integer(ceiling(x / to) * to - (floor(to / 2) * (x != 0)))
   }
+  as.integer(ceiling(x / to) * to - (floor(to / 2) * (x != 0)))
 }
 
 ceiling_any <- function(x, to = 1L) {
   # round to nearest 100 millionth to avoid floating point errors
 
   if (to == 0) {
-    return(x)
-  } else {
-    return(ceiling(plyr::round_any(x / to, 1 / 100000000)) * to)
-    # return(plyr::round_any(x, to, f=ceiling))
+    x
   }
+  ceiling(plyr::round_any(x / to, 1 / 100000000)) * to
+  # return(plyr::round_any(x, to, f=ceiling))
 }
 
 
@@ -36,20 +34,18 @@ floor_any <- function(x, to = 1L) {
   # round to nearest 100 millionth to avoid floating point errors
 
   if (to == 0) {
-    return(x)
-  } else {
-    return(floor(plyr::round_any(x / to, 1 / 100000000)) * to)
-    # return(plyr::round_any(x, to, f=floor))
+    x
   }
+  floor(plyr::round_any(x / to, 1 / 100000000)) * to
+  # return(plyr::round_any(x, to, f=floor))
 }
 
 
 round_any <- function(x, to = 1) {
   if (to == 0) {
     x
-  } else {
-    if_else(x != 5, plyr::round_any(x, accuracy = to), 0)
   }
+  if_else(x != 5, plyr::round_any(x, accuracy = to), 0)
 }
 
 # get nth largest value from list
