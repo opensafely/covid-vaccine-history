@@ -85,14 +85,18 @@ summary_validation <-
   data_vax |>
   # group_by(vax_campaign) |>
   summarise(
-    n = roundmid_any(n(), sdc_threshold),
-    n_missing_date = roundmid_any(sum(is.na(vax_date)), sdc_threshold),
+    n = round_sdc(n()),
+    n_missing_date = round_sdc(sum(is.na(vax_date))),
     pct_missing_date = n_missing_date / n,
-    n_earlier_than_start_date = roundmid_any(sum(vax_date < study_dates$start_date, na.rm = TRUE), sdc_threshold),
+    n_earlier_than_start_date = round_sdc(
+      sum(vax_date < study_dates$start_date, na.rm = TRUE)
+    ),
     pct_earlier_than_start_date = n_earlier_than_start_date / n,
-    n_earlier_than_firstpossiblevax_date = roundmid_any(sum(vax_date < study_dates$firstpossiblevax_date, na.rm = TRUE), sdc_threshold),
+    n_earlier_than_firstpossiblevax_date = round_sdc(
+      sum(vax_date < study_dates$firstpossiblevax_date, na.rm = TRUE),
+    ),
     pct_earlier_than_firstpossiblevax_date = n_earlier_than_firstpossiblevax_date / n,
-    n_interval_within_14days = roundmid_any(sum(vax_interval < 14, na.rm = TRUE), sdc_threshold),
+    n_interval_within_14days = round_sdc(sum(vax_interval < 14, na.rm = TRUE)),
     pct_interval_within_14days = n_interval_within_14days / n,
   ) |>
   ungroup()
@@ -105,17 +109,22 @@ write_csv(summary_validation, fs::path(output_dir, "validation.csv"))
 summary_validation_stratified <-
   data_vax |>
   group_by(
-    vax_dosenumber, vax_product_core
+    vax_dosenumber,
+    vax_product_core
   ) |>
   summarise(
-    n = roundmid_any(n(), sdc_threshold),
-    n_missing_date = roundmid_any(sum(is.na(vax_date)), sdc_threshold),
+    n = round_sdc(n()),
+    n_missing_date = round_sdc(sum(is.na(vax_date))),
     pct_missing_date = n_missing_date / n,
-    n_earlier_than_start_date = roundmid_any(sum(vax_date < study_dates$start_date, na.rm = TRUE), sdc_threshold),
+    n_earlier_than_start_date = round_sdc(
+      sum(vax_date < study_dates$start_date, na.rm = TRUE)
+    ),
     pct_earlier_than_start_date = n_earlier_than_start_date / n,
-    n_earlier_than_firstpossiblevax_date = roundmid_any(sum(vax_date < study_dates$firstpossiblevax_date, na.rm = TRUE), sdc_threshold),
+    n_earlier_than_firstpossiblevax_date = round_sdc(
+      sum(vax_date < study_dates$firstpossiblevax_date, na.rm = TRUE)
+    ),
     pct_earlier_than_firstpossiblevax_date = n_earlier_than_firstpossiblevax_date / n,
-    n_interval_within_14days = roundmid_any(sum(vax_interval < 14, na.rm = TRUE), sdc_threshold),
+    n_interval_within_14days = round_sdc(sum(vax_interval < 14, na.rm = TRUE)),
     pct_interval_within_14days = n_interval_within_14days / n,
   ) |>
   ungroup()
@@ -130,7 +139,7 @@ summary_vax_count <-
   group_by(patient_id) |>
   summarise(vax_count = n()) |>
   group_by(vax_count) |>
-  summarise(frequency = roundmid_any(n(), sdc_threshold))
+  summarise(frequency = round_sdc(n()))
 
 write_csv(summary_vax_count, fs::path(output_dir, "validation_vax_count.csv"))
 
@@ -140,10 +149,11 @@ write_csv(summary_vax_count, fs::path(output_dir, "validation_vax_count.csv"))
 summary_vax_product_campaign <-
   data_vax |>
   group_by(
-    vax_campaign, vax_product
+    vax_campaign,
+    vax_product
   ) |>
   summarise(
-    n = roundmid_any(n(), sdc_threshold)
+    n = round_sdc(n())
   ) |>
   ungroup()
 
@@ -155,10 +165,11 @@ write_csv(summary_vax_product_campaign, fs::path(output_dir, "vax_counts_product
 summary_vax_product_dosenumber <-
   data_vax |>
   group_by(
-    vax_dosenumber, vax_product
+    vax_dosenumber,
+    vax_product
   ) |>
   summarise(
-    n = roundmid_any(n(), sdc_threshold)
+    n = round_sdc(n())
   ) |>
   ungroup()
 
@@ -197,7 +208,7 @@ summary_stratified <-
     #   ckd_rrt, copd, learndis_cat, sickle_cell, cirrhosis, cochlear_implant, cystic_fibrosis, csfl
   ) |>
   summarise(
-    n = roundmid_any(n(), sdc_threshold)
+    n = round_sdc(n())
   ) |>
   ungroup()
 
@@ -213,7 +224,7 @@ plot_vax_dates <- function(rows, cols) {
     group_by(vax_product_core, vax_week) |>
     group_by({{ rows }}, {{ cols }}, .add = TRUE) |>
     summarise(
-      n = roundmid_any(n(), sdc_threshold)
+      n = round_sdc(n())
     )
 
   temp_plot <-
@@ -331,7 +342,7 @@ plot_vax_intervals <- function(rows, cols) {
   summary_by <- data_vax |>
     filter(vax_index != 1) |>
     mutate(
-      vax_interval = roundmid_any(vax_interval + 1, 7), # to split into 0-6, 7-13, 14-20, 21-28, ....
+      vax_interval = plyr::round_sdc(vax_interval + 1, 7), # to split into 0-6, 7-13, 14-20, 21-28, ....
       vax_dosenumber = factor(
         vax_index,
         levels = sort(unique(vax_index)),
@@ -346,7 +357,7 @@ plot_vax_intervals <- function(rows, cols) {
     group_by(vax_dosenumber, vax_product_core, vax_interval) |>
     group_by({{ rows }}, {{ cols }}, .add = TRUE) |>
     summarise(
-      n = roundmid_any(n(), sdc_threshold),
+      n = round_sdc(n()),
     )
 
   temp_plot <-

@@ -11,6 +11,11 @@ library("arrow")
 
 # utility functions ----
 
+print_interactive <- function(x) {
+  # if running scripts interactively, then print them to console / viewer. Otherwise do not print.
+  if (interactive()) print(x)
+}
+
 roundmid_any <- function(x, to = 1L) {
   # like ceiling_any, but centers on (integer) midpoint of the rounding points
   if (to == 0) {
@@ -76,8 +81,13 @@ fct_case_when <- function(...) {
 # Design elements ----
 
 # statistical disclosure control rounding precision
-sdc_threshold <- 10L
+sdc_threshold <- 5L # descriptions of groups of size equal or less than this value will be redacted
+sdc_precision <- 10L # the rounding precision for counts
 
+# select SDC method for entire project, with rounding precision baked in
+round_sdc <- function(x) {
+  round_any(x, to = sdc_precision)
+}
 
 # study dates
 
@@ -217,7 +227,6 @@ factor_levels <-
 # using this in mutate like this: `mutate(!!!standardise_demographic_characteristics)`
 standardise_demographic_characteristics <-
   rlang::quos(
-
     ## --VARIABLES--
     ## demographics
     ageband4 = cut(
@@ -229,7 +238,23 @@ standardise_demographic_characteristics <-
     ageband13 = cut(
       age,
       breaks = c(-Inf, 12, 18, 30, 40, 50, 55, 60, 65, 70, 75, 80, 85, 90, 105, Inf),
-      labels = c("under 12", "12-17", "18-29", "30-39", "40-49", "50-54", "55-59", "60-64", "65-69", "70-74", "75-79", "80-84", "85-89", "90-104", "105+"), # under 12 and 105+ should be excluded in analysis but include here to ensure nobody slipped through the net
+      labels = c(
+        "under 12",
+        "12-17",
+        "18-29",
+        "30-39",
+        "40-49",
+        "50-54",
+        "55-59",
+        "60-64",
+        "65-69",
+        "70-74",
+        "75-79",
+        "80-84",
+        "85-89",
+        "90-104",
+        "105+"
+      ), # under 12 and 105+ should be excluded in analysis but include here to ensure nobody slipped through the net
       right = FALSE
     ),
     region = fct_collapse(
@@ -321,7 +346,6 @@ ethnicity_16_to_5 <- function(x) {
 ## --VARIABLES--
 
 level1_group <- c(
-
   # Level 1A (all)
   "all",
 
@@ -333,7 +357,7 @@ level1_group <- c(
 
   # Level 1D (eligibility)
   "any_eligibility",
-  "age_above_eligiblity_threshold",
+  "age_above_eligibility_threshold",
   "clinical_priority",
   "clinical_priority_only",
   "carehome_status",
@@ -401,8 +425,9 @@ level_combos <-
     (group1 == group2) %in% c(FALSE, NA) | (group1 == "all"), # remove if group1 and group2 are the same, unless both are "all"
     !((group1 != "all") & (group2 == "all")), # remove if group2 is all and group1 is not all (as all*X breakdowns are covered when group1="all")
     !((group1 %in% c("ageband4", "ageband13")) & (group2 %in% c("ageband4", "ageband13"))), # do not do breakdowns for different age groups
-    !((group1 %in% c("age_above_eligiblity_threshold", "clinical_priority_only")) & (group2 %in% c("ageband4", "ageband13"))), # do not embed age breakdowns inside eligibility as these are aready covered by age alone
-    !((group1 %in% c("clinical_priority_only")) & (group2 %in% c("primis_atrisk"))), # do not embed primis risk yes/no inside clinical priority eligibility 
+    !((group1 %in% c("age_above_eligibility_threshold", "clinical_priority_only")) &
+      (group2 %in% c("ageband4", "ageband13"))), # do not embed age breakdowns inside eligibility as these are aready covered by age alone
+    !((group1 %in% c("clinical_priority_only")) & (group2 %in% c("primis_atrisk"))), # do not embed primis risk yes/no inside clinical priority eligibility
     !((group1 %in% c("primis_atrisk")) & (group2 %in% c("primis_atrisk_count_fct"))), # do not embed primis count breakdowns inside primis yes/no
   )
 
