@@ -160,6 +160,7 @@ write_feather(data_vax_ELD, fs::path(output_dir, "data_vax_ELD.arrow"))
 
 data_vax_ELD_cleaned <-
   data_vax_ELD |>
+  arrange(patient_id, vax_date) |>
   lazy_dt() |>
   mutate(
     uk_approval_date = recode_values(
@@ -182,6 +183,7 @@ data_vax_ELD_cleaned <-
     !is.na(uk_approval_date)
   ) |>
   mutate(
+    vax_index = row_number(),
     vax_interval = as.integer(vax_date - lag(vax_date, 1)),
     .by = patient_id
   ) |>
@@ -190,15 +192,21 @@ data_vax_ELD_cleaned <-
     is.na(vax_interval) | vax_interval >= 14,
   )
 
-  # save to disk and select original columns with original names
+# save to disk and select original columns with original names
   data_vax_ELD_cleaned |>
     as_tibble() |>
-    transmute(
-      patient_id,
-      vaccination_id = vax_id,
-      date = vax_date,
-      product_name = vax_product
-    ) |>
     write_feather(fs::path(output_dir, "data_vax_ELD_cleaned.arrow"))
+
+
+  # consider saving this way if reimporting into a dataset definition
+  # data_vax_ELD_cleaned |>
+  #   as_tibble() |>
+  #   transmute(
+  #     patient_id,
+  #     vaccination_id = vax_id,
+  #     date = vax_date,
+  #     product_name = vax_product
+  #   ) |>
+  #   write_feather(fs::path(output_dir, "data_vax_ELD_cleaned.arrow"))
 
 

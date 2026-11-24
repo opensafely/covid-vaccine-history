@@ -77,6 +77,7 @@ fs::dir_create(output_dir)
 options(width = 200) # set output width for capture.output
 
 # Import and process cleaned vaccination data ----
+
 # ideally we would do this step in ehrQL, but table_from_file doesn't work for eventFrames (ie, event level data), so we'll do it here instead
 data_vax <- read_feather(here(
   "output",
@@ -103,13 +104,13 @@ signed_index <- function(x) {
 # select previous 3 and next 2 vaccines
 data_vax_at_snapshot <-
   data_vax |>
-  arrange(patient_id, date) |>
+  arrange(patient_id, vax_date) |>
   mutate(
-    vax_index_relative = signed_index(date - snapshot_date),
+    vax_index_relative = signed_index(vax_date - snapshot_date),
     .by = patient_id
   ) |>
   filter(
-    between(vax_index_relative, -3, 2)
+    between(vax_index_relative, -3, 1)
   ) |>
   mutate(
     name = if_else(
@@ -122,19 +123,23 @@ data_vax_at_snapshot <-
 # tranform to wide format
 data_vax_wide <-
   data_vax_at_snapshot |>
-  rename(product = product_name) |>
+  rename(
+    product = vax_product,
+    date = vax_date
+  ) |>
   pivot_wider(
     id_cols = c(patient_id),
     names_from = name,
     names_glue = "{name}_{.value}",
     values_from = c(date, product),
+    names_sort = TRUE,
     names_vary = "slowest"
   )
 
 # count total number of documented prior vaccines
 data_vax_prior_count <-
   data_vax |>
-  filter(date < snapshot_date) |>
+  filter(vax_date < snapshot_date) |>
   summarise(
     covid_vax_prior_count = n(),
     .by = patient_id

@@ -22,8 +22,14 @@ fs::dir_create(output_dir)
 
 # Import prepared data ----
 data_fixed <- read_feather(here("output", "2-prepare", "prepare", "data_fixed.arrow"))
-data_varying <- read_feather(here("output", "2-prepare", "prepare", "data_vax.arrow"))
-data_varying_clean <- read_feather(here("output", "2-prepare", "prepare", "data_vax_clean.arrow"))
+
+data_vax_cleaned <- read_feather(here(
+  "output",
+  "2-prepare",
+  "prepare",
+  "data_vax_ELD_cleaned.arrow"
+))
+
 
 # _______________________________________________________________________________________
 # Process datasets ----
@@ -33,34 +39,39 @@ data_varying_clean <- read_feather(here("output", "2-prepare", "prepare", "data_
 
 data_vax <-
   left_join(
-    lazy_dt(data_varying),
-    lazy_dt(data_fixed) |> select(patient_id, sex, ethnicity5, ethnicity16, death_date),
+    lazy_dt(data_vax_cleaned),
+    lazy_dt(data_fixed) |>
+      select(patient_id, sex, ethnicity5, ethnicity16, death_date),
     by = "patient_id"
   ) |>
   mutate(
-    vax_dosenumber = factor(vax_index, levels = sort(unique(vax_index)), labels = paste("Dose", sort(unique(vax_index)))),
+    ageband4 = cut(
+      age,
+      breaks = c(-Inf, 12, 50, 65, 75, 105, Inf),
+      labels = c("under 12", "12-49", "50-64", "65-74", "75-104", "105+"), # under 12 and 105+ should be excluded in analysis but include here to ensure nobody slipped through the net
+      right = FALSE
+    ),
+    vax_campaign = campaign,
+    vax_dosenumber = factor(
+      vax_index,
+      levels = sort(unique(vax_index)),
+      labels = paste("Dose", sort(unique(vax_index)))
+    ),
     vax_week = floor_date(vax_date, unit = "week", week_start = 1),
-    vax_product_core = fct_other(vax_product, vax_product_core_levels, other_level = "other"),
-    all = ""
-  ) |>
-  as_tibble()
-
-data_vax_clean <-
-  left_join(
-    lazy_dt(data_varying_clean),
-    lazy_dt(data_fixed) |> select(patient_id, sex, ethnicity5, ethnicity16, death_date),
-    by = "patient_id"
-  ) |>
-  mutate(
-    vax_dosenumber = factor(vax_index, levels = sort(unique(vax_index)), labels = paste("Dose", sort(unique(vax_index)))),
-    vax_week = floor_date(vax_date, unit = "week", week_start = 1),
-    vax_product_core = fct_other(vax_product, vax_product_core_levels, other_level = "other"),
+    vax_product_core = fct_other(
+      vax_product,
+      vax_product_core_levels,
+      other_level = "other"
+    ),
     all = "",
     all2 = ""
   ) |>
   as_tibble() |>
   mutate(
-    across(where(is.factor) | where(is.character), ~ fct_explicit_na(.x, na_level = "Unknown"))
+    across(
+      where(is.factor) | where(is.character),
+      ~ fct_na_value_to_level(.x, level = "Unknown")
+    )
   )
 
 
@@ -170,14 +181,20 @@ write_csv(summary_vax_product_dosenumber, fs::path(output_dir, "vax_counts_produ
 summary_stratified <-
   data_vax |>
   group_by(
-    vax_dosenumber, vax_product_core, vax_campaign,
-    sex, ageband4, ethnicity5, region, imd_quintile,
+    vax_dosenumber,
+    vax_product_core,
+    vax_campaign,
+    sex,
+    ageband4,
+    ethnicity5,
+    # don't do these variables as they are time-varying in ways that can't be querying alongside event-level data, except by using wide trick
+    # time varying
+    # region, imd_quintile,
     # PRIMIS
     #   crd, chd, ckd, cld, cns, learndis, diabetes, immunosuppressed, asplenia, severe_obesity, smi,
     #   primis_atrisk
     # Extended subgroups
     #   ckd_rrt, copd, learndis_cat, sickle_cell, cirrhosis, cochlear_implant, cystic_fibrosis, csfl
-
   ) |>
   summarise(
     n = roundmid_any(n(), sdc_threshold)
@@ -192,7 +209,7 @@ write_csv(summary_stratified, fs::path(output_dir, "vax_counts_stratified.csv"))
 ## stratified by product, dose number, and other characteristics
 
 plot_vax_dates <- function(rows, cols) {
-  summary_by <- data_vax_clean |>
+  summary_by <- data_vax |>
     group_by(vax_product_core, vax_week) |>
     group_by({{ rows }}, {{ cols }}, .add = TRUE) |>
     summarise(
@@ -264,11 +281,13 @@ plot_vax_dates(all, all2)
 plot_vax_dates(sex, all)
 plot_vax_dates(ageband4, all)
 plot_vax_dates(ethnicity5, all)
-plot_vax_dates(region, all)
-plot_vax_dates(imd_quintile, all)
 plot_vax_dates(vax_campaign, all)
 plot_vax_dates(vax_dosenumber, all)
 
+
+# time-varying demographics
+# plot_vax_dates(region, all)
+# plot_vax_dates(imd_quintile, all)
 # PRIMIS
 # plot_vax_dates(crd, all) # chronic respiratory disease
 # plot_vax_dates(chd, all) # chronic heart disease
@@ -287,9 +306,11 @@ plot_vax_dates(vax_dosenumber, all)
 plot_vax_dates(sex, vax_dosenumber)
 plot_vax_dates(ageband4, vax_dosenumber)
 plot_vax_dates(ethnicity5, vax_dosenumber)
-plot_vax_dates(region, vax_dosenumber)
-plot_vax_dates(imd_quintile, vax_dosenumber)
 plot_vax_dates(vax_campaign, vax_dosenumber)
+
+# time-varying demographics
+# plot_vax_dates(region, vax_dosenumber)
+# plot_vax_dates(imd_quintile, vax_dosenumber)
 # PRIMIS
 # plot_vax_dates(crd, vax_dosenumber) # chronic respiratory disease
 # plot_vax_dates(chd, vax_dosenumber) # chronic heart disease
@@ -307,11 +328,20 @@ plot_vax_dates(vax_campaign, vax_dosenumber)
 ## output plots of time since previous vaccination by product, dose number, and other characteristics ----
 
 plot_vax_intervals <- function(rows, cols) {
-  summary_by <- data_vax_clean |>
+  summary_by <- data_vax |>
     filter(vax_index != 1) |>
     mutate(
       vax_interval = roundmid_any(vax_interval + 1, 7), # to split into 0-6, 7-13, 14-20, 21-28, ....
-      vax_dosenumber = factor(vax_index, levels = sort(unique(vax_index)), labels = paste("Dose ", sort(unique(vax_index)) - 1, "-", sort(unique(vax_index)))),
+      vax_dosenumber = factor(
+        vax_index,
+        levels = sort(unique(vax_index)),
+        labels = paste(
+          "Dose ",
+          sort(unique(vax_index)) - 1,
+          "-",
+          sort(unique(vax_index))
+        )
+      ),
     ) |>
     group_by(vax_dosenumber, vax_product_core, vax_interval) |>
     group_by({{ rows }}, {{ cols }}, .add = TRUE) |>
@@ -376,14 +406,14 @@ plot_vax_intervals <- function(rows, cols) {
 plot_vax_intervals(sex, vax_dosenumber)
 plot_vax_intervals(ageband4, vax_dosenumber)
 plot_vax_intervals(ethnicity5, vax_dosenumber)
-plot_vax_intervals(region, vax_dosenumber)
-plot_vax_intervals(imd_quintile, vax_dosenumber)
 plot_vax_intervals(vax_campaign, vax_dosenumber)
 plot_vax_intervals(vax_campaign, all)
 plot_vax_intervals(vax_dosenumber, all)
 
+# time-varying demographics
+# plot_vax_intervals(region, vax_dosenumber)
+# plot_vax_intervals(imd_quintile, vax_dosenumber)
 # PRIMIS
-
 # plot_vax_intervals(crd, vax_dosenumber) # chronic respiratory disease
 # plot_vax_intervals(chd, vax_dosenumber) # chronic heart disease
 # plot_vax_intervals(ckd, vax_dosenumber) # chronic kidney disease
